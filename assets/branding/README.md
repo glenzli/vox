@@ -1,27 +1,35 @@
 # Vox application icon
 
-Generated with **built-in imagegen** on 2026-10-18. The selected original artwork is
-`app-icon-source.png`, preserved byte-for-byte from `exec-b51bdda8-e0db-4923-82f2-8387b80ce92d.png`.
+The current balanced flat mark was created with **built-in imagegen** on 2026-10-18.
+`app-icon-source.png` is preserved byte-for-byte from
+`exec-955bc06f-21df-46f8-9b4a-c59bdc46bc30.png`.
 
-- Original SHA-256: `c340ddaa6f79e94798c7ac82d5b2f76fec81cd30796d7933a0e369b0223044d6`
-- Design meaning: Five sculptural voice strokes represent scripts becoming spoken performances. Their ivory and restrained warm edges distinguish voice production from Echo's sound rings. This is brand preparation only; Vox has no standalone application.
+- Original SHA-256: `cad8a3c90505e5dbc2e72e970e202eb2cd8fdd7dfdb4cbc1b95a47d0b77d8550`
+- Design meaning: Five equally slim, flat voice strokes use a compact rhythm and measured height steps. The muted coral center and warm ivory side strokes represent spoken performance without sculptural depth. Vox remains brand preparation only, with no standalone application.
+- Previous sources and complete prompts are preserved in the
+  [dimensional archive](archive/2026-10-18-dimensional/README.md) and
+  [first flat study](archive/2026-10-18-flat-study/README.md).
 
-## Original generation prompt
+## Imagegen edit prompt
+
+The archived first flat study was the exact reference for this proportion edit.
 
 ```text
-Use case: logo-brand. Create one finished macOS application icon for Vox, an app for turning scripts and dialogue into spoken performances.
-Square 1024x1024, pure deep black background edge to edge, no drawn rounded-square tile. A single compact centered voice-wave emblem: exactly FIVE upright slim sculptural pill-shaped strokes of different heights, arranged left to right short / medium / tallest / medium-high / short, vertically centered on the same invisible horizontal baseline. They form a calm, immediately recognizable spoken voice pulse, not a chart. The whole emblem occupies about 70% of the canvas width and 66% of its height. Substantial clean gaps, simple silhouette readable at 32px.
-Visual family: black-background geometric art with controlled luminous edges, like Shadow's champagne-lit planes and Echo's glowing silver sound traces. The strokes are softly rounded satin ivory metal, mostly silver-white faces with graphite side shadows. Gentle warm copper and soft coral light grazes the inside edges; a small restrained warm halo, no broad background wash. Slightly dimensional sculptural relief, almost frontal. Very fine material grain, clean premium finish, generous pure black negative space.
-Do not use concentric circles (those belong to Echo), a microphone, speech bubble, equalizer UI, controls, text, letters, labels, numbers, music notes, colorful neon, sparkle, tile frame, floor, scenery, or watermark. One coherent quiet emblem, no collage.
+Use case: precise-object-edit. Edit target: the provided flat Vox icon.
+Redesign the proportions and spacing of this five-bar voice mark. The current center stroke is too towering, the whole group too spread out, and the side strokes feel detached.
+Keep exactly five front-facing vertical rounded bars on an opaque pure black square. Keep the four side bars soft warm ivory and the center bar muted coral salmon. Use clean uniform matte solid fills with NO texture, gradient, highlights, shadows, bevels or glow.
+Make ALL FIVE bars the same elegant width, about 6.8 percent of canvas width. Set the four gaps to about 3.3 percent of canvas width, so the total group width is about 47 percent. Make the heights progress smoothly: outer bars about 19 percent of canvas height, inner pair about 32 percent, central bar about 43 percent. All bars share one horizontal centerline. The center bar should feel integrated, not a tall separate pillar. Ends are smooth semicircles. Avoid turning the outer strokes into circular dots.
+Center the compact mark optically in the square with generous balanced black margins. Its proportions should read as a cohesive voice waveform, calm and confident, with a balanced height-to-width relation at 32 pixels.
+No text, letters, borders, extra symbols, outer app tile or transparency. Keep this an opaque black square artwork. Main change is the size hierarchy, spacing and visual balance; preserve the five-stroke identity and restrained ivory/coral palette.
 ```
 
 ## Mechanical outputs
 
 `app-icon.png` is 1024×1024. `app-icon.icns` contains the standard macOS 16, 32, 64, 128,
-256, 512 and 1024 pixel representations, including the paired Retina entries. Vox's containers are brand resources only; there is no Vox application.
-Both derive directly from the opaque RGB original: macOS supplies the native outer presentation,
-avoiding a second frame around a precomposed transparent tile. No repainting, cropping, filtering,
-masking or background removal is applied. No Windows binary or ICO is claimed.
+256, 512 and 1024 pixel representations, including the paired Retina entries. These are brand resources only; there is no Vox application.
+Both derive directly from the opaque RGB original, reusing the established native black-background
+presentation. No repainting, cropping, filtering, masking or background removal is applied.
+No Windows binary or ICO is claimed.
 
 From this asset directory on macOS, reproduce the outputs with:
 
