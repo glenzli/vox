@@ -19,3 +19,6 @@ when a complete independent editing and persistence boundary is ready. No source
 migrated into this repository.
 
 See [the roadmap](ROADMAP.md).
+
+See [the brand icon and its provenance](assets/branding/README.md). These assets do not constitute
+a desktop application or release.
