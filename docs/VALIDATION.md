@@ -194,3 +194,33 @@ display fields are persisted or change executable events, digests or acceptance.
 Source/artifact/project identities are recorded in `/private/tmp/vox-reading-evidence-20261018/report.json`.
 The compact UI/documentation commit is `e2cc820`; this reading change is committed separately.
 No push, synthesis job, Echo edit or microphone capture was required for this refinement.
+
+## Published SDK and clean checkout build — 2026-10-18
+
+Infer Runtime SDK commit `8dc48ce137428e6c11d5d50a3bf94c090be7f3b9` is now published on
+`origin/main`; both the remote ref and GitHub commit API return that exact revision. The existing
+SDK commit needed no further source changes. Its clean archived tree passed all 39 SDK tests;
+the three SAM prompt regression tests for its parent commit also passed. The 37 pre-existing
+uncommitted Infer media/model-catalog files remain byte-identical and were not included.
+
+- Vox was freshly cloned from `https://github.com/glenzli/vox.git` at `2f009e4`, with no Git object
+  alternates and global/system Git configuration disabled. Cargo home, Cargo target and desktop
+  build directories were empty before dependency retrieval.
+- `cargo fetch --locked` downloaded the pinned SDK from its HTTPS remote and the locked registry
+  dependencies. The fetched SDK checkout resolves to the exact published revision above; no local
+  Infer checkout or pre-populated Cargo cache was used.
+- With that isolated Cargo home and `CARGO_NET_OFFLINE=true`,
+  `scripts/build_and_promote_debug.sh` passed formatting, Clippy, all 70 Rust tests, all six packaged
+  desktop checks and 307 complete Chinese translations. The fresh source checkout stayed clean.
+- The script promoted only to an isolated temporary application directory. Signature verification
+  and a signed Cocoa `--smoke-exit` startup passed. macOS emitted a sandbox-extension diagnostic;
+  no QML load/binding error or failing check was observed. The normal preview application and
+  the user's existing 239-character project with two accepted takes were preserved.
+
+Evidence, source/artifact identities and logs are in
+`/private/tmp/vox-sdk-clean-20261018-c_1ybir5/report.json`. This verifies a fresh checkout and empty
+dependency/build caches on the existing macOS ARM64 host (Rust/Cargo 1.96.0, CMake 4.4.0,
+Ninja 1.13.2 and Qt 6.11.2), not a newly provisioned operating system or a new Runtime synthesis
+session. The bilingual README now documents the initial online fetch before the offline build.
+Only publication documentation changed after this build; production source and the lockfile match
+the validated checkout.

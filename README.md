@@ -51,12 +51,11 @@ Echo 返回的音频先进入候选列表；24 位到 16 位 PCM 的转换需要
 ### 本地运行
 
 需要 Rust 1.96+、CMake 3.28+、Ninja，以及包含 Quick、Quick Controls、Multimedia、SVG 和
-Linguist Tools 的 Qt 6.9+。构建脚本使用离线 Cargo 依赖缓存，首次运行前需准备锁定的依赖。
-
-此开发预览锁定的 Infer Runtime SDK 提交为 `8dc48ce`，目前尚待推送到其源仓库。
-在该提交可从远端获取前，首次构建需要已准备好这版 SDK 的本地 Cargo Git 缓存。
+Linguist Tools 的 Qt 6.9+。首次构建先联网下载锁定的依赖（包括固定版本的 Infer Runtime SDK），
+之后构建脚本使用离线 Cargo 缓存。无需本机 Infer Runtime 源码检出或预置 SDK 缓存。
 
 ```sh
+cargo fetch --locked
 ./scripts/build_and_promote_debug.sh
 ./scripts/run_debug.sh
 ./scripts/run_debug.sh /absolute/path/MyProject.vox
@@ -160,14 +159,12 @@ The applications exchange files and retain independent project stores and databa
 ### Run locally
 
 Requires Rust 1.96+, CMake 3.28+, Ninja and Qt 6.9+ with Quick, Quick Controls, Multimedia, SVG and
-Linguist Tools. Build scripts use the offline Cargo dependency cache; prepare the locked dependencies
-before the first build.
-
-This preview pins Infer Runtime SDK commit `8dc48ce`, which is still pending publication in its
-source repository. Until it is available remotely, the first build requires a local Cargo Git
-cache containing that SDK revision.
+Linguist Tools. Fetch the locked dependencies online for the first build, including the pinned Infer
+Runtime SDK; the build script then uses Cargo's offline cache. No local Infer Runtime checkout or
+pre-populated SDK cache is required.
 
 ```sh
+cargo fetch --locked
 ./scripts/build_and_promote_debug.sh
 ./scripts/run_debug.sh
 ./scripts/run_debug.sh /absolute/path/MyProject.vox
