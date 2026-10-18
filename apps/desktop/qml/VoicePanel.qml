@@ -44,71 +44,94 @@ Rectangle {
     function openLibrary(tab) { materials.initialTab = tab; materials.open() }
     ScrollView {
         anchors.fill: parent
-        anchors.margins: 20
+        anchors.margins: 16
         clip: true
         contentWidth: availableWidth
         ColumnLayout {
             width: parent.width
-            spacing: 16
-            Label { text: qsTr("VOICES & DIRECTION"); font.pixelSize: 10; font.letterSpacing: 1.5; color: Theme.secondary }
+            spacing: 14
             RowLayout {
                 Layout.fillWidth: true
-                ActionButton { objectName: "voiceLibraryButton"; text: qsTr("Voice library"); symbol: "users"; enabled: !backend.rendering; onClicked: panel.openLibrary(0) }
-                ActionButton { objectName: "soundLibraryButton"; text: qsTr("Sounds"); symbol: "headphones"; enabled: !backend.rendering; onClicked: panel.openLibrary(1) }
+                spacing: 4
+                Label { text: qsTr("VOICES & DIRECTION"); font.pixelSize: 10; font.letterSpacing: 1; color: Theme.secondary; Layout.fillWidth: true }
+                IconButton { objectName: "voiceLibraryButton"; symbol: "users"; hint: qsTr("Voice library"); enabled: !backend.rendering; onClicked: panel.openLibrary(0) }
+                IconButton { objectName: "soundLibraryButton"; symbol: "headphones"; hint: qsTr("Sounds"); enabled: !backend.rendering; onClicked: panel.openLibrary(1) }
             }
-            Label { text: qsTr("Default voice"); font.weight: Font.DemiBold }
-            RowLayout {
+            ColumnLayout {
                 Layout.fillWidth: true
-                ComboBox {
-                    id: defaultVoice
-                    objectName: "defaultVoice"
+                spacing: 6
+                Label { text: qsTr("Default voice"); font.pixelSize: 11; color: Theme.secondary }
+                RowLayout {
                     Layout.fillWidth: true
-                    model: { const localeDependency = preferences.language; return panel.voiceNames() }
-                    currentIndex: panel.voiceIndex(panel.selected(""))
-                    enabled: !backend.rendering
-                    onActivated: panel.choose("", currentIndex)
+                    spacing: 6
+                    CompactComboBox {
+                        id: defaultVoice
+                        objectName: "defaultVoice"
+                        Layout.fillWidth: true
+                        model: { const localeDependency = preferences.language; return panel.voiceNames() }
+                        currentIndex: panel.voiceIndex(panel.selected(""))
+                        enabled: !backend.rendering
+                        onActivated: panel.choose("", currentIndex)
+                    }
+                    IconButton { symbol: "play"; hint: qsTr("Audition this voice"); enabled: !backend.rendering && defaultVoice.currentIndex >= 0; onClicked: panel.audition(defaultVoice.currentIndex) }
                 }
-                IconButton { symbol: "play"; hint: qsTr("Audition this voice"); enabled: !backend.rendering && defaultVoice.currentIndex >= 0; onClicked: panel.audition(defaultVoice.currentIndex) }
-            }
-            Label { text: qsTr("Language"); color: Theme.secondary }
-            ComboBox {
-                Layout.fillWidth: true
-                model: backend.languages.map(v => v.label)
-                currentIndex: panel.languages.indexOf(backend.document.language || "auto")
-                enabled: !backend.rendering
-                onActivated: backend.setLanguage(panel.languages[currentIndex])
             }
             RowLayout {
-                Label { text: qsTr("Pace"); color: Theme.secondary; Layout.fillWidth: true }
-                Label { text: ((backend.document.speed_milli || 1000) / 1000).toFixed(2) + "×"; font.pixelSize: 12 }
-            }
-            Slider {
-                id: pace
                 Layout.fillWidth: true
-                from: 500; to: 2000; stepSize: 50
-                value: backend.document.speed_milli || 1000
-                enabled: !backend.rendering && !panel.usesReference
-                onMoved: backend.setSpeed(Math.round(value))
-                Accessible.name: qsTr("Speech pace")
-            }
-            Label { visible: panel.usesReference; Layout.fillWidth: true; text: qsTr("Reference voices use 1× pace and neutral delivery."); wrapMode: Text.WordWrap; color: Theme.muted; font.pixelSize: 11 }
-            Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
-            Label { text: qsTr("Roles"); font.weight: Font.DemiBold; visible: backend.document.format === "production_script" }
-            Label {
-                text: qsTr("Declare roles in your script, then choose a voice for each one.")
-                visible: backend.document.format === "production_script" && !(backend.analysis.roles || []).length
-                wrapMode: Text.WordWrap; Layout.fillWidth: true; color: Theme.secondary; font.pixelSize: 12
-            }
-            Repeater {
-                model: backend.document.format === "production_script" ? (backend.analysis.roles || []) : []
-                ColumnLayout {
-                    id: roleRow
-                    required property string modelData
+                spacing: 12
+                Label { text: qsTr("Language"); color: Theme.secondary; font.pixelSize: 12 }
+                CompactComboBox {
                     Layout.fillWidth: true
-                    spacing: 7
-                    Label { text: roleRow.modelData; font.pixelSize: 12; font.weight: Font.Medium }
+                    model: backend.languages.map(v => v.label)
+                    currentIndex: panel.languages.indexOf(backend.document.language || "auto")
+                    enabled: !backend.rendering
+                    onActivated: backend.setLanguage(panel.languages[currentIndex])
+                }
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+                RowLayout {
+                    Label { text: qsTr("Pace"); color: Theme.secondary; font.pixelSize: 12; Layout.fillWidth: true }
+                    Label { text: ((backend.document.speed_milli || 1000) / 1000).toFixed(2) + "×"; font.pixelSize: 11; color: Theme.secondary }
+                }
+                CompactSlider {
+                    id: pace
+                    Layout.fillWidth: true
+                    from: 500; to: 2000; stepSize: 50
+                    value: backend.document.speed_milli || 1000
+                    enabled: !backend.rendering && !panel.usesReference
+                    onMoved: backend.setSpeed(Math.round(value))
+                    Accessible.name: qsTr("Speech pace")
+                }
+                Label { visible: panel.usesReference; Layout.fillWidth: true; text: qsTr("Reference voices use 1× pace and neutral delivery."); wrapMode: Text.WordWrap; color: Theme.muted; font.pixelSize: 11 }
+            }
+            Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border; visible: backend.document.format === "production_script" }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                visible: backend.document.format === "production_script"
+                Label { text: qsTr("Roles"); font.pixelSize: 12; font.weight: Font.DemiBold }
+                Label {
+                    text: qsTr("Declare roles in your script, then choose a voice for each one.")
+                    visible: !(backend.analysis.roles || []).length
+                    wrapMode: Text.WordWrap; Layout.fillWidth: true; color: Theme.secondary; font.pixelSize: 12
+                }
+                Repeater {
+                    model: backend.document.format === "production_script" ? (backend.analysis.roles || []) : []
                     RowLayout {
-                        ComboBox {
+                        id: roleRow
+                        required property string modelData
+                        Layout.fillWidth: true
+                        spacing: 6
+                        Label {
+                            text: roleRow.modelData; font.pixelSize: 11
+                            Layout.preferredWidth: 48; elide: Text.ElideRight
+                            HoverHandler { id: roleHover }
+                            ToolTip.visible: roleHover.hovered && truncated
+                            ToolTip.text: text
+                        }
+                        CompactComboBox {
                             id: roleChoice
                             Layout.fillWidth: true
                             model: { const localeDependency = preferences.language; return panel.voiceNames() }
@@ -121,17 +144,26 @@ Rectangle {
                     }
                 }
             }
-            Label { text: qsTr("Sound cues"); font.weight: Font.DemiBold; visible: (backend.analysis.cues || []).length > 0 && backend.document.format === "production_script" }
-            Repeater {
-                model: backend.document.format === "production_script" ? (backend.analysis.cues || []) : []
-                ColumnLayout {
-                    id: cueRow
-                    required property string modelData
-                    Layout.fillWidth: true
-                    spacing: 7
-                    Label { text: cueRow.modelData; font.pixelSize: 12 }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                visible: (backend.analysis.cues || []).length > 0 && backend.document.format === "production_script"
+                Label { text: qsTr("Sound cues"); font.pixelSize: 12; font.weight: Font.DemiBold }
+                Repeater {
+                    model: backend.document.format === "production_script" ? (backend.analysis.cues || []) : []
                     RowLayout {
-                        ComboBox {
+                        id: cueRow
+                        required property string modelData
+                        Layout.fillWidth: true
+                        spacing: 6
+                        Label {
+                            text: cueRow.modelData; font.pixelSize: 11
+                            Layout.preferredWidth: 48; elide: Text.ElideRight
+                            HoverHandler { id: cueHover }
+                            ToolTip.visible: cueHover.hovered && truncated
+                            ToolTip.text: text
+                        }
+                        CompactComboBox {
                             Layout.fillWidth: true
                             model: {const locale = preferences.language; return panel.cueNames()}
                             currentIndex: panel.cueIndex(cueRow.modelData)
@@ -142,7 +174,6 @@ Rectangle {
                     }
                 }
             }
-            Item { Layout.preferredHeight: 12 }
             Label { Layout.fillWidth: true; text: qsTr("Generated speech is labeled as synthetic. Your accepted takes stay available when you revise the script."); wrapMode: Text.WordWrap; color: Theme.muted; font.pixelSize: 11; lineHeight: 1.35 }
         }
     }

@@ -133,3 +133,32 @@ the speech worker is unchanged. No new speech/Echo operation, commit or push was
   The own grant adds local clone, sound and text preparation, without cloud or observer permission.
 - The pre-existing user project stayed byte-identical to `/private/tmp/vox-studio-user-before.json`
   (239 characters, two accepted takes, version 14); no sample script or accepted audio was replaced.
+
+## Compact desktop controls and bilingual documentation — 2026-10-18
+
+Shared controls now use 28 px buttons and fields, a single 12 px dropdown chevron, a 3 px pace
+track with a 12 px handle, and themed, scrollable option lists. Script tools occupy one row;
+role/cue bindings occupy compact rows. Take cards are 182 × 60 px and the audio area is 172 px
+high instead of 236 px. Script font preferences and source semantics are unchanged.
+
+- Formatting/Clippy, all 68 Rust tests and 284 complete Chinese messages passed in
+  `/private/tmp/vox-density-gate.log`. The first appearance run caught a faint disabled waveform
+  icon after it was reduced to 14 px; retaining a 16 px icon corrected it without relaxing checks.
+- The final Qt build passed all five packaged checks in `/private/tmp/vox-density-ui-recheck.log`.
+  Unchanged Rust evidence was reused after that QML-only adjustment.
+- The promoted, signed Cocoa app passed appearance, editor and studio checks in
+  `/private/tmp/vox-density-native.log`, including light/dark, activation, disabled actions,
+  maximize/restore, source preservation, fonts, and material forms. Images are retained under
+  `/private/tmp/vox-density-native-20261018`. Native macOS diagnostics were present; no QML
+  binding/resource error or failing check was observed.
+- Live UI inspection opened the existing project, expanded the voice menu, navigated with the
+  keyboard and cancelled without changing its voice. The manifest remained byte-identical to
+  `/private/tmp/vox-density-user-before.json`: version 14, 239 characters and two accepted takes.
+- Chinese `README.md` and English `README.en.md` have reciprocal language links and verified
+  relative documentation links. Both explicitly link the existing full MIT `LICENSE` and retain
+  third-party attribution and model-license boundaries.
+
+Artifact/input hashes and the validation paths are recorded in
+`/private/tmp/vox-density-evidence-20261018/report.json`. The validated app was promoted without
+another build. These UI and documentation changes are local working-tree changes; no new commit,
+push, synthesis job or microphone recording was performed for this refinement.

@@ -97,7 +97,7 @@ ApplicationWindow {
                 anchors.fill: parent
                 visible: backend.path.length > 0
                 spacing: 0
-                ProjectSidebar { Layout.preferredWidth: 192; Layout.fillHeight: true }
+                ProjectSidebar { Layout.preferredWidth: 176; Layout.fillHeight: true }
                 Rectangle { width: 1; Layout.fillHeight: true; color: Theme.border }
                 ColumnLayout {
                     Layout.fillWidth: true; Layout.fillHeight: true; spacing: 0
@@ -107,24 +107,19 @@ ApplicationWindow {
                             color: Theme.panel
                             Layout.fillHeight: true; Layout.fillWidth: true
                             ColumnLayout {
-                                anchors.fill: parent; anchors.margins: 24; spacing: 16
+                                anchors.fill: parent; anchors.margins: 18; spacing: 12
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    Label { text: qsTr("The script"); font.pixelSize: 23; font.weight: Font.Medium; font.letterSpacing: -0.6 }
-                                    Item { Layout.fillWidth: true }
-                                    IconButton { objectName: "importScriptButton"; symbol: "import"; hint: qsTr("Import text or script"); enabled: !backend.rendering; onClicked: scriptFile.open() }
-                                    IconButton { symbol: "help"; hint: qsTr("Script guide"); onClicked: guide.open() }
-                                }
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    ComboBox {
+                                    spacing: 6
+                                    Label { text: qsTr("The script"); font.pixelSize: 17; font.weight: Font.DemiBold; Layout.rightMargin: 6 }
+                                    CompactComboBox {
                                         id: formatChoice
                                         objectName: "formatChoice"
                                         model: [qsTr("Plain narration"), qsTr("Production script")]
                                         currentIndex: backend.document.format === "production_script" ? 1 : 0
                                         enabled: !backend.rendering
                                         onActivated: backend.setFormat(currentIndex === 0 ? "plain" : "production_script")
-                                        implicitWidth: 180
+                                        implicitWidth: 154
                                     }
                                     Item { Layout.fillWidth: true }
                                     IconButton {
@@ -141,6 +136,8 @@ ApplicationWindow {
                                         ActionButton { objectName: "writeButton"; text: qsTr("Write"); primary: !window.reading; onClicked: window.reading = false }
                                         ActionButton { objectName: "readButton"; text: qsTr("Read"); primary: window.reading; onClicked: window.reading = true }
                                     }
+                                    IconButton { objectName: "importScriptButton"; symbol: "import"; hint: qsTr("Import text or script"); enabled: !backend.rendering; onClicked: scriptFile.open() }
+                                    IconButton { symbol: "help"; hint: qsTr("Script guide"); onClicked: guide.open() }
                                 }
                                 StackLayout {
                                     Layout.fillWidth: true; Layout.fillHeight: true
@@ -204,10 +201,10 @@ ApplicationWindow {
                             }
                         }
                         Rectangle { width: 1; Layout.fillHeight: true; color: Theme.border }
-                        VoicePanel { Layout.preferredWidth: 284; Layout.fillHeight: true }
+                        VoicePanel { Layout.preferredWidth: 276; Layout.fillHeight: true }
                     }
                     Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
-                    AudioPanel { Layout.fillWidth: true; Layout.preferredHeight: 236 }
+                    AudioPanel { Layout.fillWidth: true; Layout.preferredHeight: 172 }
                 }
             }
             ColumnLayout {
@@ -232,7 +229,7 @@ ApplicationWindow {
         }
         Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
         Rectangle {
-            Layout.fillWidth: true; Layout.preferredHeight: 32; color: Theme.window
+            Layout.fillWidth: true; Layout.preferredHeight: 26; color: Theme.window
             Label { anchors.fill: parent; anchors.leftMargin: 20; anchors.rightMargin: 20; verticalAlignment: Text.AlignVCenter; text: backend.message || qsTr("Your project stays on this device."); color: Theme.secondary; font.pixelSize: 11; elide: Text.ElideRight }
         }
     }

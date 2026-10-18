@@ -8,6 +8,9 @@ an unavailable Runtime from blocking local project work.
 Desktop buttons own their text and symbolic-icon colors in both window activation states.
 `mac_titlebar` keeps native macOS controls aligned with the single QML toolbar across window
 size/state changes. These owners do not mutate project data.
+The shared compact QML controls own desktop dimensions, themed dropdowns and numeric/text inputs;
+their Qt controls retain keyboard navigation and accessibility. Script typography stays independent
+of interface density and is still owned by the editor preferences.
 
 `ScriptEditor.qml` composes the plain-text authoring control, lexical `ScriptHighlighter`, and
 `LineNumberGutter`. Syntax colors are presentation only; the Rust parser remains authoritative.

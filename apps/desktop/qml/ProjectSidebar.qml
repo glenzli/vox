@@ -6,8 +6,8 @@ Rectangle {
     color: Theme.window
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 18
-        spacing: 12
+        anchors.margins: 14
+        spacing: 8
         Label { text: qsTr("PRODUCTION"); color: Theme.secondary; font.pixelSize: 10; font.letterSpacing: 1.5 }
         RowLayout {
             IconButton { symbol: "file"; hint: qsTr("Script"); enabled: false }
@@ -17,7 +17,7 @@ Rectangle {
         ActionButton { Layout.fillWidth: true; text: qsTr("Narration"); symbol: "file"; enabled: !backend.rendering && !(backend.document.text || "").length && backend.path.length > 0; onClicked: backend.useTemplate("narration") }
         ActionButton { Layout.fillWidth: true; text: qsTr("Dialogue"); symbol: "users"; enabled: !backend.rendering && !(backend.document.text || "").length && backend.path.length > 0; onClicked: backend.useTemplate("dialogue") }
         ActionButton { Layout.fillWidth: true; text: qsTr("Listening"); symbol: "headphones"; enabled: !backend.rendering && !(backend.document.text || "").length && backend.path.length > 0; onClicked: backend.useTemplate("listening") }
-        Item { Layout.preferredHeight: 10 }
+        Item { Layout.preferredHeight: 6 }
         Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
         RowLayout {
             Label { text: qsTr("SCRIPT HISTORY"); color: Theme.secondary; font.pixelSize: 10; font.letterSpacing: 1.2; Layout.fillWidth: true }
@@ -35,7 +35,7 @@ Rectangle {
                 required property var modelData
                 required property int index
                 width: ListView.view.width
-                height: 44
+                height: 32
                 text: qsTr("Script %1").arg((backend.project.sources || []).length-index)
                 font.pixelSize: 12
                 enabled: !backend.rendering

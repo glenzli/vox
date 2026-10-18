@@ -36,6 +36,8 @@ set_source_files_properties(apps/desktop/qml/Theme.qml PROPERTIES QT_QML_SINGLET
 qt_add_qml_module(vox-desktop URI Vox.Desktop VERSION 1.0
     QML_FILES apps/desktop/qml/Main.qml apps/desktop/qml/Theme.qml
     apps/desktop/qml/IconButton.qml apps/desktop/qml/ActionButton.qml
+    apps/desktop/qml/CompactComboBox.qml apps/desktop/qml/CompactSlider.qml
+    apps/desktop/qml/CompactSpinBox.qml apps/desktop/qml/CompactTextField.qml
     apps/desktop/qml/MaterialsDialog.qml apps/desktop/qml/ReferenceDialog.qml
     apps/desktop/qml/ScriptEditor.qml
     apps/desktop/qml/VoicePanel.qml apps/desktop/qml/AudioPanel.qml

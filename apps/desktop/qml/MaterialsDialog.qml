@@ -10,11 +10,11 @@ Dialog {
     width: Math.min(860, parent.width - 48)
     height: Math.min(730, parent.height - 48)
     anchors.centerIn: parent
-    padding: 24
+    padding: 18
     footer: Item {
-        implicitHeight: 64
+        implicitHeight: 54
         RowLayout {
-            anchors.fill: parent; anchors.margins: 18
+            anchors.fill: parent; anchors.margins: 12
             Label { text: backend.message; color: Theme.secondary; Layout.fillWidth: true; maximumLineCount: 2; wrapMode: Text.WordWrap; elide: Text.ElideRight }
             ActionButton { text: qsTr("Close"); onClicked: dialog.close() }
         }
@@ -27,13 +27,13 @@ Dialog {
     background: Rectangle { color: Theme.panel; radius: 12; border.color: Theme.border }
     ColumnLayout {
         anchors.fill: parent
-        spacing: 16
+        spacing: 12
         TabBar {
             id: tabs
             Layout.fillWidth: true
-            TabButton { id: voiceTab; text: qsTr("Reference voices"); contentItem: Label { text: voiceTab.text; color: Theme.text; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            TabButton { id: voiceTab; implicitHeight: 30; text: qsTr("Reference voices"); contentItem: Label { text: voiceTab.text; color: Theme.text; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                 background: Rectangle { color: voiceTab.checked ? Theme.selected : Theme.panel; border.color: Theme.border; radius: 6 } }
-            TabButton { id: soundTab; text: qsTr("Sound effects"); contentItem: Label { text: soundTab.text; color: Theme.text; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            TabButton { id: soundTab; implicitHeight: 30; text: qsTr("Sound effects"); contentItem: Label { text: soundTab.text; color: Theme.text; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                 background: Rectangle { color: soundTab.checked ? Theme.selected : Theme.panel; border.color: Theme.border; radius: 6 } }
         }
         RowLayout {
@@ -48,9 +48,9 @@ Dialog {
             clip: true; contentWidth: availableWidth
             ColumnLayout {
                 width: parent.width
-                spacing: 14
+                spacing: 12
                 RowLayout {
-                    Label { text: qsTr("Your reference voices"); font.pixelSize: 20; font.weight: Font.DemiBold; Layout.fillWidth: true }
+                    Label { text: qsTr("Your reference voices"); font.pixelSize: 17; font.weight: Font.DemiBold; Layout.fillWidth: true }
                     ActionButton { objectName: "addReferenceButton"; text: qsTr("Add voice"); symbol: "add"; enabled: !backend.rendering; onClicked: reference.open() }
                 }
                 Label { text: qsTr("Record or import a voice, then choose it for narration or any role. References stay in this project."); wrapMode: Text.WordWrap; Layout.fillWidth: true; color: Theme.secondary }
@@ -80,7 +80,7 @@ Dialog {
                         }
                     }
                 }
-                TextField { id: previewWords; objectName: "referencePreviewText"; Layout.fillWidth: true; text: qsTr("Hello. Welcome to Vox. Every story begins with a voice."); maximumLength: 200; placeholderText: qsTr("Words for the synthesized preview"); enabled: !backend.rendering }
+                CompactTextField { id: previewWords; objectName: "referencePreviewText"; Layout.fillWidth: true; text: qsTr("Hello. Welcome to Vox. Every story begins with a voice."); maximumLength: 200; placeholderText: qsTr("Words for the synthesized preview"); enabled: !backend.rendering }
                 Label { text: qsTr("After editing in Echo, import its exported WAV as a new reference and confirm the spoken words."); Layout.fillWidth: true; wrapMode: Text.WordWrap; color: Theme.muted; font.pixelSize: 11 }
             }
         }
@@ -91,8 +91,8 @@ Dialog {
             clip: true; contentWidth: availableWidth
             ColumnLayout {
                 width: parent.width
-                spacing: 14
-                Label { text: qsTr("Built-in sounds"); font.pixelSize: 20; font.weight: Font.DemiBold }
+                spacing: 12
+                Label { text: qsTr("Built-in sounds"); font.pixelSize: 17; font.weight: Font.DemiBold }
                 GridLayout {
                     Layout.fillWidth: true; columns: 2; columnSpacing: 12; rowSpacing: 6
                     Repeater {
@@ -109,16 +109,16 @@ Dialog {
                     }
                 }
                 Rectangle { height: 1; color: Theme.border; Layout.fillWidth: true }
-                Label { text: qsTr("Generate a sound"); font.pixelSize: 18; font.weight: Font.DemiBold }
+                Label { text: qsTr("Generate a sound"); font.pixelSize: 15; font.weight: Font.DemiBold }
                 Label { text: qsTr("Describe a sound in English or Chinese. Listen to the candidate before accepting it."); Layout.fillWidth: true; wrapMode: Text.WordWrap; color: Theme.secondary }
-                TextField { id: soundName; Layout.fillWidth: true; placeholderText: qsTr("Sound name"); maximumLength: 100; enabled: !backend.rendering }
+                CompactTextField { id: soundName; Layout.fillWidth: true; placeholderText: qsTr("Sound name"); maximumLength: 100; enabled: !backend.rendering }
                 ScrollView { Layout.fillWidth: true; Layout.preferredHeight: 95; TextArea { id: soundPrompt; objectName: "soundPrompt"; wrapMode: TextEdit.Wrap; placeholderText: qsTr("A soft bell, followed by gentle rain. No music or speech."); enabled: !backend.rendering; selectByMouse: true } }
                 RowLayout {
-                    ComboBox { id: soundKind; model: [qsTr("Sound effect"), qsTr("Short music")]; enabled: !backend.rendering; Layout.fillWidth: true }
+                    CompactComboBox { id: soundKind; model: [qsTr("Sound effect"), qsTr("Short music")]; enabled: !backend.rendering; Layout.fillWidth: true }
                     Label { text: qsTr("Seconds") }
-                    SpinBox { id: seconds; from: 1; to: 30; value: 5; editable: true; enabled: !backend.rendering }
+                    CompactSpinBox { id: seconds; from: 1; to: 30; value: 5; editable: true; enabled: !backend.rendering }
                     Label { text: qsTr("Seed") }
-                    TextField { id: seed; text: "42"; Layout.preferredWidth: 100; validator: IntValidator { bottom: 0; top: 2147483647 }
+                    CompactTextField { id: seed; text: "42"; Layout.preferredWidth: 100; validator: IntValidator { bottom: 0; top: 2147483647 }
                         enabled: !backend.rendering; Accessible.name: qsTr("Generation seed") }
                 }
                 RowLayout {
@@ -127,7 +127,7 @@ Dialog {
                     ActionButton { objectName: "generateSoundButton"; text: qsTr("Generate candidate"); symbol: "waveform"; primary: true; enabled: !backend.rendering && backend.runtimeReady && soundName.text.trim().length > 0 && soundPrompt.text.trim().length > 0 && seed.acceptableInput; onClicked: backend.generateSound(soundName.text, soundPrompt.text, seconds.value, Number(seed.text), soundKind.currentIndex === 1) }
                 }
                 Rectangle { height: 1; color: Theme.border; Layout.fillWidth: true }
-                Label { text: qsTr("Project sounds"); font.pixelSize: 18; font.weight: Font.DemiBold }
+                Label { text: qsTr("Project sounds"); font.pixelSize: 15; font.weight: Font.DemiBold }
                 Label { text: qsTr("Accepting prepares a script-compatible copy and keeps the original. Choose accepted sounds beside each cue in your script."); Layout.fillWidth: true; wrapMode: Text.WordWrap; color: Theme.secondary }
                 Repeater {
                     model: backend.project.sound_library || []

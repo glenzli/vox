@@ -11,12 +11,12 @@ Dialog {
     width: Math.min(760, parent.width - 48)
     height: Math.min(650, parent.height - 48)
     anchors.centerIn: parent
-    padding: 24
+    padding: 18
     property string operationError: ""
     footer: Item {
-        implicitHeight: 70
+        implicitHeight: 58
         RowLayout {
-            anchors.fill: parent; anchors.margins: 18
+            anchors.fill: parent; anchors.margins: 14
             Label { text: qsTr("Saved only in this Vox project."); color: Theme.secondary; Layout.fillWidth: true }
             ActionButton { text: qsTr("Close"); enabled: !backend.rendering; onClicked: dialog.close() }
             ActionButton { objectName: "saveReferenceButton"; text: qsTr("Save reference voice"); symbol: "check"; primary: true; enabled: dialog.projectPath === backend.path && !backend.rendering && !recorder.recording && !recorder.requesting && dialog.sourceFile.toString().length > 0 && voiceName.text.trim().length > 0 && transcript.text.trim().length > 0 && consent.checked; onClicked: backend.importReference(voiceName.text, transcript.text, dialog.sourceFile, consent.checked, recorder.file.toString().length > 0) }
@@ -34,12 +34,12 @@ Dialog {
         contentWidth: availableWidth
         ColumnLayout {
             width: parent.width
-            spacing: 16
-            Label { text: qsTr("A voice from a recording"); font.pixelSize: 21; font.weight: Font.DemiBold }
+            spacing: 12
+            Label { text: qsTr("A voice from a recording"); font.pixelSize: 17; font.weight: Font.DemiBold }
             Label { text: qsTr("Record clear speech or import a mono/stereo PCM16 WAV. Include the exact words spoken; this is a reference for new speech, not model training."); Layout.fillWidth: true; wrapMode: Text.WordWrap; color: Theme.secondary }
-            TextField { id: voiceName; objectName: "referenceName"; Layout.fillWidth: true; placeholderText: qsTr("Voice name"); maximumLength: 100; enabled: !backend.rendering }
+            CompactTextField { id: voiceName; objectName: "referenceName"; Layout.fillWidth: true; placeholderText: qsTr("Voice name"); maximumLength: 100; enabled: !backend.rendering }
             RowLayout {
-                ComboBox { id: microphone; objectName: "microphoneChoice"; Layout.fillWidth: true; model: recorder.devices; displayText: count ? currentText : qsTr("No microphone"); enabled: !recorder.recording && !recorder.requesting && !backend.rendering }
+                CompactComboBox { id: microphone; objectName: "microphoneChoice"; Layout.fillWidth: true; model: recorder.devices; displayText: count ? currentText : qsTr("No microphone"); enabled: !recorder.recording && !recorder.requesting && !backend.rendering }
                 ActionButton { objectName: "recordReferenceButton"; symbol: recorder.recording ? "stop" : "waveform"; text: recorder.recording ? qsTr("Stop recording") : qsTr("Record"); enabled: !backend.rendering && !recorder.requesting && microphone.count > 0; onClicked: { if (recorder.recording) recorder.stop(); else { dialog.importedFile = ""; recorder.start(microphone.currentIndex) } } }
                 ActionButton { symbol: "import"; text: qsTr("Import WAV"); enabled: !recorder.recording && !recorder.requesting && !backend.rendering; onClicked: referenceFile.open() }
             }

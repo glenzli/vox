@@ -30,11 +30,11 @@ Rectangle {
     Connections { target: Theme; function onDarkChanged() { waveform.requestPaint() } }
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 18
-        spacing: 12
+        anchors.margins: 14
+        spacing: 8
         RowLayout {
             Layout.fillWidth: true
-            Label { text: qsTr("Takes"); font.weight: Font.DemiBold; font.pixelSize: 14 }
+            Label { text: qsTr("Takes"); font.weight: Font.DemiBold; font.pixelSize: 12 }
             Label { text: panel.takes.length; color: Theme.secondary; font.pixelSize: 11 }
             Item { Layout.fillWidth: true }
             ActionButton { text: qsTr("Accept"); symbol: "check"; primary: true; enabled: panel.selected && !panel.selected.accepted && !backend.rendering; onClicked: backend.acceptSelected() }
@@ -47,9 +47,9 @@ Rectangle {
         ListView {
             id: takeList
             Layout.fillWidth: true
-            Layout.preferredHeight: 82
+            Layout.preferredHeight: 64
             orientation: ListView.Horizontal
-            spacing: 10
+            spacing: 8
             clip: true
             model: panel.takes
             ScrollBar.horizontal: ScrollBar { }
@@ -57,17 +57,17 @@ Rectangle {
                 id: take
                 required property var modelData
                 required property int index
-                width: 218; height: 78; radius: 8
+                width: 182; height: 60; radius: 6
                 color: backend.selectedAudio === modelData.record.id ? Theme.selected : Theme.inset
                 border.color: backend.selectedAudio === modelData.record.id ? Theme.secondary : Theme.border
                 Accessible.role: Accessible.Button
                 Accessible.name: (modelData.accepted ? qsTr("Accepted version") : qsTr("Candidate take")) + " " + (index+1)
                 MouseArea { anchors.fill: parent; onClicked: backend.selectAudio(take.modelData.record.id) }
                 RowLayout {
-                    anchors.fill: parent; anchors.margins: 12; spacing: 10
+                    anchors.fill: parent; anchors.margins: 8; spacing: 8
                     IconButton { symbol: "play"; hint: qsTr("Play take"); onClicked: { backend.selectAudio(take.modelData.record.id); backend.playSelected() } }
                     ColumnLayout {
-                        Layout.fillWidth: true; spacing: 5
+                        Layout.fillWidth: true; spacing: 3
                         Label { text: take.modelData.record.origin === "echo_file_return" ? qsTr("Echo edit") : qsTr("Take %1").arg(take.index + 1); font.weight: Font.Medium; font.pixelSize: 12 }
                         Label { text: (take.modelData.accepted ? qsTr("Accepted") : qsTr("For review")) + " · " + panel.time(take.modelData.record.contract.frame_count * 1000 / take.modelData.record.contract.sample_rate_hz); color: Theme.secondary; font.pixelSize: 11 }
                     }
@@ -88,7 +88,7 @@ Rectangle {
             IconButton { symbol: "stop"; hint: qsTr("Stop playback"); onClicked: player.stop(); enabled: player.source.toString().length > 0 }
             Item {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 36
+                Layout.preferredHeight: 28
                 Canvas {
                     id: waveform
                     anchors.fill: parent

@@ -8,7 +8,7 @@ Dialog {
     modal: true
     width: Math.min(600, parent.width - 48)
     height: Math.min(740, parent.height - 48)
-    padding: 24
+    padding: 18
     standardButtons: Dialog.Close
     background: Rectangle { color: Theme.panel; radius: 12; border.color: Theme.border }
     ScrollView {
@@ -17,21 +17,21 @@ Dialog {
         contentWidth: availableWidth
         ColumnLayout {
             width: parent.width
-            spacing: 18
+            spacing: 12
             Label { text: qsTr("Appearance"); font.weight: Font.DemiBold }
             RowLayout {
                 Label { text: qsTr("Theme"); Layout.fillWidth: true }
-                ComboBox { objectName: "themeChoice"; model: [qsTr("Follow system"), qsTr("Light"), qsTr("Dark")]; currentIndex: ["system", "light", "dark"].indexOf(preferences.theme); onActivated: preferences.theme = ["system", "light", "dark"][currentIndex] }
+                CompactComboBox { objectName: "themeChoice"; model: [qsTr("Follow system"), qsTr("Light"), qsTr("Dark")]; currentIndex: ["system", "light", "dark"].indexOf(preferences.theme); onActivated: preferences.theme = ["system", "light", "dark"][currentIndex] }
             }
             RowLayout {
                 Label { text: qsTr("Language"); Layout.fillWidth: true }
-                ComboBox { objectName: "languageChoice"; model: [qsTr("Follow system"), "English", "简体中文"]; currentIndex: ["system", "en", "zh_CN"].indexOf(preferences.language); onActivated: preferences.language = ["system", "en", "zh_CN"][currentIndex] }
+                CompactComboBox { objectName: "languageChoice"; model: [qsTr("Follow system"), "English", "简体中文"]; currentIndex: ["system", "en", "zh_CN"].indexOf(preferences.language); onActivated: preferences.language = ["system", "en", "zh_CN"][currentIndex] }
             }
             Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
             Label { text: qsTr("Script editor"); font.weight: Font.DemiBold }
             Label { text: qsTr("Default font for scripts only. Interface text and exported audio are unaffected."); Layout.fillWidth: true; wrapMode: Text.WordWrap; color: Theme.secondary }
             RowLayout {
-                ComboBox {
+                CompactComboBox {
                     objectName: "editorFontChoice"
                     Layout.fillWidth: true
                     model: preferences.fontFamilies
@@ -39,7 +39,7 @@ Dialog {
                     onActivated: preferences.editorFontFamily = currentText
                     Accessible.name: qsTr("Script font")
                 }
-                SpinBox { objectName: "editorFontSize"; from: 11; to: 32; value: preferences.editorFontSize; editable: true; onValueModified: preferences.editorFontSize = value; Accessible.name: qsTr("Script font size") }
+                CompactSpinBox { objectName: "editorFontSize"; from: 11; to: 32; value: preferences.editorFontSize; editable: true; onValueModified: preferences.editorFontSize = value; Accessible.name: qsTr("Script font size") }
             }
             Rectangle {
                 Layout.fillWidth: true; implicitHeight: fontPreview.implicitHeight + 24
