@@ -21,6 +21,8 @@ class DesktopBackend final : public QObject {
   Q_PROPERTY(
       QVariantList recentProjects READ recentProjects NOTIFY stateChanged)
   Q_PROPERTY(QString path READ path NOTIFY stateChanged)
+  Q_PROPERTY(
+      QString importedDraftKind READ importedDraftKind NOTIFY documentChanged)
   Q_PROPERTY(bool dirty READ dirty NOTIFY documentChanged)
   Q_PROPERTY(bool rendering READ rendering NOTIFY renderingChanged)
   Q_PROPERTY(bool runtimeReady READ runtimeReady NOTIFY runtimeChanged)
@@ -46,6 +48,7 @@ public:
   }
   QVariantList recentProjects() const;
   QString path() const { return m_path; }
+  QString importedDraftKind() const;
   bool dirty() const { return m_dirty; }
   bool rendering() const { return m_rendering; }
   bool runtimeReady() const { return m_runtimeReady; }
@@ -58,6 +61,10 @@ public:
   bool hasEchoHandoff() const;
   Q_INVOKABLE void createProject(const QUrl &url);
   Q_INVOKABLE void openProject(const QUrl &url);
+  Q_INVOKABLE void importShapeTransfer(const QUrl &transfer,
+                                       const QUrl &destination,
+                                       const QString &expectedBlake3 = {});
+  Q_INVOKABLE void restoreShapeDraft(const QString &kind);
   Q_INVOKABLE void editText(const QString &text);
   Q_INVOKABLE void setFormat(const QString &format);
   Q_INVOKABLE void setVoice(const QString &alias);

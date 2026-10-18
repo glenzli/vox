@@ -2,6 +2,7 @@
 pub mod materials;
 mod model;
 mod render;
+pub mod shape_transfer;
 pub(crate) mod store;
 pub use model::*;
 pub use store::Project;

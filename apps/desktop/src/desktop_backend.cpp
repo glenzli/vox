@@ -111,6 +111,15 @@ void DesktopBackend::apply(const QJsonObject &result, quint64 capturedEdit,
   m_settings.setValue("recentProjects", recent);
   emit stateChanged();
 }
+QString DesktopBackend::importedDraftKind() const {
+  const auto drafts = m_project["shape_import"].toObject()["drafts"].toArray();
+  for (const auto &draft : drafts) {
+    const auto value = draft.toObject();
+    if (value["document"].toObject() == m_draft)
+      return value["kind"].toString();
+  }
+  return drafts.isEmpty() ? QString{} : QStringLiteral("modified");
+}
 QVariantList DesktopBackend::recentProjects() const {
   QVariantList out;
   for (const auto &path : m_settings.value("recentProjects").toStringList())
@@ -153,6 +162,38 @@ void DesktopBackend::openProject(const QUrl &url) {
         false);
   });
 }
+void DesktopBackend::importShapeTransfer(const QUrl &transfer,
+                                         const QUrl &destination,
+                                         const QString &expectedBlake3) {
+  if (m_rendering)
+    return;
+  m_rendering = true;
+  emit renderingChanged();
+  saveThen([this, transfer, destination, expectedBlake3] {
+    command(
+        "import_shape_transfer",
+        {{"file", transfer.toLocalFile()},
+         {"path", destination.toLocalFile()},
+         {"expected_blake3", expectedBlake3.isEmpty()
+                                 ? QJsonValue{}
+                                 : QJsonValue{expectedBlake3}}},
+        [this](const QJsonObject &r) {
+          m_rendering = false;
+          emit renderingChanged();
+          if (r["ok"].toBool()) {
+            ++m_editSequence;
+            apply(r["result"].toObject(), m_editSequence, true);
+            messageCode("shape_imported");
+          }
+        },
+        false);
+  });
+}
+void DesktopBackend::restoreShapeDraft(const QString &kind) {
+  if (m_rendering || m_path.isEmpty())
+    return;
+  saveThen([this, kind] { command("restore_shape_draft", {{"kind", kind}}); });
+}
 void DesktopBackend::mutate(
     const std::function<void(QJsonObject &)> &mutation) {
   if (m_rendering || m_path.isEmpty())
@@ -174,6 +215,7 @@ void DesktopBackend::setFormat(const QString &format) {
 void DesktopBackend::setVoice(const QString &alias) {
   mutate([&](auto &d) {
     d.insert("voice", alias);
+    d.remove("voice_catalog_revision");
     d.remove("reference_voice");
   });
 }
@@ -556,6 +598,9 @@ QString DesktopBackend::message() const {
     return tr("Project created");
   if (m_messageCode == "project_opened")
     return tr("Project opened");
+  if (m_messageCode == "shape_imported")
+    return tr("Shape material imported. Review preserved drafts and source "
+              "receipts before continuing.");
   if (m_messageCode == "rendered")
     return tr("Your take is ready. Listen, then accept the version you want to "
               "keep.");
@@ -580,6 +625,18 @@ QString DesktopBackend::message() const {
   return errorText(m_messageCode);
 }
 QString DesktopBackend::errorText(const QString &code) const {
+  if (code == "shape_settings_incomplete")
+    return tr("Some imported voice settings need review. Select supported "
+              "voices or reimport missing references before rendering.");
+  if (code == "invalid_shape_transfer" || code == "shape_transfer_path" ||
+      code == "shape_transfer_hash" || code == "shape_transfer_contract")
+    return tr("This Shape transfer is incomplete or changed. Export it again "
+              "from Shape.");
+  if (code == "shape_transfer_conflict")
+    return tr("This project belongs to another transfer. Choose a new .vox "
+              "location.");
+  if (code == "shape_transfer_cancelled")
+    return tr("Shape import cancelled. No project was created.");
   if (code == "voice_consent_required")
     return tr("Confirm that you may use this voice for local synthesis.");
   if (code == "reference_text_required")

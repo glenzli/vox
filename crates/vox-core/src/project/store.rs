@@ -43,6 +43,7 @@ impl Project {
             handoffs: vec![],
             voice_library: vec![],
             sound_library: vec![],
+            shape_import: None,
         };
         project.write(&m)?;
         Ok(project)
@@ -68,10 +69,30 @@ impl Project {
         {
             return Err(Error::new("invalid_project"));
         }
+        if let Some(receipt) = &m.shape_import
+            && (receipt.schema != "vox.shape-import/1"
+                || receipt.transfer_digest != receipt.original_manifest.digest.to_string()
+                || receipt.original_manifest.media_type != "application/json"
+                || receipt.original_manifest.byte_length > 8 * 1024 * 1024
+                || receipt.materials.len() > 256
+                || receipt.drafts.len() > 2
+                || receipt.unsupported_documents.len() > 16
+                || receipt.issues.len() > 16
+                || receipt.drafts.iter().any(|draft| {
+                    draft.status != "unaccepted"
+                        || !matches!(draft.kind.as_str(), "speech" | "authoring")
+                }))
+        {
+            return Err(Error::new("invalid_project"));
+        }
         super::materials::validate_libraries(&m)?;
-        m.draft.operation()?;
+        if !super::shape_transfer::unsupported(&m, &m.draft) {
+            m.draft.operation()?;
+        }
         for source in &m.sources {
-            source.document.operation()?;
+            if !super::shape_transfer::unsupported(&m, &source.document) {
+                source.document.operation()?;
+            }
             if source.source_digest
                 != blake3::hash(source.document.text.as_bytes())
                     .to_hex()
@@ -156,6 +177,7 @@ impl Project {
     }
     pub fn adopt_script(&self, expected: u64) -> Result<Manifest> {
         self.update(expected, |m| {
+            super::shape_transfer::require_executable(m, &m.draft)?;
             if m.draft.text.trim().is_empty() {
                 return Err(Error::new("empty_script"));
             }

@@ -18,3 +18,6 @@ void startStudioSmoke(QGuiApplication &, QQmlApplicationEngine &,
                       UiPreferences &, DesktopBackend &, const QString &);
 void startReadingSmoke(QGuiApplication &, QQmlApplicationEngine &,
                        UiPreferences &, DesktopBackend &, const QString &);
+
+void startShapeTransferSmoke(QGuiApplication &, QQmlApplicationEngine &,
+                             DesktopBackend &, const QString &output);

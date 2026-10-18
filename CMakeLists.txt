@@ -31,7 +31,7 @@ qt_add_executable(vox-desktop
     apps/desktop/src/script_editor.cpp apps/desktop/src/script_editor.hpp
     apps/desktop/tests/workflow_smoke.cpp apps/desktop/tests/workflow_smoke.hpp
     apps/desktop/tests/appearance_smoke.cpp apps/desktop/tests/editor_smoke.cpp apps/desktop/tests/studio_smoke.cpp
-    apps/desktop/tests/reading_smoke.cpp)
+    apps/desktop/tests/reading_smoke.cpp apps/desktop/tests/shape_transfer_smoke.cpp)
 target_include_directories(vox-desktop PRIVATE apps/desktop/src apps/desktop/tests)
 set_source_files_properties(apps/desktop/qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_add_qml_module(vox-desktop URI Vox.Desktop VERSION 1.0

@@ -72,6 +72,7 @@ impl Project {
             .find(|s| Some(&s.id) == m.source_head.as_ref())
             .cloned()
             .ok_or_else(|| Error::new("source_missing"))?;
+        super::shape_transfer::require_executable(&m, &source.document)?;
         if source.document != m.draft {
             return Err(Error::new("unadopted_script"));
         }

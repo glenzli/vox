@@ -21,6 +21,10 @@ pub struct Document {
     pub format: ScriptFormat,
     pub voice: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub voice_catalog_revision: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub delivery: Option<crate::speech_script::SpeechDelivery>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reference_voice: Option<crate::AuthorizedVoiceReference>,
     pub language: String,
     pub speed_milli: u16,
@@ -32,6 +36,8 @@ impl Default for Document {
             text: String::new(),
             format: ScriptFormat::Plain,
             voice: crate::SPEECH_PRESETS[0].alias.into(),
+            voice_catalog_revision: None,
+            delivery: None,
             reference_voice: None,
             language: "auto".into(),
             speed_milli: 1000,
@@ -46,7 +52,9 @@ impl Document {
         }
         let voice = PresetVoiceSelection::new(
             PresetVoiceAlias::new(self.voice.clone()).map_err(|_| Error::new("invalid_voice"))?,
-            INFER_SPEECH_VOICE_CATALOG_REVISION,
+            self.voice_catalog_revision
+                .as_deref()
+                .unwrap_or(INFER_SPEECH_VOICE_CATALOG_REVISION),
         )
         .map_err(|_| Error::new("invalid_voice"))?;
         let mut op = SpeechSynthesisOperation::new(
@@ -59,6 +67,7 @@ impl Document {
             true,
         )
         .map_err(|_| Error::new("invalid_settings"))?;
+        op.delivery = self.delivery;
         if self.format == ScriptFormat::ProductionScript {
             op.script = Some(self.options.clone());
         }
@@ -148,4 +157,6 @@ pub struct Manifest {
     pub voice_library: Vec<super::materials::ReferenceVoice>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub sound_library: Vec<super::materials::SoundMaterial>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shape_import: Option<super::shape_transfer::ImportReceipt>,
 }

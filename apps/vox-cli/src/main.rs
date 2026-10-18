@@ -31,7 +31,7 @@ fn project(v: &Value) -> Result<Project> {
     Project::open(Path::new(field(v, "path")?))
 }
 fn snapshot(p: &Project, m: Manifest) -> Value {
-    let analysis = m.draft.analysis();
+    let analysis = m.analysis();
     json!({"project":m,"path":p.path,"analysis":analysis})
 }
 fn voices() -> Value {
@@ -47,7 +47,7 @@ fn execute(v: &Value) -> Result<Value> {
     let action = field(v, "action")?;
     if action == "capabilities" {
         return Ok(
-            json!({"schema":"vox.capabilities/1","project_schema":"vox.project/1","voices":voices(),"languages":["auto","Chinese","English","Japanese","Korean","German","French","Russian","Portuguese","Spanish","Italian"],"operations":["create","open","save","adopt","validate","render","cancel","accept","discard","playback","export","import_script","import_cue","import_reference","bind_reference","add_builtin","import_sound","generate_sound","accept_sound","discard_sound","bind_sound","material_file","export_material","restore_source","begin_echo","review_echo"],"forms":["narration","dialogue","listening"],"voice_reference":true,"sound_generation":true,"builtin_sounds":vox_core::materials::BUILTIN_SOUNDS,"acceptance":"explicit","runtime_app":"vox"}),
+            json!({"schema":"vox.capabilities/1","project_schema":"vox.project/1","voices":voices(),"languages":["auto","Chinese","English","Japanese","Korean","German","French","Russian","Portuguese","Spanish","Italian"],"operations":["import_shape_transfer","shape_transfer_receipt","restore_shape_draft","create","open","save","adopt","validate","render","cancel","accept","discard","playback","export","import_script","import_cue","import_reference","bind_reference","add_builtin","import_sound","generate_sound","accept_sound","discard_sound","bind_sound","material_file","export_material","restore_source","begin_echo","review_echo"],"forms":["narration","dialogue","listening"],"voice_reference":true,"sound_generation":true,"builtin_sounds":vox_core::materials::BUILTIN_SOUNDS,"acceptance":"explicit","runtime_app":"vox"}),
         );
     }
     if action == "probe" {
@@ -75,12 +75,14 @@ fn execute(v: &Value) -> Result<Value> {
     let m = match action {
         "open" => p.recover()?,
         "status" => p.read()?,
-        "validate" => return Ok(p.read()?.draft.analysis()),
+        "validate" => return Ok(p.read()?.analysis()),
         "save" => {
             let draft: Document = serde_json::from_value(v["document"].clone())?;
             p.save(version(v)?, draft, v["title"].as_str().map(str::to_owned))?
         }
         "adopt" => p.adopt_script(version(v)?)?,
+        "restore_shape_draft" => p.restore_shape_draft(version(v)?, field(v, "kind")?)?,
+        "shape_transfer_receipt" => return p.shape_transfer_receipt(),
         "accept" => p.accept(version(v)?, field(v, "audio_id")?)?,
         "discard" => p.discard(version(v)?, field(v, "audio_id")?)?,
         "restore_source" => p.restore_source(version(v)?, field(v, "source_id")?)?,
@@ -218,7 +220,11 @@ fn main() {
         }
         if matches!(
             action,
-            "render" | "voice_preview" | "reference_preview" | "generate_sound"
+            "render"
+                | "voice_preview"
+                | "reference_preview"
+                | "generate_sound"
+                | "import_shape_transfer"
         ) {
             if busy
                 .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
@@ -231,7 +237,20 @@ fn main() {
             let control = control.clone();
             let busy = busy.clone();
             let worker = std::thread::spawn(move || {
-                let result = if v["action"] == "generate_sound" {
+                let result = if v["action"] == "import_shape_transfer" {
+                    (|| {
+                        if !v["expected_blake3"].is_null() && !v["expected_blake3"].is_string() {
+                            return Err(Error::new("invalid_request"));
+                        }
+                        let p = Project::import_shape_transfer_expected(
+                            Path::new(field(&v, "file")?),
+                            Path::new(field(&v, "path")?),
+                            v["expected_blake3"].as_str(),
+                            &control,
+                        )?;
+                        Ok(snapshot(&p, p.read()?))
+                    })()
+                } else if v["action"] == "generate_sound" {
                     (|| {
                         let p = project(&v)?;
                         let spec = serde_json::from_value(v["spec"].clone())?;

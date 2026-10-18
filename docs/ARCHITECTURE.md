@@ -78,3 +78,11 @@ Original 44.1 kHz stereo generated audio is retained. Material Echo edits use is
 synthetic disclosure when appropriate; manual WAV reimport creates a new candidate/reference, without
 claiming a native completion receipt or mutating an accepted source. Cancellation stops after the
 current model request and suppresses late candidates.
+
+
+`project::shape_transfer` owns admission of the narrow `vox.shape-transfer/1` package and atomic
+creation of an independent project. It preserves original manifest/material objects, accepted
+Shape audio with its historical source pin, and separate unaccepted writing/speech drafts. Replay
+never overwrites later edits. Unsupported imported settings remain visible and non-executable;
+CLI and desktop share the same use case, with visible draft restoration in the sidebar. See
+[Shape transfer](SHAPE_TRANSFER.md) for the file and selection-hash boundary.

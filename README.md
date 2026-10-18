@@ -94,9 +94,11 @@ Runtime 离线时，脚本编辑和已保存音频仍可使用。
 [脚本语法](docs/SPEECH_SCRIPT.md)、[验证记录](docs/VALIDATION.md)、[路线图](ROADMAP.md)
 和[图标来源](assets/branding/README.md)。
 
-迁移复用了 Shape 的语音制作代码，保留其来源和许可；Shape 原有项目与配音界面不受影响。
-目前可导入导出的文本和脚本，尚不自动转换整个 `.shape` 项目。分段重录、通过描述设计音色、
-视频配音等形态列入后续规划。
+Vox 复用了 Shape 的语音制作代码，保留其来源和许可。Shape 的配音制作工作台收敛到 Vox，
+旧工程保留读取与精确交接：选中文稿、写作与配音草稿、角色选声、音效和可选已采用音频，
+导入独立 `.vox` 工程。已采用历史与未完成工作稿分别保留，可在侧栏恢复迁移的写作或配音草稿。
+原 `.shape` 工程不改动，也不自动转换其中其他作品。迁移合同见 [Shape 交接](docs/SHAPE_TRANSFER.md)。
+分段重录、通过描述设计音色和视频配音列入后续规划。
 
 ### 许可证
 
@@ -205,10 +207,13 @@ See [architecture](docs/ARCHITECTURE.md), [automation](docs/AUTOMATION.md),
 [script rules](docs/SPEECH_SCRIPT.md), [validation](docs/VALIDATION.md), [roadmap](ROADMAP.md),
 and [icon provenance](assets/branding/README.md).
 
-This migration reuses Shape's speech production code with its provenance and license retained.
-Shape's existing projects and speech interface remain intact. Exported text/scripts can be imported;
-entire `.shape` projects are not automatically converted. Persistent per-segment re-recording,
-voice design from descriptions and video dubbing remain future work.
+Vox reuses Shape's speech production code with its provenance and license retained. Shape's voice
+production workspace moves to Vox; existing projects retain a read/export path. Import a selected
+script, writing and speech drafts, role choices, cues and optional accepted audio into an independent
+`.vox` project. Accepted history and unfinished work remain distinct, with sidebar actions to restore
+the preserved writing or speech draft. The original `.shape` project stays intact; other works in that
+project are not automatically converted. See the [Shape transfer contract](docs/SHAPE_TRANSFER.md).
+Persistent per-segment re-recording, voice design from descriptions and video dubbing remain future work.
 
 ### License
 

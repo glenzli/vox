@@ -3,6 +3,8 @@
 ## First independent production slice
 
 - Independent `.vox` projects, recoverable working drafts and exact source/audio revisions.
+- Bounded Shape-to-Vox transfers into independent projects: exact accepted text/audio, historical
+  source pins, separate unfinished writing/speech drafts, cue bytes and visible draft restoration.
 - Plain narration and Shape-compatible multi-role scripts, listening repeats, pauses, delivery
   and explicit sound-cue bindings.
 - Own Infer Runtime App, nine voice presets, local synthesis, segment progress and stop after
@@ -25,8 +27,8 @@ separately in [validation](docs/VALIDATION.md). Source implementation is not a p
 Production labels guide authoring without restricting the grammar to a genre. New narration,
 dialogue and listening templates reuse the same pipeline. Larger forms need real contracts:
 
-1. Supported Shape-to-Vox project/material handoff with accepted audio, source revisions and
-   exact role/cue choices. Retain Shape compatibility until independently accepted.
+1. Broader Shape project migration beyond the implemented selected speech transfer, with explicit
+   material selection and independently accepted compatibility.
 2. Persistent segment alternatives, re-recording and pronunciation controls with exact source
    and settings invalidation.
 3. Runtime-supported voice design from descriptions, extending the executable reference workflow

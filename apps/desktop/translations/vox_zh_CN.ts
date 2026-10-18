@@ -604,6 +604,26 @@ Give your words a moment to breathe.</source>
         <source>Countdown</source>
         <translation>倒计时</translation>
     </message>
+    <message>
+        <source>Shape material imported. Review preserved drafts and source receipts before continuing.</source>
+        <translation>Shape 素材已导入。请先检查保留的草稿与来源回执。</translation>
+    </message>
+    <message>
+        <source>Some imported voice settings need review. Select supported voices or reimport missing references before rendering.</source>
+        <translation>部分导入的配音设置需要检查。请选择支持的音色，或重新导入缺失的参考录音，再生成配音。</translation>
+    </message>
+    <message>
+        <source>This Shape transfer is incomplete or changed. Export it again from Shape.</source>
+        <translation>此 Shape 迁移包不完整或已改变。请从 Shape 重新导出。</translation>
+    </message>
+    <message>
+        <source>This project belongs to another transfer. Choose a new .vox location.</source>
+        <translation>此项目属于另一个迁移包。请选择新的 .vox 位置。</translation>
+    </message>
+    <message>
+        <source>Shape import cancelled. No project was created.</source>
+        <translation>Shape 导入已取消，未创建项目。</translation>
+    </message>
 </context>
 <context>
     <name>Main</name>
@@ -1074,6 +1094,30 @@ Write the script. Direct the voices. Keep the take.</source>
         <location filename="../qml/ProjectSidebar.qml" line="53"/>
         <source>Vox · Development preview</source>
         <translation>Vox · 开发预览</translation>
+    </message>
+    <message>
+        <source>Restore Shape speech draft</source>
+        <translation>恢复 Shape 配音草稿</translation>
+    </message>
+    <message>
+        <source>Restore Shape writing draft</source>
+        <translation>恢复 Shape 写作草稿</translation>
+    </message>
+    <message>
+        <source>Working draft: Shape speech</source>
+        <translation>当前工作稿：Shape 配音草稿</translation>
+    </message>
+    <message>
+        <source>Working draft: Shape writing</source>
+        <translation>当前工作稿：Shape 写作草稿</translation>
+    </message>
+    <message>
+        <source>Working draft: your changes</source>
+        <translation>当前工作稿：你的修改</translation>
+    </message>
+    <message>
+        <source>Restore changes only the working draft. Accepted audio stays available.</source>
+        <translation>恢复仅改变工作稿，已采用的录音仍然保留。</translation>
     </message>
 </context>
 <context>

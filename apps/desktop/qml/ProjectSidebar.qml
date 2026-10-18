@@ -17,6 +17,34 @@ Rectangle {
         ActionButton { Layout.fillWidth: true; text: qsTr("Narration"); symbol: "file"; enabled: !backend.rendering && !(backend.document.text || "").length && backend.path.length > 0; onClicked: backend.useTemplate("narration") }
         ActionButton { Layout.fillWidth: true; text: qsTr("Dialogue"); symbol: "users"; enabled: !backend.rendering && !(backend.document.text || "").length && backend.path.length > 0; onClicked: backend.useTemplate("dialogue") }
         ActionButton { Layout.fillWidth: true; text: qsTr("Listening"); symbol: "headphones"; enabled: !backend.rendering && !(backend.document.text || "").length && backend.path.length > 0; onClicked: backend.useTemplate("listening") }
+        Label {
+            visible: !!backend.project.shape_import
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+            font.pixelSize: 11
+            color: Theme.secondary
+            text: backend.importedDraftKind === "speech" ? qsTr("Working draft: Shape speech") : backend.importedDraftKind === "authoring" ? qsTr("Working draft: Shape writing") : qsTr("Working draft: your changes")
+        }
+        Label {
+            visible: !!backend.project.shape_import
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+            font.pixelSize: 11
+            color: Theme.muted
+            text: qsTr("Restore changes only the working draft. Accepted audio stays available.")
+        }
+        Repeater {
+            model: backend.project.shape_import ? backend.project.shape_import.drafts || [] : []
+            delegate: ActionButton {
+                required property var modelData
+                objectName: "shapeDraft-" + modelData.kind
+                Layout.fillWidth: true
+                text: modelData.kind === "speech" ? qsTr("Restore Shape speech draft") : qsTr("Restore Shape writing draft")
+                symbol: "file"
+                enabled: !backend.rendering
+                onClicked: backend.restoreShapeDraft(modelData.kind)
+            }
+        }
         Item { Layout.preferredHeight: 6 }
         Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
         RowLayout {

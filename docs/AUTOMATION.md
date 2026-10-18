@@ -16,6 +16,9 @@ Mutations return `result.project`, `result.path` and `result.analysis`. Use the 
 | --- | --- |
 | `capabilities`, `probe` | No project; optional explicit diagnostic `endpoint` for probe |
 | `create` | New absolute `.vox` path and title |
+| `import_shape_transfer` | New absolute `.vox` `path`, transfer `file`, producer `expected_blake3` for Shape continuation |
+| `restore_shape_draft` | `path`, expected `version`, `kind: "authoring"` or `"speech"`; restores without adoption |
+| `shape_transfer_receipt` | Existing `path`; reads the preserved original transfer |
 | `open`, `status`, `validate` | Existing `path` |
 | `save` | `path`, expected `version`, complete `document`, optional title |
 | `adopt`, `render` | `path`, expected `version` |
@@ -61,3 +64,5 @@ and `material_echo` take `kind: "voice" | "sound"` and `id`; export additionally
 claim provider-side interruption. The worker admits one foreground generation at a time.
 `test_studio_live.py` explicitly exercises real local generation using a synthetic reference in a
 new external project; `--resume` continues that named test project after an interrupted check.
+
+Shape transfer schema, exact manifest fencing, replay behavior and preserved-draft semantics are documented in [Shape transfer](SHAPE_TRANSFER.md).

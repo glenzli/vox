@@ -1,7 +1,8 @@
 # Vox project conventions
 
-Vox owns an independent script-led voice production application. Existing speech remains in Shape
-for compatibility. Read README.md, ROADMAP.md and docs/ARCHITECTURE.md before changes.
+Vox owns independent script-led voice production. Shape retains existing speech data through
+read/export compatibility and explicit material transfer; new production belongs to Vox.
+Read README.md, ROADMAP.md and docs/ARCHITECTURE.md before changes.
 
 - Do not claim a runnable application, release or completed migration without evidence.
 - Reuse existing script and synthesis owners when implementation is explicitly commissioned.

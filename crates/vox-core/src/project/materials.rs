@@ -43,6 +43,9 @@ pub(super) fn validate_libraries(m: &Manifest) -> Result<()> {
     }
     // Bindings must match a complete immutable project-owned source, never an arbitrary path/claim.
     for document in std::iter::once(&m.draft).chain(m.sources.iter().map(|s| &s.document)) {
+        if super::shape_transfer::unsupported(m, document) {
+            continue;
+        }
         for reference in document
             .reference_voice
             .iter()

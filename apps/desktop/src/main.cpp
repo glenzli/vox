@@ -33,7 +33,8 @@ int main(int argc, char **argv) {
       app.arguments().contains("--smoke-editor") ||
       app.arguments().contains("--smoke-studio") ||
       app.arguments().contains("--smoke-reading") ||
-      app.arguments().contains("--smoke-audio")) {
+      app.arguments().contains("--smoke-audio") ||
+      app.arguments().contains("--smoke-shape-transfer")) {
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope,
                        QDir::tempPath() + "/vox-ui-tests-" +
@@ -90,7 +91,29 @@ int main(int argc, char **argv) {
 #endif
   const auto arguments = app.arguments();
   const int projectIndex = arguments.indexOf("--project");
-  if (projectIndex >= 0 && projectIndex + 1 < arguments.size())
+  const int transferIndex = arguments.indexOf("--import-shape-transfer");
+  const int expectedIndex = arguments.indexOf("--expected-blake3");
+  if (transferIndex >= 0) {
+    if (transferIndex + 1 >= arguments.size() || projectIndex < 0 ||
+        projectIndex + 1 >= arguments.size() ||
+        (expectedIndex >= 0 && expectedIndex + 1 >= arguments.size())) {
+      qCritical()
+          << "--import-shape-transfer requires TRANSFER and --project NEW.vox";
+      return 64;
+    }
+    QTimer::singleShot(
+        0, &backend,
+        [&backend, transfer = arguments[transferIndex + 1],
+         path = arguments[projectIndex + 1],
+         expected = expectedIndex >= 0 && expectedIndex + 1 < arguments.size()
+                        ? arguments[expectedIndex + 1]
+                        : QString{}] {
+          backend.importShapeTransfer(
+              QUrl::fromLocalFile(QFileInfo(transfer).absoluteFilePath()),
+              QUrl::fromLocalFile(QFileInfo(path).absoluteFilePath()),
+              expected);
+        });
+  } else if (projectIndex >= 0 && projectIndex + 1 < arguments.size())
     QTimer::singleShot(0, &backend,
                        [&backend, path = arguments[projectIndex + 1]] {
                          backend.openProject(QUrl::fromLocalFile(path));
@@ -100,6 +123,10 @@ int main(int argc, char **argv) {
       backend.openProject(
           QUrl::fromLocalFile(QFileInfo(path).absoluteFilePath()));
     });
+  const int shapeSmokeIndex = arguments.indexOf("--smoke-shape-transfer");
+  if (shapeSmokeIndex >= 0 && shapeSmokeIndex + 1 < arguments.size())
+    startShapeTransferSmoke(app, engine, backend,
+                            arguments[shapeSmokeIndex + 1]);
   const int snapshotIndex = arguments.indexOf("--snapshot");
   if (snapshotIndex >= 0 && snapshotIndex + 1 < arguments.size())
     QTimer::singleShot(2000, &app, [&] {
