@@ -16,3 +16,5 @@ void startEditorSmoke(QGuiApplication &, QQmlApplicationEngine &,
 
 void startStudioSmoke(QGuiApplication &, QQmlApplicationEngine &,
                       UiPreferences &, DesktopBackend &, const QString &);
+void startReadingSmoke(QGuiApplication &, QQmlApplicationEngine &,
+                       UiPreferences &, DesktopBackend &, const QString &);

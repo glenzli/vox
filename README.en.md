@@ -22,7 +22,7 @@ release. macOS Apple Silicon is the initial verified platform.
 
 | Feature | Available now |
 | --- | --- |
-| Script editor | Syntax highlighting, logical line numbers, wrapping, write/read views, and independent script font/size settings with preview and reset |
+| Script editor | Syntax highlighting, logical line numbers, wrapping, grouped speech/repeat reading with source navigation, and independent script font/size settings with preview and reset |
 | Multi-speaker production | Shape-compatible roles, delivery, scenes, pauses, cues and repeats; repeats replay identical PCM without another model call |
 | Voice presets | Nine presets, with automatic or explicit speech language |
 | Reference voices | Record a microphone sample or import mono/stereo PCM16 WAV, enter its exact transcript and confirm permitted use; assign to narration or any role |

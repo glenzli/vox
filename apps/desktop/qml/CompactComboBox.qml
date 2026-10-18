@@ -2,6 +2,14 @@ import QtQuick
 import QtQuick.Controls
 ComboBox {
     id: control
+    // Document/preferences own these selections across translated model replacement.
+    // -2 leaves transient form choices under the ComboBox's own control.
+    property int selectionIndex: -2
+    currentIndex: selectionIndex >= -1 ? selectionIndex : 0
+    onModelChanged: {
+        if (selectionIndex >= -1)
+            Qt.callLater(() => control.currentIndex = Qt.binding(() => control.selectionIndex))
+    }
     implicitWidth: Math.max(112, implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: 28
     leftPadding: mirrored ? 28 : 9

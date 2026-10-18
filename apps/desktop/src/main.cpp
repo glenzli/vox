@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
       app.arguments().contains("--smoke-appearance") ||
       app.arguments().contains("--smoke-editor") ||
       app.arguments().contains("--smoke-studio") ||
+      app.arguments().contains("--smoke-reading") ||
       app.arguments().contains("--smoke-audio")) {
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope,
@@ -131,5 +132,9 @@ int main(int argc, char **argv) {
   if (studioIndex >= 0 && studioIndex + 1 < arguments.size())
     startStudioSmoke(app, engine, preferences, backend,
                      arguments[studioIndex + 1]);
+  const int readingIndex = arguments.indexOf("--smoke-reading");
+  if (readingIndex >= 0 && readingIndex + 1 < arguments.size())
+    startReadingSmoke(app, engine, preferences, backend,
+                      arguments[readingIndex + 1]);
   return app.exec();
 }

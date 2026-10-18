@@ -21,11 +21,11 @@ Dialog {
             Label { text: qsTr("Appearance"); font.weight: Font.DemiBold }
             RowLayout {
                 Label { text: qsTr("Theme"); Layout.fillWidth: true }
-                CompactComboBox { objectName: "themeChoice"; model: [qsTr("Follow system"), qsTr("Light"), qsTr("Dark")]; currentIndex: ["system", "light", "dark"].indexOf(preferences.theme); onActivated: preferences.theme = ["system", "light", "dark"][currentIndex] }
+                CompactComboBox { objectName: "themeChoice"; model: [qsTr("Follow system"), qsTr("Light"), qsTr("Dark")]; selectionIndex: ["system", "light", "dark"].indexOf(preferences.theme); onActivated: preferences.theme = ["system", "light", "dark"][currentIndex] }
             }
             RowLayout {
                 Label { text: qsTr("Language"); Layout.fillWidth: true }
-                CompactComboBox { objectName: "languageChoice"; model: [qsTr("Follow system"), "English", "简体中文"]; currentIndex: ["system", "en", "zh_CN"].indexOf(preferences.language); onActivated: preferences.language = ["system", "en", "zh_CN"][currentIndex] }
+                CompactComboBox { objectName: "languageChoice"; model: [qsTr("Follow system"), "English", "简体中文"]; selectionIndex: ["system", "en", "zh_CN"].indexOf(preferences.language); onActivated: preferences.language = ["system", "en", "zh_CN"][currentIndex] }
             }
             Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
             Label { text: qsTr("Script editor"); font.weight: Font.DemiBold }
@@ -35,7 +35,7 @@ Dialog {
                     objectName: "editorFontChoice"
                     Layout.fillWidth: true
                     model: preferences.fontFamilies
-                    currentIndex: preferences.fontFamilies.indexOf(preferences.editorFontFamily)
+                    selectionIndex: preferences.fontFamilies.indexOf(preferences.editorFontFamily)
                     onActivated: preferences.editorFontFamily = currentText
                     Accessible.name: qsTr("Script font")
                 }

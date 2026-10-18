@@ -160,5 +160,37 @@ high instead of 236 px. Script font preferences and source semantics are unchang
 
 Artifact/input hashes and the validation paths are recorded in
 `/private/tmp/vox-density-evidence-20261018/report.json`. The validated app was promoted without
-another build. These UI and documentation changes are local working-tree changes; no new commit,
-push, synthesis job or microphone recording was performed for this refinement.
+another build. At that checkpoint these UI/documentation changes were uncommitted; they were later
+committed as `e2cc820`. No push, synthesis job or microphone recording was performed for that refinement.
+
+## Grouped script reading — 2026-10-18
+
+Reading now presents role/language/delivery metadata with selectable speech, compact pause/sound
+rows, and a bordered repeat group showing count, gap and cue. Parser-owned authored-note markers
+separate actual notes from historical role/language control events. Rejected source lines remain
+visible with their issue and an explicit source-line edit action. The projection keeps exact input
+text, suppressing old-source cards while a changed draft is waiting for analysis. None of these
+display fields are persisted or change executable events, digests or acceptance.
+
+- `/private/tmp/vox-reading-gate.log` passed Rust formatting, Clippy and 70 Rust tests, including
+  unchanged execution-plan bytes/digests, repeat grouping, authored notes and rejected Unicode/CRLF
+  source. That evidence was reused for later QML/test-only corrections.
+- The final native build and all six packaged checks passed in `/private/tmp/vox-reading-ui-final.log`.
+  The new reading check covers card/group geometry, rejected text, literal plain narration, live
+  Chinese/English and light/dark switching, correct source-line focus, stale-preview suppression
+  and byte-identical project preservation. Translation extraction verifies all 307 Chinese messages.
+- Translated combo models previously reset their displayed format/voice index. Shared controlled
+  selections now restore the document/preferences value. The reading check verifies both format
+  and a non-default voice across language changes.
+- The signed Cocoa app passed reading and appearance checks in `/private/tmp/vox-reading-native.log`.
+  Light/dark images are under `/private/tmp/vox-reading-native-20261018`. Native macOS diagnostics
+  were present, with no QML binding/resource errors or failing checks.
+- The same validated app was promoted to the normal local preview without rebuilding. Live pointer
+  interaction on the existing project opened the reading page, followed the line-7 edit action,
+  and returned to reading. Its manifest stays byte-identical to
+  `/private/tmp/vox-reading-user-before.json` (239 characters, version 14, two accepted takes).
+  The pre-existing missing-role issue remains explicit; the task did not rewrite the user's script.
+
+Source/artifact/project identities are recorded in `/private/tmp/vox-reading-evidence-20261018/report.json`.
+The compact UI/documentation commit is `e2cc820`; this reading change is committed separately.
+No push, synthesis job, Echo edit or microphone capture was required for this refinement.

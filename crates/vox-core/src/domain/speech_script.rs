@@ -2,10 +2,12 @@
 mod parser;
 mod production;
 mod readiness;
+mod reading;
 use crate::{ContentDigest, ContentRef, PresetVoiceSelection};
 pub use parser::{parse_speech_script, parse_speech_script_for_review};
 pub use production::{CueLevel, SpeechDelivery, SpeechProduction, SpeechRole};
 pub use readiness::{SpeechScriptReadiness, SpeechScriptRequirement};
+pub use reading::reading_preview;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 

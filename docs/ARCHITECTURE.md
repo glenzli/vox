@@ -19,6 +19,13 @@ keeping wrapped lines and scrolling aligned without adding text or undo entries 
 Guarded source loading and an observed-text comparison keep format-only TextEdit notifications
 out of the draft mutation path, including when an existing production script is first opened.
 
+`domain::speech_script::reading` projects the authoritative parser plan and authored-note markers
+into display-only speech cards and repeat groups. Rejected source lines remain visible with their
+issues; execution events, source digests and persisted documents are unchanged. Each projection
+retains its exact input text so `ScriptReader` suppresses stale previews while saving. `ReadingEntry`
+renders selectable literal text and metadata, and routes explicit line navigation to `ScriptEditor`.
+The shared combo restores document/preference selections after translated models are replaced.
+
 `domain::speech_script` migrates Shape's grammar and readiness tests. `assembly` owns complete
 control-to-action compilation, local cues, silence, exact replay and PCM validation. The pinned
 official Infer SDK owns Discovery, contracts, transport and owner-only credential loading.

@@ -69,7 +69,7 @@ Rectangle {
                         objectName: "defaultVoice"
                         Layout.fillWidth: true
                         model: { const localeDependency = preferences.language; return panel.voiceNames() }
-                        currentIndex: panel.voiceIndex(panel.selected(""))
+                        selectionIndex: panel.voiceIndex(panel.selected(""))
                         enabled: !backend.rendering
                         onActivated: panel.choose("", currentIndex)
                     }
@@ -83,7 +83,7 @@ Rectangle {
                 CompactComboBox {
                     Layout.fillWidth: true
                     model: backend.languages.map(v => v.label)
-                    currentIndex: panel.languages.indexOf(backend.document.language || "auto")
+                    selectionIndex: panel.languages.indexOf(backend.document.language || "auto")
                     enabled: !backend.rendering
                     onActivated: backend.setLanguage(panel.languages[currentIndex])
                 }
@@ -135,7 +135,7 @@ Rectangle {
                             id: roleChoice
                             Layout.fillWidth: true
                             model: { const localeDependency = preferences.language; return panel.voiceNames() }
-                            currentIndex: panel.voiceIndex(panel.selected(roleRow.modelData))
+                            selectionIndex: panel.voiceIndex(panel.selected(roleRow.modelData))
                             displayText: currentIndex < 0 ? qsTr("Choose a voice") : currentText
                             enabled: !backend.rendering
                             onActivated: panel.choose(roleRow.modelData, currentIndex)
@@ -166,7 +166,7 @@ Rectangle {
                         CompactComboBox {
                             Layout.fillWidth: true
                             model: {const locale = preferences.language; return panel.cueNames()}
-                            currentIndex: panel.cueIndex(cueRow.modelData)
+                            selectionIndex: panel.cueIndex(cueRow.modelData)
                             enabled: !backend.rendering
                             onActivated: { if (currentIndex === 3) panel.openLibrary(1); else if (currentIndex >= 4) backend.bindSound(cueRow.modelData, panel.sounds()[currentIndex - 4].id); else backend.bindCue(cueRow.modelData, ["unresolved", "chime", "skip"][currentIndex]) }
                         }

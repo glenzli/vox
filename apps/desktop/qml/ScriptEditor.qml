@@ -14,6 +14,16 @@ Item {
         textArea.text = value
         loadingSource = false
     }
+    function focusLine(line) {
+        let position = 0
+        for (let current = 1; current < line; ++current) {
+            let next = textArea.text.indexOf("\n", position)
+            if (next < 0) break
+            position = next + 1
+        }
+        textArea.cursorPosition = position
+        textArea.forceActiveFocus()
+    }
     property bool productionScript: false
     property bool readOnly: false
     property bool showLineNumbers: true

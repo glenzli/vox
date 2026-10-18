@@ -116,7 +116,7 @@ ApplicationWindow {
                                         id: formatChoice
                                         objectName: "formatChoice"
                                         model: [qsTr("Plain narration"), qsTr("Production script")]
-                                        currentIndex: backend.document.format === "production_script" ? 1 : 0
+                                        selectionIndex: backend.document.format === "production_script" ? 1 : 0
                                         enabled: !backend.rendering
                                         onActivated: backend.setFormat(currentIndex === 0 ? "plain" : "production_script")
                                         implicitWidth: 154
@@ -151,36 +151,10 @@ ApplicationWindow {
                                         proseFontFamily: window.font.family
                                         onTextEdited: value => { if (!window.applyingText) backend.editText(value) }
                                     }
-                                    ScrollView {
-                                        clip: true
-                                        contentWidth: availableWidth
-                                        ColumnLayout {
-                                            width: parent.width; spacing: 18
-                                            Label { visible: backend.document.format === "plain"; text: backend.document.text || ""; Layout.fillWidth: true; wrapMode: Text.WordWrap; font.pixelSize: 19; lineHeight: 1.6 }
-                                            Repeater {
-                                                model: backend.document.format === "production_script" ? (backend.analysis.events || []) : []
-                                                ColumnLayout {
-                                                    id: eventRow
-                                                    required property var modelData
-                                                    Layout.fillWidth: true; spacing: 7
-                                                    Label { visible: eventRow.modelData.kind === "speech" && (eventRow.modelData.role || "").length > 0; text: eventRow.modelData.role || ""; color: Theme.secondary; font.pixelSize: 11; font.weight: Font.DemiBold }
-                                                    Label {
-                                                        Layout.fillWidth: true; wrapMode: Text.WordWrap
-                                                        font.pixelSize: eventRow.modelData.kind === "speech" ? 18 : 12
-                                                        color: eventRow.modelData.kind === "speech" ? Theme.text : Theme.secondary
-                                                        lineHeight: 1.5
-                                                        text: {
-                                                            let e=eventRow.modelData
-                                                            if(e.kind === "pause")return qsTr("Pause · %1 s").arg(e.milliseconds / 1000)
-                                                            if(e.kind === "cue")return qsTr("Sound · %1").arg(e.label)
-                                                            if(e.kind === "scene")return qsTr("Scene · %1").arg(e.label)
-                                                            if(e.kind === "repeat_start")return qsTr("Repeat %1 times · same recording").arg(e.count)
-                                                            if(e.kind === "repeat_end")return qsTr("End repeat")
-                                                            return e.text || ""
-                                                        }
-                                                    }
-                                                }
-                                            }
+                                    ScriptReader {
+                                        onEditLineRequested: line => {
+                                            window.reading = false
+                                            Qt.callLater(() => editor.focusLine(line))
                                         }
                                     }
                                 }

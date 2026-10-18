@@ -624,13 +624,13 @@ Give your words a moment to breathe.</source>
     </message>
     <message>
         <location filename="../qml/Main.qml" line="86"/>
-        <location filename="../qml/Main.qml" line="223"/>
+        <location filename="../qml/Main.qml" line="194"/>
         <source>New project</source>
         <translation>新建工程</translation>
     </message>
     <message>
         <location filename="../qml/Main.qml" line="87"/>
-        <location filename="../qml/Main.qml" line="224"/>
+        <location filename="../qml/Main.qml" line="195"/>
         <source>Open project</source>
         <translation>打开工程</translation>
     </message>
@@ -645,171 +645,146 @@ Give your words a moment to breathe.</source>
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="113"/>
+        <location filename="../qml/Main.qml" line="114"/>
         <source>The script</source>
         <translation>脚本</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="115"/>
+        <location filename="../qml/Main.qml" line="139"/>
         <source>Import text or script</source>
         <translation>导入文稿或脚本</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="116"/>
-        <location filename="../qml/Main.qml" line="242"/>
+        <location filename="../qml/Main.qml" line="140"/>
+        <location filename="../qml/Main.qml" line="213"/>
         <source>Script guide</source>
         <translation>脚本指南</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="123"/>
+        <location filename="../qml/Main.qml" line="118"/>
         <source>Plain narration</source>
         <translation>普通旁白</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="123"/>
+        <location filename="../qml/Main.qml" line="118"/>
         <source>Production script</source>
         <translation>制作脚本</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="133"/>
+        <location filename="../qml/Main.qml" line="128"/>
         <source>Line numbers</source>
         <translation>行号</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="141"/>
+        <location filename="../qml/Main.qml" line="136"/>
         <source>Write</source>
         <translation>编写</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="142"/>
+        <location filename="../qml/Main.qml" line="137"/>
         <source>Read</source>
         <translation>阅读</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="177"/>
-        <source>Pause · %1 s</source>
-        <translation>停顿 · %1 秒</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="178"/>
-        <source>Sound · %1</source>
-        <translation>音效 · %1</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="179"/>
-        <source>Scene · %1</source>
-        <translation>场景 · %1</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="180"/>
-        <source>Repeat %1 times · same recording</source>
-        <translation>重复 %1 次 · 重播同一录音</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="181"/>
-        <source>End repeat</source>
-        <translation>重复结束</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="193"/>
+        <location filename="../qml/Main.qml" line="164"/>
         <source>Line %1 · %2</source>
         <translation>第 %1 行 · %2</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="197"/>
+        <location filename="../qml/Main.qml" line="168"/>
         <source>%1 characters</source>
         <translation>%1 个字符</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="199"/>
+        <location filename="../qml/Main.qml" line="170"/>
         <source>%1 / %2 segments</source>
         <translation>%1 / %2 段</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="199"/>
+        <location filename="../qml/Main.qml" line="170"/>
         <source>Preparing…</source>
         <translation>准备中…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="199"/>
+        <location filename="../qml/Main.qml" line="170"/>
         <source>Ready to render</source>
         <translation>可以生成配音</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="199"/>
+        <location filename="../qml/Main.qml" line="170"/>
         <source>Review voices and script</source>
         <translation>请检查脚本与角色声音</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="200"/>
+        <location filename="../qml/Main.qml" line="171"/>
         <source>Stop after current segment</source>
         <translation>完成当前段落后停止</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="201"/>
+        <location filename="../qml/Main.qml" line="172"/>
         <source>Rendering…</source>
         <translation>生成中…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="201"/>
+        <location filename="../qml/Main.qml" line="172"/>
         <source>Render voice</source>
         <translation>生成配音</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="219"/>
+        <location filename="../qml/Main.qml" line="190"/>
         <source>Give your words a voice.</source>
         <translation>让文字，拥有声音。</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="220"/>
+        <location filename="../qml/Main.qml" line="191"/>
         <source>A quiet space for narration, dialogue and listening materials.
 Write the script. Direct the voices. Keep the take.</source>
         <translation>专注旁白、对话与听力材料的创作空间。
 写下脚本，安排声音，留下满意的录音。</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="236"/>
+        <location filename="../qml/Main.qml" line="207"/>
         <source>Your project stays on this device.</source>
         <translation>工程保存在这台设备上。</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="251"/>
+        <location filename="../qml/Main.qml" line="222"/>
         <source>Audio is still being generated</source>
         <translation>音频仍在生成中</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="256"/>
+        <location filename="../qml/Main.qml" line="227"/>
         <source>Stop after the current generation, then close Vox?</source>
         <translation>在当前生成结束后停止，并关闭 Vox？</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="259"/>
+        <location filename="../qml/Main.qml" line="230"/>
         <source>New Vox project</source>
         <translation>新建 Vox 工程</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="259"/>
-        <location filename="../qml/Main.qml" line="260"/>
+        <location filename="../qml/Main.qml" line="230"/>
+        <location filename="../qml/Main.qml" line="231"/>
         <source>Vox project (*.vox)</source>
         <translation>Vox 工程 (*.vox)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="260"/>
+        <location filename="../qml/Main.qml" line="231"/>
         <source>Open Vox project</source>
         <translation>打开 Vox 工程</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="261"/>
+        <location filename="../qml/Main.qml" line="232"/>
         <source>Import script</source>
         <translation>导入脚本</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="261"/>
+        <location filename="../qml/Main.qml" line="232"/>
         <source>Text files (*.txt *.md)</source>
         <translation>文本文件 (*.txt *.md)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="261"/>
+        <location filename="../qml/Main.qml" line="232"/>
         <source>All files (*)</source>
         <translation>所有文件 (*)</translation>
     </message>
@@ -1102,6 +1077,80 @@ Write the script. Direct the voices. Keep the take.</source>
     </message>
 </context>
 <context>
+    <name>ReadingEntry</name>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="12"/>
+        <source>Clear</source>
+        <translation>清晰平稳</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="12"/>
+        <source>Warm</source>
+        <translation>温暖亲切</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="12"/>
+        <source>Lively</source>
+        <translation>轻快活泼</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="35"/>
+        <source>Choose a role</source>
+        <translation>请选择角色</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="35"/>
+        <location filename="../qml/ReadingEntry.qml" line="107"/>
+        <source>Needs attention</source>
+        <translation>需要检查</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="35"/>
+        <source>Narration</source>
+        <translation>旁白</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="49"/>
+        <source>Line %1</source>
+        <translation>第 %1 行</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="53"/>
+        <source>Edit line %1</source>
+        <translation>编辑第 %1 行</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="72"/>
+        <source>Source needing review</source>
+        <translation>需要检查的原文</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="72"/>
+        <source>Spoken passage</source>
+        <translation>配音台词</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="93"/>
+        <source>Pause %1 s</source>
+        <translation>停顿 %1 秒</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="94"/>
+        <source>Sound · %1</source>
+        <translation>音效 · %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="95"/>
+        <source>Scene · %1</source>
+        <translation>片段 · %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReadingEntry.qml" line="96"/>
+        <source>Note · %1</source>
+        <translation>备注 · %1</translation>
+    </message>
+</context>
+<context>
     <name>ReferenceDialog</name>
     <message>
         <location filename="../qml/ReferenceDialog.qml" line="8"/>
@@ -1261,7 +1310,7 @@ Write the script. Direct the voices. Keep the take.</source>
 <context>
     <name>ScriptEditor</name>
     <message>
-        <location filename="../qml/ScriptEditor.qml" line="45"/>
+        <location filename="../qml/ScriptEditor.qml" line="55"/>
         <source>Start with your words.
 
 Write a narration, import an existing script, or choose a form on the left.</source>
@@ -1270,9 +1319,82 @@ Write a narration, import an existing script, or choose a form on the left.</sou
 写一段旁白，导入已有的脚本，或从左侧选择一种形式。</translation>
     </message>
     <message>
-        <location filename="../qml/ScriptEditor.qml" line="52"/>
+        <location filename="../qml/ScriptEditor.qml" line="62"/>
         <source>Script editor</source>
         <translation>脚本编辑器</translation>
+    </message>
+</context>
+<context>
+    <name>ScriptReader</name>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="12"/>
+        <source>Narration</source>
+        <translation>旁白</translation>
+    </message>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="12"/>
+        <source>Dialogue</source>
+        <translation>对话</translation>
+    </message>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="12"/>
+        <source>Listening</source>
+        <translation>听力材料</translation>
+    </message>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="23"/>
+        <source>Passages %1 · Roles %2</source>
+        <translation>台词 %1 段 · 角色 %2 位</translation>
+    </message>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="23"/>
+        <source>Passages %1</source>
+        <translation>台词 %1 段</translation>
+    </message>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="25"/>
+        <source>Reading preview</source>
+        <translation>配音预览</translation>
+    </message>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="27"/>
+        <source>Your spoken passages will appear here as you write.</source>
+        <translation>编写脚本后，配音台词会显示在这里。</translation>
+    </message>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="27"/>
+        <source>Updating preview…</source>
+        <translation>正在更新预览…</translation>
+    </message>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="56"/>
+        <source>Repeat %1×</source>
+        <translation>重复 %1×</translation>
+    </message>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="57"/>
+        <source>Same recording</source>
+        <translation>重播同一录音</translation>
+    </message>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="59"/>
+        <source>Edit line %1</source>
+        <translation>编辑第 %1 行</translation>
+    </message>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="65"/>
+        <source>%1 s between repeats</source>
+        <translation>每次间隔 %1 秒</translation>
+    </message>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="65"/>
+        <source>Sound · %1</source>
+        <translation>音效 · %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/ScriptReader.qml" line="80"/>
+        <source>Needs attention</source>
+        <translation>需要检查</translation>
     </message>
 </context>
 <context>
@@ -1403,77 +1525,77 @@ Write a narration, import an existing script, or choose a form on the left.</sou
         <translation>音频 / 打开音效库…</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="53"/>
+        <location filename="../qml/VoicePanel.qml" line="56"/>
         <source>VOICES &amp; DIRECTION</source>
         <translation>声音与演绎</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="56"/>
+        <location filename="../qml/VoicePanel.qml" line="57"/>
         <source>Voice library</source>
         <translation>音色库</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="57"/>
+        <location filename="../qml/VoicePanel.qml" line="58"/>
         <source>Sounds</source>
         <translation>音效库</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="59"/>
+        <location filename="../qml/VoicePanel.qml" line="63"/>
         <source>Default voice</source>
         <translation>默认声音</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="71"/>
+        <location filename="../qml/VoicePanel.qml" line="76"/>
         <source>Audition this voice</source>
         <translation>试听这个声音</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="73"/>
+        <location filename="../qml/VoicePanel.qml" line="82"/>
         <source>Language</source>
         <translation>配音语言</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="82"/>
+        <location filename="../qml/VoicePanel.qml" line="95"/>
         <source>Pace</source>
         <translation>语速</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="92"/>
+        <location filename="../qml/VoicePanel.qml" line="105"/>
         <source>Speech pace</source>
         <translation>配音语速</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="94"/>
+        <location filename="../qml/VoicePanel.qml" line="107"/>
         <source>Reference voices use 1× pace and neutral delivery.</source>
         <translation>参考音色支持 1× 语速与自然平稳的演绎。</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="96"/>
+        <location filename="../qml/VoicePanel.qml" line="114"/>
         <source>Roles</source>
         <translation>角色</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="98"/>
+        <location filename="../qml/VoicePanel.qml" line="116"/>
         <source>Declare roles in your script, then choose a voice for each one.</source>
         <translation>在脚本中声明角色，再为每个角色选择声音。</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="116"/>
+        <location filename="../qml/VoicePanel.qml" line="139"/>
         <source>Choose a voice</source>
         <translation>选择声音</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="120"/>
+        <location filename="../qml/VoicePanel.qml" line="143"/>
         <source>Audition role voice</source>
         <translation>试听角色声音</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="124"/>
+        <location filename="../qml/VoicePanel.qml" line="151"/>
         <source>Sound cues</source>
         <translation>音效提示</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="141"/>
+        <location filename="../qml/VoicePanel.qml" line="173"/>
         <source>Open sound library</source>
         <translation>打开音效库</translation>
     </message>
@@ -1503,17 +1625,17 @@ Write a narration, import an existing script, or choose a form on the left.</sou
         <translation>跳过</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="146"/>
+        <location filename="../qml/VoicePanel.qml" line="177"/>
         <source>Generated speech is labeled as synthetic. Your accepted takes stay available when you revise the script.</source>
         <translation>生成的配音会标为合成音频。修改脚本后，已采用的录音版本仍会保留。</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="150"/>
+        <location filename="../qml/VoicePanel.qml" line="181"/>
         <source>Import sound cue</source>
         <translation>导入音效</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="150"/>
+        <location filename="../qml/VoicePanel.qml" line="181"/>
         <source>WAV audio (*.wav)</source>
         <translation>WAV 音频 (*.wav)</translation>
     </message>

@@ -3,7 +3,7 @@ use crate::{
     AudioValueContract, ContentRef, ExternalExecutionProvenance,
     INFER_SPEECH_VOICE_CATALOG_REVISION, PresetVoiceAlias, PresetVoiceSelection,
     SpeechSynthesisOperation, SpeechVoiceSelection,
-    speech_script::{SpeechScriptOptions, parse_speech_script_for_review},
+    speech_script::{SpeechScriptOptions, parse_speech_script_for_review, reading_preview},
 };
 use serde::{Deserialize, Serialize};
 
@@ -83,7 +83,7 @@ impl Document {
         if self.format == ScriptFormat::Plain {
             return serde_json::json!({"ready": !self.text.trim().is_empty() && self.operation().is_ok(),"roles":[],"cues":[],"issues":[],"spoken_passages":usize::from(!self.text.trim().is_empty())});
         }
-        let (mut plan, _spoken_lines) = parse_speech_script_for_review(&self.text);
+        let (mut plan, note_lines) = parse_speech_script_for_review(&self.text);
         for event in &plan.events {
             if let crate::speech_script::SpeechScriptEventKind::Speech { role, delivery, .. } =
                 &event.kind
@@ -99,7 +99,7 @@ impl Document {
                 }
             }
         }
-        serde_json::json!({"ready":plan.ready(&self.options)&&self.operation().is_ok(),"roles":plan.roles.keys().collect::<Vec<_>>(),"cues":plan.cues.keys().collect::<Vec<_>>(),"issues":plan.issues,"readiness":plan.readiness(&self.options),"spoken_passages":plan.readiness(&self.options).spoken_passages,"events":plan.events,"pause_ms":plan.pause_millis(),"shared_voices":plan.shared_voices(&self.options)})
+        serde_json::json!({"ready":plan.ready(&self.options)&&self.operation().is_ok(),"roles":plan.roles.keys().collect::<Vec<_>>(),"cues":plan.cues.keys().collect::<Vec<_>>(),"issues":plan.issues,"readiness":plan.readiness(&self.options),"spoken_passages":plan.readiness(&self.options).spoken_passages,"events":plan.events,"reading":reading_preview(&self.text,&plan,&note_lines),"pause_ms":plan.pause_millis(),"shared_voices":plan.shared_voices(&self.options)})
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
