@@ -1,2 +1,8 @@
 .dev-mesh/
+target/
+build/
 .DS_Store
+*.vox/
+*.wav
+*.echo/
+__pycache__/

@@ -1,0 +1,122 @@
+#pragma once
+#include "echo_launcher.hpp"
+#include "worker_client.hpp"
+#include <QJsonArray>
+#include <QSettings>
+#include <QTimer>
+#include <QUrl>
+#include <QVariantMap>
+
+// Owns the live project/draft identity and routes all durable operations
+// through vox-core.
+class DesktopBackend final : public QObject {
+  Q_OBJECT
+  Q_PROPERTY(QVariantMap project READ project NOTIFY stateChanged)
+  Q_PROPERTY(QVariantMap document READ document NOTIFY documentChanged)
+  Q_PROPERTY(QVariantMap analysis READ analysis NOTIFY stateChanged)
+  Q_PROPERTY(QVariantList voices READ voices NOTIFY capabilitiesChanged)
+  Q_PROPERTY(
+      QVariantList recentProjects READ recentProjects NOTIFY stateChanged)
+  Q_PROPERTY(QString path READ path NOTIFY stateChanged)
+  Q_PROPERTY(bool dirty READ dirty NOTIFY documentChanged)
+  Q_PROPERTY(bool rendering READ rendering NOTIFY renderingChanged)
+  Q_PROPERTY(bool runtimeReady READ runtimeReady NOTIFY runtimeChanged)
+  Q_PROPERTY(QString runtimeError READ runtimeError NOTIFY runtimeChanged)
+  Q_PROPERTY(QString message READ message NOTIFY messageChanged)
+  Q_PROPERTY(int completed READ completed NOTIFY progressChanged)
+  Q_PROPERTY(int total READ total NOTIFY progressChanged)
+  Q_PROPERTY(QString selectedAudio READ selectedAudio WRITE selectAudio NOTIFY
+                 selectionChanged)
+  Q_PROPERTY(QVariantList waveform READ waveform NOTIFY waveformChanged)
+  Q_PROPERTY(bool hasEchoHandoff READ hasEchoHandoff NOTIFY stateChanged)
+public:
+  explicit DesktopBackend(QObject *parent = nullptr);
+  QVariantMap project() const { return m_project.toVariantMap(); }
+  QVariantMap document() const { return m_draft.toVariantMap(); }
+  QVariantMap analysis() const { return m_analysis.toVariantMap(); }
+  QVariantList voices() const { return m_voices.toVariantList(); }
+  QVariantList recentProjects() const;
+  QString path() const { return m_path; }
+  bool dirty() const { return m_dirty; }
+  bool rendering() const { return m_rendering; }
+  bool runtimeReady() const { return m_runtimeReady; }
+  QString runtimeError() const { return m_runtimeError; }
+  QString message() const;
+  int completed() const { return m_completed; }
+  int total() const { return m_total; }
+  QString selectedAudio() const { return m_selected; }
+  QVariantList waveform() const { return m_waveform; }
+  bool hasEchoHandoff() const;
+  Q_INVOKABLE void createProject(const QUrl &url);
+  Q_INVOKABLE void openProject(const QUrl &url);
+  Q_INVOKABLE void editText(const QString &text);
+  Q_INVOKABLE void setFormat(const QString &format);
+  Q_INVOKABLE void setVoice(const QString &alias);
+  Q_INVOKABLE void setLanguage(const QString &language);
+  Q_INVOKABLE void setSpeed(int speed);
+  Q_INVOKABLE void bindRole(const QString &role, const QString &alias);
+  Q_INVOKABLE void bindCue(const QString &label, const QString &action);
+  Q_INVOKABLE void importCue(const QString &label, const QUrl &url);
+  Q_INVOKABLE void save();
+  Q_INVOKABLE void render();
+  Q_INVOKABLE void cancel();
+  Q_INVOKABLE void auditionVoice(const QString &alias);
+  Q_INVOKABLE void selectAudio(const QString &id);
+  Q_INVOKABLE void playSelected();
+  Q_INVOKABLE void acceptSelected();
+  Q_INVOKABLE void discardSelected();
+  Q_INVOKABLE void exportSelected(const QUrl &url);
+  Q_INVOKABLE void importScript(const QUrl &url);
+  Q_INVOKABLE void useTemplate(const QString &kind);
+  Q_INVOKABLE void restoreSource(const QString &id);
+  Q_INVOKABLE void probeRuntime();
+  Q_INVOKABLE void installCredential(const QUrl &url);
+  Q_INVOKABLE void editInEcho();
+  Q_INVOKABLE void returnFromEcho(const QUrl &url, bool allowPCM24);
+  Q_INVOKABLE QString scriptRules() const;
+  Q_INVOKABLE QString voiceLabel(const QString &key) const;
+  Q_INVOKABLE QString languageLabel(const QString &key) const;
+  Q_INVOKABLE QString errorText(const QString &code) const;
+  Q_INVOKABLE QString echoBinary() const;
+  Q_INVOKABLE void setEchoBinary(const QUrl &url);
+signals:
+  void stateChanged();
+  void documentChanged();
+  void capabilitiesChanged();
+  void renderingChanged();
+  void runtimeChanged();
+  void messageChanged();
+  void progressChanged();
+  void selectionChanged();
+  void playFile(const QUrl &file);
+  void requestFinished(const QString &action, bool ok);
+  void waveformChanged();
+
+private:
+  WorkerClient m_worker;
+  WorkerClient m_probeWorker;
+  EchoLauncher m_echoLauncher;
+  QSettings m_settings;
+  QJsonObject m_project, m_draft, m_analysis;
+  QJsonArray m_voices;
+  QVariantList m_waveform;
+  QUrl m_preparedFile;
+  QString m_preparedID;
+  QString m_path, m_selected, m_messageCode, m_runtimeError;
+  bool m_dirty = false, m_rendering = false, m_runtimeReady = false,
+       m_savePending = false;
+  bool m_probing = false;
+  bool m_echoOpening = false;
+  quint64 m_editSequence = 0;
+  int m_completed = 0, m_total = 0;
+  QTimer m_saveTimer;
+  QTimer m_probeTimer;
+  void mutate(const std::function<void(QJsonObject &)> &mutation);
+  void saveThen(std::function<void()> continuation);
+  void apply(const QJsonObject &result, quint64 capturedEdit,
+             bool reset = false);
+  void command(const QString &action, const QJsonObject &fields,
+               WorkerClient::Callback done = {}, bool includeProject = true);
+  void messageCode(const QString &code);
+  void finishRender(const QJsonObject &response, bool voiceSample);
+};

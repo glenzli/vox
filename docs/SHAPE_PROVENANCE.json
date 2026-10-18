@@ -1,0 +1,173 @@
+{
+  "repository": "https://github.com/glenzli/shape",
+  "revision": "d47789fc2dd604b14cc2a651e49889513bbd8677",
+  "license": "MIT",
+  "note": "Portable speech domain, compiler, PCM assembly, Runtime receipt validation and adjacent regression tests migrated. Vox owns independent persistence and application identity. See THIRD_PARTY_NOTICES.md. Vox retains only the speech policy profile; unrelated Shape text/image/agent policy code and tests were removed. Native titlebar alignment is adapted from the same revision.",
+  "files": [
+    {
+      "source": "crates/shape-domain/src/audio.rs",
+      "destination": "crates/vox-core/src/domain/audio.rs",
+      "source_sha256": "17d17dc84645ae9bd4c0a0420911f57bc7d53d280482aa1aea6ebf601eb25304"
+    },
+    {
+      "source": "crates/shape-domain/src/audio/tests.rs",
+      "destination": "crates/vox-core/src/domain/audio/tests.rs",
+      "source_sha256": "eda696cc8650774e2a1c8bcb30a08831259461ca869bf1abaf3415ede172f758"
+    },
+    {
+      "source": "crates/shape-domain/src/content.rs",
+      "destination": "crates/vox-core/src/domain/content.rs",
+      "source_sha256": "a5b419e88ed7b43f53cb7029765888f95a162726fcf05a740ecf3c6d51a132f3"
+    },
+    {
+      "source": "crates/shape-domain/src/content/tests.rs",
+      "destination": "crates/vox-core/src/domain/content/tests.rs",
+      "source_sha256": "42f62e8109de7d36ea09c540398e49d998c1f1b8959a8fbc7357c42a69bdc79e"
+    },
+    {
+      "source": "crates/shape-domain/src/ids.rs",
+      "destination": "crates/vox-core/src/domain/ids.rs",
+      "source_sha256": "ac7181dc7e386a1fe7b63f9318c7cba564d42a23711549d34c7584998460d930"
+    },
+    {
+      "source": "crates/shape-domain/src/ids/tests.rs",
+      "destination": "crates/vox-core/src/domain/ids/tests.rs",
+      "source_sha256": "70d4b083fb5da0d2efb938ed9338b21c9f6b9563b4c1a79663f01795037c8551"
+    },
+    {
+      "source": "crates/shape-domain/src/speech_script.rs",
+      "destination": "crates/vox-core/src/domain/speech_script.rs",
+      "source_sha256": "45e06996e697660d97881a91ea4d2d372bbe055c07f18bac37355e383db91dc2"
+    },
+    {
+      "source": "crates/shape-domain/src/speech_script/production.rs",
+      "destination": "crates/vox-core/src/domain/speech_script/production.rs",
+      "source_sha256": "62faa219658fad0fdf2a764ad04b1832563a323dae1286a3e72e0fafed30f1d9"
+    },
+    {
+      "source": "crates/shape-domain/src/speech_script/readiness.rs",
+      "destination": "crates/vox-core/src/domain/speech_script/readiness.rs",
+      "source_sha256": "d47792921776631e96bc0febea942563f0bf358a2c44bbb4361ce46af93fece3"
+    },
+    {
+      "source": "crates/shape-domain/src/speech_script/tests.rs",
+      "destination": "crates/vox-core/src/domain/speech_script/tests.rs",
+      "source_sha256": "1844c889b10e26ebc74daebdc4adca2b5f20d8774980c147b688f2e3c89d0eaf"
+    },
+    {
+      "source": "crates/shape-domain/src/speech_script/parser.rs",
+      "destination": "crates/vox-core/src/domain/speech_script/parser.rs",
+      "source_sha256": "c2b2b5fc329f1ad23173ac31fe48f844ed4246b9fd7ef55525289e74305a29cb"
+    },
+    {
+      "source": "crates/shape-domain/src/speech_script/readiness/tests.rs",
+      "destination": "crates/vox-core/src/domain/speech_script/readiness/tests.rs",
+      "source_sha256": "fd728db0061d0d2dda5e6e3e3adc7aee0d4a826e27fd76db74170793387faebb"
+    },
+    {
+      "source": "crates/shape-execution/src/audio.rs",
+      "destination": "crates/vox-core/src/audio.rs",
+      "source_sha256": "3edacd3c21c6b804a4dbac6e7d7bb965fee62d4c5720ee89191af60455dadc7b"
+    },
+    {
+      "source": "crates/shape-execution/src/audio/tests.rs",
+      "destination": "crates/vox-core/src/audio/tests.rs",
+      "source_sha256": "a0dddd1c1ae045054188803970930d386bf09650032097d1fc18dbcfe969deee"
+    },
+    {
+      "source": "crates/shape-execution/src/speech_script.rs",
+      "destination": "crates/vox-core/src/assembly.rs",
+      "source_sha256": "01045a3a03caf871a37a07d8180d59f93a0a83f9ab4bed58b87ca940735c0775"
+    },
+    {
+      "source": "crates/shape-execution/src/speech_script/tests.rs",
+      "destination": "crates/vox-core/src/assembly/tests.rs",
+      "source_sha256": "4dc11687d0f69097053be3e47e0c720a65b937391a5cec890302be43170c09e3"
+    },
+    {
+      "source": "crates/shape-execution/src/executor.rs",
+      "destination": "crates/vox-core/src/executor.rs",
+      "source_sha256": "8a372a92f04dbbc8b067199b65b69bcc0df9c1757fda1c18e218e1d40b005492"
+    },
+    {
+      "source": "crates/shape-execution/src/executor/tests.rs",
+      "destination": "crates/vox-core/src/executor/tests.rs",
+      "source_sha256": "817069c5bebd218da63e21496f5428e8cc6ced7af2cc9c56adb5a18fbe3f756d"
+    },
+    {
+      "source": "crates/shape-execution/src/provenance.rs",
+      "destination": "crates/vox-core/src/provenance.rs",
+      "source_sha256": "67bc309b670d4b0e391ee0f31541209611fe96dc803323ba9b5c0634058c6aaf"
+    },
+    {
+      "source": "crates/shape-execution/src/provenance/tests.rs",
+      "destination": "crates/vox-core/src/provenance/tests.rs",
+      "source_sha256": "c72d65f066cce14c3f5949af41121dc6edceced0bbd8abd053ad88368165e71e"
+    },
+    {
+      "source": "crates/shape-execution/src/infer_runtime/speech.rs",
+      "destination": "crates/vox-core/src/infer_runtime/speech.rs",
+      "source_sha256": "c67b9df4f53160a46e67d508db651a06c74f74ae7e5afb8c20426d0331d00f6e"
+    },
+    {
+      "source": "crates/shape-execution/src/infer_runtime/speech/script.rs",
+      "destination": "crates/vox-core/src/infer_runtime/speech/script.rs",
+      "source_sha256": "213d4b22703dccbb13781aa21215c3dcdece68610a96dc3d5583a7ab46fc5c3a"
+    },
+    {
+      "source": "crates/shape-execution/src/infer_runtime/speech/voices.rs",
+      "destination": "crates/vox-core/src/infer_runtime/speech/voices.rs",
+      "source_sha256": "34648cc5034c730b945402dcf6fd69ee0086bd8bd9eef2c90527bfc4fefce982"
+    },
+    {
+      "source": "crates/shape-execution/src/infer_runtime/speech/narration.rs",
+      "destination": "crates/vox-core/src/infer_runtime/speech/narration.rs",
+      "source_sha256": "97a2a8f28aba8e1d5e6ddc2afda10e82c9e9fee61a4bf129fab37771e18a2357"
+    },
+    {
+      "source": "crates/shape-execution/src/infer_runtime/speech/tests.rs",
+      "destination": "crates/vox-core/src/infer_runtime/speech/tests.rs",
+      "source_sha256": "c1c4b1d9daba8ce1bd834b8a239d9e04f629e4c96116a3fd0f7b14f2695fd5c6"
+    },
+    {
+      "source": "crates/shape-execution/src/infer_runtime/speech/narration/tests.rs",
+      "destination": "crates/vox-core/src/infer_runtime/speech/narration/tests.rs",
+      "source_sha256": "d2bbb99cb05efbce891d4e6a5a804dd1a6fef3a55679386d49495035f1b28c52"
+    },
+    {
+      "source": "crates/shape-execution/src/infer_runtime/job_provenance.rs",
+      "destination": "crates/vox-core/src/infer_runtime/job_provenance.rs",
+      "source_sha256": "709bb1bf510225ff2d5ab9a76b64d3c0e4223133bcbb37dca3f1adc3eb618ccd"
+    },
+    {
+      "source": "crates/shape-execution/src/infer_runtime/job_provenance/tests.rs",
+      "destination": "crates/vox-core/src/infer_runtime/job_provenance/tests.rs",
+      "source_sha256": "e13ac769ed12aaff9c5729256b956dca06ce19eb73dc3e5d4f40854b9807880f"
+    },
+    {
+      "source": "crates/shape-execution/src/material_return/pcm24.rs",
+      "destination": "crates/vox-core/src/handoff/pcm24.rs",
+      "source_sha256": "563c6b9a29c2ea5e57bd5098a10ecd327797b8d339a4aaaf8a9cdcb22dc54e4b"
+    },
+    {
+      "source": "crates/shape-execution/src/material_return/pcm24/tests.rs",
+      "destination": "crates/vox-core/src/handoff/pcm24/tests.rs",
+      "source_sha256": "db8f28949075501f3b60fa095b3bd9046e396492aeb4e979e910b5962b2ca19e"
+    },
+    {
+      "source": "scripts/test_material_echo.py",
+      "destination": "scripts/test_echo_process.py",
+      "source_sha256": "ad72f7ed43283f5ad038e8e8e3dbf7ab0e3d7a39082202d4d7d365fe4c139846"
+    },
+    {
+      "source": "apps/desktop/src/mac_titlebar.hpp",
+      "destination": "apps/desktop/src/mac_titlebar.hpp",
+      "source_sha256": "20430f36e1114ad2301943524efcbe738cfc6e8495d1235ae419e115520de3bb"
+    },
+    {
+      "source": "apps/desktop/src/mac_titlebar.mm",
+      "destination": "apps/desktop/src/mac_titlebar.mm",
+      "source_sha256": "05df57b687be2ac43c320c062b6507877833048025fd29be8bd87a2fab1e76ea"
+    }
+  ]
+}
