@@ -19,6 +19,11 @@ impl Project {
             return Err(Error::new("project_extension"));
         }
         fs::create_dir(path).map_err(|_| Error::new("project_exists"))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(path, fs::Permissions::from_mode(0o700))?;
+        }
         let project = Self {
             path: fs::canonicalize(path)?,
         };
@@ -36,6 +41,8 @@ impl Project {
             audio_head: None,
             runs: vec![],
             handoffs: vec![],
+            voice_library: vec![],
+            sound_library: vec![],
         };
         project.write(&m)?;
         Ok(project)
@@ -56,9 +63,12 @@ impl Project {
             || m.sources.len() > 1024
             || m.audio.len() + m.candidates.len() > 1024
             || m.runs.len() > 2048
+            || m.voice_library.len() > 128
+            || m.sound_library.len() > 256
         {
             return Err(Error::new("invalid_project"));
         }
+        super::materials::validate_libraries(&m)?;
         m.draft.operation()?;
         for source in &m.sources {
             source.document.operation()?;
@@ -117,10 +127,7 @@ impl Project {
         if bytes.len() > 16 * 1024 * 1024 {
             return Err(Error::new("project_limit"));
         }
-        let mut file = OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&temp)?;
+        let mut file = private_file(&temp)?;
         file.write_all(&bytes)?;
         file.sync_all()?;
         fs::rename(temp, self.path.join("project.json"))?;
@@ -129,6 +136,9 @@ impl Project {
     }
     pub fn save(&self, expected: u64, draft: Document, title: Option<String>) -> Result<Manifest> {
         draft.operation()?;
+        let mut candidate = self.read()?;
+        candidate.draft = draft.clone();
+        super::materials::validate_libraries(&candidate)?;
         if title
             .as_ref()
             .is_some_and(|t| t.is_empty() || t.len() > 512)
@@ -200,10 +210,7 @@ impl Project {
                 .path
                 .join("objects")
                 .join(format!(".{}.tmp", uuid::Uuid::now_v7()));
-            let mut file = OpenOptions::new()
-                .write(true)
-                .create_new(true)
-                .open(&temp)?;
+            let mut file = private_file(&temp)?;
             file.write_all(bytes)?;
             file.sync_all()?;
             match fs::hard_link(&temp, &path) {
@@ -365,4 +372,24 @@ pub(crate) fn read_bounded(path: &Path, max: u64) -> Result<Vec<u8>> {
         return Err(Error::new("file_too_large"));
     }
     Ok(bytes)
+}
+
+fn private_file(path: &Path) -> Result<File> {
+    let mut options = OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    Ok(options.open(path)?)
+}
+pub(crate) fn private_directory(path: &Path) -> Result<()> {
+    fs::create_dir_all(path)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(path, fs::Permissions::from_mode(0o700))?;
+    }
+    Ok(())
 }

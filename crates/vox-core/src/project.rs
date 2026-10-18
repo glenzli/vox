@@ -1,4 +1,5 @@
 //! Independent .vox bundle, working drafts, immutable sources and explicit audio acceptance.
+pub mod materials;
 mod model;
 mod render;
 pub(crate) mod store;

@@ -98,3 +98,38 @@ The live manifest remains identical to the restored snapshot after opening and t
 The promoted executable SHA-256 is
 `57257f8a020ed88ee90b1eedda0e92673680dd3774ea8093c10af7c34b7965bd`;
 the speech worker is unchanged. No new speech/Echo operation, commit or push was performed.
+
+## Reference voices, editor fonts and sound library — 2026-10-18
+
+- Initial independent app/editor implementation is locally committed as `2f411d2`. Official Rust
+  clone transport is separately committed in Infer Runtime as `8dc48ce` and pinned by Vox. No push
+  or public release is implied.
+- The source gate `/private/tmp/vox-studio-final-gate.log` passed 68 Rust tests, fmt/Clippy, 284
+  complete Chinese messages and all five packaged tests. New tests cover exact reference words,
+  consent, foreign-project binding rejection, immutable source revisions, candidate adoption,
+  explicit downmix/resampling, owner-only files, pre-dispatch cancellation and inactive role/cue
+  inputs when switching to plain narration.
+- Native capture checks inject bounded float/stereo PCM through the actual recorder conversion and
+  WAV publication path, import it through the packaged worker, and prove cancellation removes the
+  disposable preview. They enumerate the native microphone but never capture a person or accept an
+  OS microphone permission. Real microphone recording still requires the user’s first permission
+  and a suitable device; acoustic reference quality is not established by these checks.
+- Script editor tests apply/persist a different font and size, verify actual gutter geometry after
+  wrapping/scrolling, preserve selection/undo/source bytes, and cold-reopen the project without a
+  false draft mutation. Signed Cocoa checks passed for the editor and the new library/capture form.
+- The final UI refinement replaces dynamic translated-name lookups with notification-backed voice,
+  language and built-in catalogs. Focused packaged appearance/studio checks and signed native studio
+  checks passed after that change; unchanged Rust/generation evidence was reused. Native diagnostics
+  included macOS IMK/sandbox-extension messages, with no QML binding/resource errors or failing checks.
+- `/private/tmp/vox-studio-live-20261018-c/report.json` proves real `app_id=vox` clone preview,
+  Stable Audio 3 Small SFX and Small Music, Chinese local prompt preparation, explicit sound adoption,
+  mixed preset/reference roles with an adopted cue, accepted WAV export and byte-identical reopen.
+  All three generation receipts are local, no-fallback and zero-cost. The reference is synthetic
+  speech generated for this isolated test, not a human recording.
+- `/private/tmp/vox-studio-live-20261018-c/final-consumer.json` proves the final worker again rendered
+  a mixed script, accepted/exported it and reopened it. It binds worker hash and per-segment receipts.
+- Vox’s existing credential was retained. Console-owned apply happened with every provider queue
+  idle; config read-back excludes only Vox and proves all other apps/runtime settings unchanged.
+  The own grant adds local clone, sound and text preparation, without cloud or observer permission.
+- The pre-existing user project stayed byte-identical to `/private/tmp/vox-studio-user-before.json`
+  (239 characters, two accepted takes, version 14); no sample script or accepted audio was replaced.

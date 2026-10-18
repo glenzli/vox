@@ -68,7 +68,13 @@ pub const SPEECH_PRESETS: &[SpeechPreset] = &[
 #[must_use]
 pub fn supported_speech_operation(operation: &SpeechSynthesisOperation) -> bool {
     let SpeechVoiceSelection::Preset(voice) = &operation.voice else {
-        return false;
+        return matches!(&operation.voice, SpeechVoiceSelection::AuthorizedReference(r) if r.is_executable())
+            && operation.synthetic_disclosure_required
+            && operation.speed_milli == 1000
+            && operation
+                .delivery
+                .is_none_or(|d| d == crate::speech_script::SpeechDelivery::Neutral)
+            && SPEECH_LANGUAGES.contains(&operation.language.as_str());
     };
     let known_voice = SPEECH_PRESETS
         .iter()

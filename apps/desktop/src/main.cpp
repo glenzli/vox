@@ -1,5 +1,6 @@
 #include "desktop_backend.hpp"
 #include "project_open_filter.hpp"
+#include "reference_recorder.hpp"
 #include "ui_preferences.hpp"
 #include "workflow_smoke.hpp"
 #ifdef Q_OS_MACOS
@@ -30,6 +31,7 @@ int main(int argc, char **argv) {
       app.arguments().contains("--smoke-exit") ||
       app.arguments().contains("--smoke-appearance") ||
       app.arguments().contains("--smoke-editor") ||
+      app.arguments().contains("--smoke-studio") ||
       app.arguments().contains("--smoke-audio")) {
     QSettings::setDefaultFormat(QSettings::IniFormat);
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope,
@@ -48,6 +50,7 @@ int main(int argc, char **argv) {
   }
   QTranslator translator;
   DesktopBackend backend;
+  ReferenceRecorder recorder;
   const auto echoIndex = app.arguments().indexOf("--echo-binary");
   if (echoIndex >= 0 && echoIndex + 1 < app.arguments().size())
     backend.setEchoBinary(QUrl::fromLocalFile(app.arguments()[echoIndex + 1]));
@@ -63,13 +66,13 @@ int main(int argc, char **argv) {
         translator.load(":/translations/vox_zh_CN.qm"))
       app.installTranslator(&translator);
     engine.retranslate();
+    backend.retranslate();
   };
   QObject::connect(&preferences, &UiPreferences::languageChanged, &app,
                    translate);
-  QObject::connect(&preferences, &UiPreferences::languageChanged, &backend,
-                   &DesktopBackend::messageChanged);
   translate();
   engine.rootContext()->setContextProperty("backend", &backend);
+  engine.rootContext()->setContextProperty("recorder", &recorder);
   engine.rootContext()->setContextProperty("preferences", &preferences);
   QObject::connect(
       &engine, &QQmlApplicationEngine::objectCreationFailed, &app,
@@ -124,5 +127,9 @@ int main(int argc, char **argv) {
   if (editorIndex >= 0 && editorIndex + 1 < arguments.size())
     startEditorSmoke(app, engine, preferences, backend,
                      arguments[editorIndex + 1]);
+  const int studioIndex = arguments.indexOf("--smoke-studio");
+  if (studioIndex >= 0 && studioIndex + 1 < arguments.size())
+    startStudioSmoke(app, engine, preferences, backend,
+                     arguments[studioIndex + 1]);
   return app.exec();
 }

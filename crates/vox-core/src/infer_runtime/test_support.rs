@@ -40,6 +40,16 @@ impl InferRuntimeSdk for FakeSdk {
             .pop_front()
             .expect("fake speech")
     }
+    fn clone_voice(
+        &self,
+        r: &SpeechRequest,
+        wav: &[u8],
+        transcript: &str,
+        t: Duration,
+    ) -> Result<AudioBytesResponse, SdkAdapterError> {
+        assert!(!wav.is_empty() && !transcript.is_empty());
+        self.synthesize_speech(r, t)
+    }
     fn job(&self, _: &str) -> Result<JobSnapshot, SdkAdapterError> {
         self.jobs.lock().unwrap().pop_front().expect("fake job")
     }

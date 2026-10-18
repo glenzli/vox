@@ -16,6 +16,9 @@ class DesktopBackend final : public QObject {
   Q_PROPERTY(QVariantMap analysis READ analysis NOTIFY stateChanged)
   Q_PROPERTY(QVariantList voices READ voices NOTIFY capabilitiesChanged)
   Q_PROPERTY(
+      QVariantList builtinSounds READ builtinSounds NOTIFY capabilitiesChanged)
+  Q_PROPERTY(QVariantList languages READ languages NOTIFY capabilitiesChanged)
+  Q_PROPERTY(
       QVariantList recentProjects READ recentProjects NOTIFY stateChanged)
   Q_PROPERTY(QString path READ path NOTIFY stateChanged)
   Q_PROPERTY(bool dirty READ dirty NOTIFY documentChanged)
@@ -34,7 +37,13 @@ public:
   QVariantMap project() const { return m_project.toVariantMap(); }
   QVariantMap document() const { return m_draft.toVariantMap(); }
   QVariantMap analysis() const { return m_analysis.toVariantMap(); }
-  QVariantList voices() const { return m_voices.toVariantList(); }
+  QVariantList voices() const;
+  QVariantList builtinSounds() const;
+  QVariantList languages() const;
+  void retranslate() {
+    emit capabilitiesChanged();
+    emit messageChanged();
+  }
   QVariantList recentProjects() const;
   QString path() const { return m_path; }
   bool dirty() const { return m_dirty; }
@@ -55,6 +64,25 @@ public:
   Q_INVOKABLE void setLanguage(const QString &language);
   Q_INVOKABLE void setSpeed(int speed);
   Q_INVOKABLE void bindRole(const QString &role, const QString &alias);
+  Q_INVOKABLE void importReference(const QString &name,
+                                   const QString &transcript, const QUrl &file,
+                                   bool consent, bool recorded);
+  Q_INVOKABLE void bindReference(const QString &role, const QString &id);
+  Q_INVOKABLE void auditionReference(const QString &id, const QString &text);
+  Q_INVOKABLE void addBuiltin(const QString &key);
+  Q_INVOKABLE void previewBuiltin(const QString &key);
+  Q_INVOKABLE void importSound(const QUrl &file);
+  Q_INVOKABLE void generateSound(const QString &name, const QString &prompt,
+                                 int seconds, int seed, bool music);
+  Q_INVOKABLE void acceptSound(const QString &id);
+  Q_INVOKABLE void discardSound(const QString &id);
+  Q_INVOKABLE void bindSound(const QString &label, const QString &id);
+  Q_INVOKABLE void previewFile(const QUrl &file);
+  Q_INVOKABLE void playMaterial(const QString &kind, const QString &id);
+  Q_INVOKABLE void exportMaterial(const QString &kind, const QString &id,
+                                  const QUrl &destination);
+  Q_INVOKABLE void editMaterialInEcho(const QString &kind, const QString &id);
+  Q_INVOKABLE QString soundLabel(const QString &key) const;
   Q_INVOKABLE void bindCue(const QString &label, const QString &action);
   Q_INVOKABLE void importCue(const QString &label, const QUrl &url);
   Q_INVOKABLE void save();
@@ -111,6 +139,8 @@ private:
   int m_completed = 0, m_total = 0;
   QTimer m_saveTimer;
   QTimer m_probeTimer;
+  void materialCommand(const QString &action, const QJsonObject &fields,
+                       bool generate = false);
   void mutate(const std::function<void(QJsonObject &)> &mutation);
   void saveThen(std::function<void()> continuation);
   void apply(const QJsonObject &result, quint64 capturedEdit,

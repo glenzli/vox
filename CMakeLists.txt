@@ -25,15 +25,18 @@ qt_add_executable(vox-desktop
     apps/desktop/src/desktop_backend.cpp apps/desktop/src/desktop_backend.hpp
     apps/desktop/src/worker_client.cpp apps/desktop/src/worker_client.hpp
     apps/desktop/src/echo_launcher.cpp apps/desktop/src/echo_launcher.hpp
+    apps/desktop/src/desktop_materials.cpp
+    apps/desktop/src/reference_recorder.cpp apps/desktop/src/reference_recorder.hpp
     apps/desktop/src/ui_preferences.hpp
     apps/desktop/src/script_editor.cpp apps/desktop/src/script_editor.hpp
     apps/desktop/tests/workflow_smoke.cpp apps/desktop/tests/workflow_smoke.hpp
-    apps/desktop/tests/appearance_smoke.cpp apps/desktop/tests/editor_smoke.cpp)
+    apps/desktop/tests/appearance_smoke.cpp apps/desktop/tests/editor_smoke.cpp apps/desktop/tests/studio_smoke.cpp)
 target_include_directories(vox-desktop PRIVATE apps/desktop/src apps/desktop/tests)
 set_source_files_properties(apps/desktop/qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_add_qml_module(vox-desktop URI Vox.Desktop VERSION 1.0
     QML_FILES apps/desktop/qml/Main.qml apps/desktop/qml/Theme.qml
     apps/desktop/qml/IconButton.qml apps/desktop/qml/ActionButton.qml
+    apps/desktop/qml/MaterialsDialog.qml apps/desktop/qml/ReferenceDialog.qml
     apps/desktop/qml/ScriptEditor.qml
     apps/desktop/qml/VoicePanel.qml apps/desktop/qml/AudioPanel.qml
     apps/desktop/qml/ProjectSidebar.qml apps/desktop/qml/SettingsDialog.qml)
@@ -66,7 +69,8 @@ if(BUILD_TESTING)
     add_test(NAME vox-packaged-project COMMAND $<TARGET_FILE:vox-desktop> --smoke "${CMAKE_BINARY_DIR}/smoke-${PROJECT_VERSION}.vox")
     add_test(NAME vox-packaged-appearance COMMAND $<TARGET_FILE:vox-desktop> --smoke-appearance "${CMAKE_BINARY_DIR}/appearance-smoke")
     add_test(NAME vox-packaged-editor COMMAND $<TARGET_FILE:vox-desktop> --smoke-editor "${CMAKE_BINARY_DIR}/editor-smoke")
-    set_tests_properties(vox-packaged-startup vox-packaged-project vox-packaged-appearance vox-packaged-editor PROPERTIES TIMEOUT 30
+    add_test(NAME vox-packaged-studio COMMAND $<TARGET_FILE:vox-desktop> --smoke-studio "${CMAKE_BINARY_DIR}/studio-smoke")
+    set_tests_properties(vox-packaged-studio vox-packaged-startup vox-packaged-project vox-packaged-appearance vox-packaged-editor PROPERTIES TIMEOUT 30
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;XDG_CONFIG_HOME=${CMAKE_BINARY_DIR}/test-config"
         FAIL_REGULAR_EXPRESSION "QQml;ReferenceError;TypeError;Binding loop;failed to load;Unable to assign")
 endif()

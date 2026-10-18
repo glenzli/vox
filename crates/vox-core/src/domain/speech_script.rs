@@ -18,6 +18,8 @@ pub struct SpeechScriptOptions {
     pub revision: String,
     #[serde(default)]
     pub roles: BTreeMap<String, PresetVoiceSelection>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub reference_roles: BTreeMap<String, crate::AuthorizedVoiceReference>,
     #[serde(default)]
     pub cues: BTreeMap<String, SpeechCueAction>,
 }
@@ -26,6 +28,7 @@ impl Default for SpeechScriptOptions {
         Self {
             revision: SPEECH_SCRIPT_REVISION.into(),
             roles: BTreeMap::new(),
+            reference_roles: BTreeMap::new(),
             cues: BTreeMap::new(),
         }
     }
@@ -34,7 +37,10 @@ impl SpeechScriptOptions {
     #[must_use]
     pub fn is_valid(&self) -> bool {
         self.revision == SPEECH_SCRIPT_REVISION
-            && self.roles.len() <= 32
+            && self.roles.len() + self.reference_roles.len() <= 32
+            && self.reference_roles.iter().all(|(role, voice)| {
+                valid_label(role) && voice.is_executable() && !self.roles.contains_key(role)
+            })
             && self.cues.len() <= 128
             && self
                 .cues

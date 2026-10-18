@@ -11,8 +11,23 @@ Roles, delivery, scenes, pauses, sound cues and repeats reuse Shape's tested pro
 Repeats replay identical PCM without another model call.
 
 Vox uses its own Infer Runtime authorization for local-only, zero-cost, no-fallback synthesis.
-Nine voice presets and automatic or explicit speech language are supported. The interface supports
-English and Simplified Chinese, with light, dark and system-following themes and accessible icons
+Nine voice presets, local reference-voice imitation and automatic or explicit speech language are
+supported. Record a microphone sample or import a PCM16 WAV, enter its exact transcript and confirm
+permitted local use; name the immutable reference and assign it to narration or any role. The Base
+clone route currently supports 1× pace and neutral delivery. Original reference bytes, transcript and
+consent stay in the project. Microphone access is requested only when Record is pressed.
+
+Settings select the script editor’s installed font and size with preview/reset. Script highlighting
+and logical line numbers follow font, wrapping and theme changes without changing source text.
+
+The project library offers eight procedural built-in sounds, WAV imports and local Stable Audio 3
+sound-effect / short-music candidates (1–30 seconds, explicit seed, Chinese or English description).
+Listen, then accept a script-compatible copy; the original WAV, prompt preparation and Runtime
+receipt remain available for export and Echo editing. Chinese descriptions use local translation,
+retaining the original and effective prompts for review. Exact source grammar and accepted takes
+remain unchanged.
+
+The interface supports English and Simplified Chinese, with light, dark and system-following themes and accessible icons
 in a neutral black, white and gray palette.
 
 Accepted audio can open in [Echo](https://github.com/glenzli/echo)'s independent editor. Return its
@@ -36,7 +51,8 @@ The promoted app contains `vox-cli`. Qt must be installed on the development hos
 and notarized packaging is a separate release task.
 
 Infer Console issues a separate `vox` App credential. `scripts/provision_infer.py --help` describes
-the explicit operator helper for the narrow speech grant and `~/.config/vox/infer-credential`.
+the explicit operator helper for the narrow speech grant (`--studio` additionally enables
+Vox-only local reference voices, sound generation and Chinese prompt preparation) and `~/.config/vox/infer-credential`.
 It never uses Shape's credential. Enable grants through Console when its queues are idle.
 Settings can import an already issued Vox credential. Offline editing and saved audio stay usable.
 
@@ -59,5 +75,5 @@ See [architecture](docs/ARCHITECTURE.md), [automation](docs/AUTOMATION.md),
 
 Shape's existing projects and speech UI remain intact. This migration reuses production code;
 it does not rewrite Shape databases or automatically convert entire `.shape` projects. Exported
-text/scripts can be imported into Vox. Voice cloning, persistent per-segment re-recording and
+text/scripts can be imported into Vox. Persistent per-segment re-recording, voice design from descriptions and
 video dubbing remain future product decisions.

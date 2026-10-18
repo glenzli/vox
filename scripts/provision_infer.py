@@ -16,6 +16,7 @@ def main():
     parser.add_argument("--cli", required=True, type=Path)
     parser.add_argument("--credential", type=Path, default=Path.home()/".config/vox/infer-credential")
     parser.add_argument("--backup", type=Path, required=True)
+    parser.add_argument("--studio", action="store_true", help="Explicitly add local reference-voice, sound and faithful Chinese prompt grants to Vox")
     args = parser.parse_args()
     if not re.fullmatch(r"http://127\.0\.0\.1:\d+", args.console):
         raise SystemExit("Use an explicit numeric-loopback Console URL")
@@ -75,6 +76,30 @@ def main():
     if updated != current:
         if call("/api/config")["source"] != current: raise RuntimeError("Configuration changed; retry after review")
         call("/api/config",{"source":updated},"PUT")
+    if args.studio:
+        current_apps = {a["app_id"]:a for a in call("/api/access/apps")["apps"]}
+        app = current_apps["vox"]
+        allowed = ["speech.synthesize", "speech.clone_voice", "audio.generate_sound", "text.edit"]
+        overrides = dict(app["request_overrides"])
+        overrides.update({"priority":["interactive","background"], "capability_floor":["capable","foundational"], "latency":["interactive","balanced"]})
+        if app["allowed_intents"] != allowed or app["request_overrides"] != overrides:
+            fields = ["allowed_builtin_tools", "allowed_provider_access_classes", "allowed_cloud_input_modalities", "max_pending_jobs", "default_policy", "allowed_policies"]
+            body = {key:app[key] for key in fields}
+            body.update({"app_id":"vox", "allowed_intents":allowed, "request_overrides":overrides})
+            call("/api/access/apps/vox", body, "PUT")
+        current = call("/api/config")["source"]
+        config = tomllib.loads(current)
+        updated = current
+        routes = {"speech.clone_voice":["mlx_qwen3_tts_base_1_7b"], "audio.generate_sound":["stable_audio_3_sm_sfx_mlx","stable_audio_3_sm_music_mlx"], "text.edit":["ollama_qwen3_5_4b"]}
+        for intent, ids in routes.items():
+            route = config["apps"]["vox"].get("routing",{}).get("intents",{}).get(intent)
+            if route is None:
+                updated += '\n[apps.vox.routing.intents.'+json.dumps(intent)+']\ndeployment_ids = '+json.dumps(ids)+'\nmodel_profile_ids = []\n'
+            elif route.get("deployment_ids") != ids:
+                raise RuntimeError("Existing Vox studio route differs; review it before changing")
+        if updated != current:
+            if call("/api/config")["source"] != current: raise RuntimeError("Configuration changed; retry after review")
+            call("/api/config", {"source":updated}, "PUT")
     after = tomllib.loads(call("/api/config")["source"])
     previous = dict(before_config); final = dict(after)
     previous["apps"] = {k:v for k,v in previous["apps"].items() if k!="vox"}

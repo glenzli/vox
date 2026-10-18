@@ -129,7 +129,7 @@
 <context>
     <name>DesktopBackend</name>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="392"/>
+        <location filename="../src/desktop_backend.cpp" line="398"/>
         <source>[production: dialogue]
 [role: Host]
 [role: Guest]
@@ -150,7 +150,7 @@ Every story begins with a voice.</source>
 每个故事，都从一个声音开始。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="397"/>
+        <location filename="../src/desktop_backend.cpp" line="403"/>
         <source>[production: listening]
 [role: Narrator]
 [cue: turn; sound: chime]
@@ -173,7 +173,7 @@ A quiet morning. A new beginning.
 [end-repeat]</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="401"/>
+        <location filename="../src/desktop_backend.cpp" line="407"/>
         <source>[production: narration]
 [role: Narrator]
 
@@ -190,314 +190,419 @@ Give your words a moment to breathe.</source>
 给文字一点时间，让它慢慢呼吸。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="543"/>
+        <location filename="../src/desktop_backend.cpp" line="549"/>
+        <source>Material saved in this project</source>
+        <translation>素材已保存在此项目中</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_backend.cpp" line="551"/>
+        <source>Sound candidate is ready. Listen, then accept it for script use.</source>
+        <translation>音效候选已生成，试听后可采用到脚本中。</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_backend.cpp" line="554"/>
         <source>All changes saved</source>
         <translation>所有修改已保存</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="545"/>
+        <location filename="../src/desktop_backend.cpp" line="556"/>
         <source>Project created</source>
         <translation>工程已创建</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="547"/>
+        <location filename="../src/desktop_backend.cpp" line="558"/>
         <source>Project opened</source>
         <translation>工程已打开</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="549"/>
+        <location filename="../src/desktop_backend.cpp" line="560"/>
         <source>Your take is ready. Listen, then accept the version you want to keep.</source>
         <translation>配音已生成。请试听，再采用想要保留的版本。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="552"/>
+        <location filename="../src/desktop_backend.cpp" line="563"/>
         <source>Audio version accepted</source>
         <translation>已采用音频版本</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="554"/>
+        <location filename="../src/desktop_backend.cpp" line="565"/>
         <source>Take discarded</source>
         <translation>已丢弃候选录音</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="556"/>
+        <location filename="../src/desktop_backend.cpp" line="567"/>
         <source>WAV exported</source>
         <translation>WAV 已导出</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="558"/>
+        <location filename="../src/desktop_backend.cpp" line="569"/>
         <source>Stopping after the current segment…</source>
         <translation>完成当前段落后停止…</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="560"/>
+        <location filename="../src/desktop_backend.cpp" line="571"/>
         <source>Voice sample · synthesized audio</source>
         <translation>声音试听 · 合成音频</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="562"/>
+        <location filename="../src/desktop_backend.cpp" line="573"/>
         <source>Echo is open. Export your edit as WAV, then return it here for review.</source>
         <translation>Echo 已打开。编辑后导出 WAV，再回到这里取回并审核。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="565"/>
+        <location filename="../src/desktop_backend.cpp" line="576"/>
         <source>Echo edit is ready for review. Accept it to keep a new version.</source>
         <translation>Echo 编辑版已加入候选。采用后将保存为新版本。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="573"/>
+        <location filename="../src/desktop_backend.cpp" line="584"/>
+        <source>Confirm that you may use this voice for local synthesis.</source>
+        <translation>请确认你有权使用此声音进行本机合成。</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_backend.cpp" line="586"/>
+        <source>Name the voice and enter the exact words spoken in its reference recording.</source>
+        <translation>请填写音色名称和参考录音中准确的台词。</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_backend.cpp" line="589"/>
+        <source>Use a mono or stereo WAV reference between 0.5 and 120 seconds.</source>
+        <translation>请选择 0.5 至 120 秒的单声道或立体声 WAV 参考录音。</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_backend.cpp" line="592"/>
+        <source>The reference voice is missing or changed. Import it again.</source>
+        <translation>参考音色缺失或已更改，请重新导入。</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_backend.cpp" line="594"/>
+        <source>Reference voices currently require 1× pace and neutral delivery.</source>
+        <translation>音色模仿目前支持 1× 语速与自然平稳的演绎。</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_backend.cpp" line="597"/>
+        <source>Listen and accept this sound before using it in a script.</source>
+        <translation>请先试听并采用此音效，再用于脚本。</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_backend.cpp" line="599"/>
+        <source>This material is missing or invalid.</source>
+        <translation>此素材缺失或无效。</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_backend.cpp" line="601"/>
+        <source>Describe a sound in at most 2000 bytes and choose 1–30 seconds.</source>
+        <translation>声音描述最多 2000 字节，时长可选 1 至 30 秒。</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_backend.cpp" line="604"/>
+        <source>The sound description could not be prepared faithfully. Revise it or try again.</source>
+        <translation>声音描述未能准确转换，请修改描述或重试。</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_backend.cpp" line="607"/>
+        <source>Use a mono or stereo sound of at most 120 seconds.</source>
+        <translation>请选择不超过 120 秒的单声道或立体声音效。</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_backend.cpp" line="609"/>
+        <source>Sound generation cancelled. No candidate was added.</source>
+        <translation>音效生成已取消，未添加候选。</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_backend.cpp" line="612"/>
         <source>Use a pause between 0 and 120 seconds, for example [pause: 0.8s].</source>
         <translation>请使用 0 到 120 秒之间的停顿，例如 [pause: 0.8s]。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="579"/>
+        <location filename="../src/desktop_backend.cpp" line="618"/>
         <source>Check the repeat block: use one start and end, spoken content, and no nested repeat or scene boundary.</source>
         <translation>请检查重复块：起止指令要配对，并包含配音内容；不要嵌套重复或跨越场景。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="582"/>
+        <location filename="../src/desktop_backend.cpp" line="621"/>
         <source>Declare the role before using it, then choose its speaker voice.</source>
         <translation>请先声明角色，再使用它并选择相应声音。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="585"/>
+        <location filename="../src/desktop_backend.cpp" line="624"/>
         <source>Choose a speaker before the spoken passage.</source>
         <translation>请在配音段落前指定说话角色。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="587"/>
+        <location filename="../src/desktop_backend.cpp" line="626"/>
         <source>Declare this sound cue before using it and choose a sound or skip it.</source>
         <translation>请先声明音效，再选择声音或明确跳过。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="590"/>
+        <location filename="../src/desktop_backend.cpp" line="629"/>
         <source>Place production, role and cue declarations before the spoken content.</source>
         <translation>请把制作形式、角色和音效的声明放在配音内容之前。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="593"/>
+        <location filename="../src/desktop_backend.cpp" line="632"/>
         <source>Choose narration, dialogue or listening as the production form.</source>
         <translation>制作形式请选择旁白、对话或听力材料。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="596"/>
+        <location filename="../src/desktop_backend.cpp" line="635"/>
         <source>Choose neutral, clear, warm or lively delivery.</source>
         <translation>演绎方式请选择自然、清晰、温暖或轻快。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="598"/>
+        <location filename="../src/desktop_backend.cpp" line="637"/>
         <source>Choose a supported speech language or automatic detection.</source>
         <translation>请选择支持的配音语言，或使用自动识别。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="600"/>
+        <location filename="../src/desktop_backend.cpp" line="639"/>
         <source>Shorten this script or split it into separate projects.</source>
         <translation>请缩短脚本，或拆分为多个工程。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="603"/>
+        <location filename="../src/desktop_backend.cpp" line="642"/>
         <source>Use a supported script instruction on its own line. Open the script guide for examples.</source>
         <translation>请使用支持的脚本指令，并单独放在一行。示例可在脚本指南中查看。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="606"/>
+        <location filename="../src/desktop_backend.cpp" line="645"/>
         <source>Add a spoken passage to the script.</source>
         <translation>请在脚本中加入需要配音的段落。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="608"/>
+        <location filename="../src/desktop_backend.cpp" line="647"/>
         <source>Check the script, choose a voice for every used role and resolve its sound cues.</source>
         <translation>请检查脚本，为使用中的每个角色选择声音，并处理音效提示。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="611"/>
+        <location filename="../src/desktop_backend.cpp" line="650"/>
         <source>Connect Vox to Infer Runtime with its own credential in Settings.</source>
         <translation>请在设置中使用 Vox 自己的凭据连接 Infer Runtime。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="614"/>
+        <location filename="../src/desktop_backend.cpp" line="653"/>
         <source>This project changed. Reopen it to review the current version.</source>
         <translation>工程已有变化。请重新打开，查看当前版本。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="616"/>
+        <location filename="../src/desktop_backend.cpp" line="655"/>
         <source>The file could not be read or written. Check its location and permissions.</source>
         <translation>无法读写文件，请检查文件位置与权限。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="619"/>
+        <location filename="../src/desktop_backend.cpp" line="658"/>
         <source>That location already exists. Choose a new name.</source>
         <translation>该位置已存在，请使用新的名称。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="621"/>
+        <location filename="../src/desktop_backend.cpp" line="660"/>
         <source>Synthesis stopped. Existing audio is kept.</source>
         <translation>合成已停止，已有音频仍会保留。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="623"/>
+        <location filename="../src/desktop_backend.cpp" line="662"/>
         <source>Sound cues need a 24 kHz mono, 16-bit PCM WAV file, up to 8 MB.</source>
         <translation>音效需要 24 kHz、单声道、16 位 PCM WAV 文件，最大 8 MB。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="626"/>
+        <location filename="../src/desktop_backend.cpp" line="665"/>
         <source>Allow conversion from 24-bit to 16-bit WAV to review this Echo export.</source>
         <translation>请允许将 24 位 WAV 转为 16 位，以审核这份 Echo 导出。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="629"/>
+        <location filename="../src/desktop_backend.cpp" line="668"/>
         <source>Choose the Echo executable in Settings, then try again.</source>
         <translation>请先在设置中选择 Echo 可执行文件，然后重试。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="631"/>
+        <location filename="../src/desktop_backend.cpp" line="670"/>
         <source>This Echo build does not support independent editing. Choose a current Echo build in Settings.</source>
         <translation>这个 Echo 构建不支持独立编辑，请在设置中选择支持该功能的新版本。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="634"/>
+        <location filename="../src/desktop_backend.cpp" line="673"/>
         <source>Echo is opening. Wait a moment, then try again.</source>
         <translation>正在打开 Echo，请稍等片刻。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="636"/>
+        <location filename="../src/desktop_backend.cpp" line="675"/>
         <source>Accept this take before opening it in Echo.</source>
         <translation>请先采用这个候选，再用 Echo 打开。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="638"/>
+        <location filename="../src/desktop_backend.cpp" line="677"/>
         <source>Write or import a script first.</source>
         <translation>请先编写或导入脚本。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="640"/>
+        <location filename="../src/desktop_backend.cpp" line="679"/>
         <source>A voice is being rendered. Wait for it to finish or stop it.</source>
         <translation>配音正在生成，请等待完成或停止生成。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="642"/>
+        <location filename="../src/desktop_backend.cpp" line="681"/>
         <source>Choose a UTF-8 text file.</source>
         <translation>请选择 UTF-8 编码的文本文件。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="644"/>
+        <location filename="../src/desktop_backend.cpp" line="683"/>
         <source>Use the .vox extension for this project.</source>
         <translation>请使用 .vox 作为工程扩展名。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="646"/>
+        <location filename="../src/desktop_backend.cpp" line="685"/>
         <source>This audio format is unsupported. Export a PCM WAV from Echo.</source>
         <translation>暂不支持这个音频格式，请在 Echo 中导出 PCM WAV。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="649"/>
+        <location filename="../src/desktop_backend.cpp" line="688"/>
         <source>Infer Runtime is unavailable. You can keep editing and listening to saved audio.</source>
         <translation>Infer Runtime 暂不可用。你仍然可以编辑脚本、试听已保存的音频。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="651"/>
+        <location filename="../src/desktop_backend.cpp" line="690"/>
         <source>The operation could not be completed (%1).</source>
         <translation>操作未能完成（%1）。</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="655"/>
+        <location filename="../src/desktop_backend.cpp" line="694"/>
         <source>Vivian · Bright</source>
         <translation>Vivian · 明亮</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="657"/>
+        <location filename="../src/desktop_backend.cpp" line="696"/>
         <source>Serena · Warm</source>
         <translation>Serena · 温暖</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="659"/>
+        <location filename="../src/desktop_backend.cpp" line="698"/>
         <source>Uncle Fu · Mature</source>
         <translation>Uncle Fu · 成熟</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="661"/>
+        <location filename="../src/desktop_backend.cpp" line="700"/>
         <source>Dylan · Beijing</source>
         <translation>Dylan · 北京口音</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="663"/>
+        <location filename="../src/desktop_backend.cpp" line="702"/>
         <source>Eric · Sichuan</source>
         <translation>Eric · 四川口音</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="665"/>
+        <location filename="../src/desktop_backend.cpp" line="704"/>
         <source>Ryan · Dynamic</source>
         <translation>Ryan · 生动</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="667"/>
+        <location filename="../src/desktop_backend.cpp" line="706"/>
         <source>Aiden · Warm</source>
         <translation>Aiden · 温暖</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="669"/>
+        <location filename="../src/desktop_backend.cpp" line="708"/>
         <source>Ono Anna · Bright</source>
         <translation>Ono Anna · 明亮</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="671"/>
+        <location filename="../src/desktop_backend.cpp" line="710"/>
         <source>Sohee · Warm</source>
         <translation>Sohee · 温暖</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="676"/>
+        <location filename="../src/desktop_backend.cpp" line="715"/>
         <source>Automatic</source>
         <translation>自动识别</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="678"/>
+        <location filename="../src/desktop_backend.cpp" line="717"/>
         <source>Chinese</source>
         <translation>中文</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="680"/>
+        <location filename="../src/desktop_backend.cpp" line="719"/>
         <source>English</source>
         <translation>英语</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="682"/>
+        <location filename="../src/desktop_backend.cpp" line="721"/>
         <source>Japanese</source>
         <translation>日语</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="684"/>
+        <location filename="../src/desktop_backend.cpp" line="723"/>
         <source>Korean</source>
         <translation>韩语</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="686"/>
+        <location filename="../src/desktop_backend.cpp" line="725"/>
         <source>German</source>
         <translation>德语</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="688"/>
+        <location filename="../src/desktop_backend.cpp" line="727"/>
         <source>French</source>
         <translation>法语</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="690"/>
+        <location filename="../src/desktop_backend.cpp" line="729"/>
         <source>Russian</source>
         <translation>俄语</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="692"/>
+        <location filename="../src/desktop_backend.cpp" line="731"/>
         <source>Portuguese</source>
         <translation>葡萄牙语</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="694"/>
+        <location filename="../src/desktop_backend.cpp" line="733"/>
         <source>Spanish</source>
         <translation>西班牙语</translation>
     </message>
     <message>
-        <location filename="../src/desktop_backend.cpp" line="696"/>
+        <location filename="../src/desktop_backend.cpp" line="735"/>
         <source>Italian</source>
         <translation>意大利语</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_materials.cpp" line="163"/>
+        <source>Soft chime</source>
+        <translation>轻柔提示音</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_materials.cpp" line="165"/>
+        <source>Double beep</source>
+        <translation>双提示音</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_materials.cpp" line="167"/>
+        <source>Click</source>
+        <translation>轻点</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_materials.cpp" line="169"/>
+        <source>Wood block</source>
+        <translation>木鱼敲击</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_materials.cpp" line="171"/>
+        <source>Bell</source>
+        <translation>铃声</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_materials.cpp" line="173"/>
+        <source>Success</source>
+        <translation>完成提示</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_materials.cpp" line="175"/>
+        <source>Whoosh</source>
+        <translation>掠过</translation>
+    </message>
+    <message>
+        <location filename="../src/desktop_materials.cpp" line="177"/>
+        <source>Countdown</source>
+        <translation>倒计时</translation>
     </message>
 </context>
 <context>
@@ -519,13 +624,13 @@ Give your words a moment to breathe.</source>
     </message>
     <message>
         <location filename="../qml/Main.qml" line="86"/>
-        <location filename="../qml/Main.qml" line="222"/>
+        <location filename="../qml/Main.qml" line="223"/>
         <source>New project</source>
         <translation>新建工程</translation>
     </message>
     <message>
         <location filename="../qml/Main.qml" line="87"/>
-        <location filename="../qml/Main.qml" line="223"/>
+        <location filename="../qml/Main.qml" line="224"/>
         <source>Open project</source>
         <translation>打开工程</translation>
     </message>
@@ -551,7 +656,7 @@ Give your words a moment to breathe.</source>
     </message>
     <message>
         <location filename="../qml/Main.qml" line="116"/>
-        <location filename="../qml/Main.qml" line="241"/>
+        <location filename="../qml/Main.qml" line="242"/>
         <source>Script guide</source>
         <translation>脚本指南</translation>
     </message>
@@ -581,132 +686,350 @@ Give your words a moment to breathe.</source>
         <translation>阅读</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="176"/>
+        <location filename="../qml/Main.qml" line="177"/>
         <source>Pause · %1 s</source>
         <translation>停顿 · %1 秒</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="177"/>
+        <location filename="../qml/Main.qml" line="178"/>
         <source>Sound · %1</source>
         <translation>音效 · %1</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="178"/>
+        <location filename="../qml/Main.qml" line="179"/>
         <source>Scene · %1</source>
         <translation>场景 · %1</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="179"/>
+        <location filename="../qml/Main.qml" line="180"/>
         <source>Repeat %1 times · same recording</source>
         <translation>重复 %1 次 · 重播同一录音</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="180"/>
+        <location filename="../qml/Main.qml" line="181"/>
         <source>End repeat</source>
         <translation>重复结束</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="192"/>
+        <location filename="../qml/Main.qml" line="193"/>
         <source>Line %1 · %2</source>
         <translation>第 %1 行 · %2</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="196"/>
+        <location filename="../qml/Main.qml" line="197"/>
         <source>%1 characters</source>
         <translation>%1 个字符</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="198"/>
+        <location filename="../qml/Main.qml" line="199"/>
         <source>%1 / %2 segments</source>
         <translation>%1 / %2 段</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="198"/>
+        <location filename="../qml/Main.qml" line="199"/>
         <source>Preparing…</source>
         <translation>准备中…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="198"/>
+        <location filename="../qml/Main.qml" line="199"/>
         <source>Ready to render</source>
         <translation>可以生成配音</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="198"/>
+        <location filename="../qml/Main.qml" line="199"/>
         <source>Review voices and script</source>
         <translation>请检查脚本与角色声音</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="199"/>
+        <location filename="../qml/Main.qml" line="200"/>
         <source>Stop after current segment</source>
         <translation>完成当前段落后停止</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="200"/>
+        <location filename="../qml/Main.qml" line="201"/>
         <source>Rendering…</source>
         <translation>生成中…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="200"/>
+        <location filename="../qml/Main.qml" line="201"/>
         <source>Render voice</source>
         <translation>生成配音</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="218"/>
+        <location filename="../qml/Main.qml" line="219"/>
         <source>Give your words a voice.</source>
         <translation>让文字，拥有声音。</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="219"/>
+        <location filename="../qml/Main.qml" line="220"/>
         <source>A quiet space for narration, dialogue and listening materials.
 Write the script. Direct the voices. Keep the take.</source>
         <translation>专注旁白、对话与听力材料的创作空间。
 写下脚本，安排声音，留下满意的录音。</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="235"/>
+        <location filename="../qml/Main.qml" line="236"/>
         <source>Your project stays on this device.</source>
         <translation>工程保存在这台设备上。</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="250"/>
-        <source>A voice is still rendering</source>
-        <translation>配音仍在生成</translation>
+        <location filename="../qml/Main.qml" line="251"/>
+        <source>Audio is still being generated</source>
+        <translation>音频仍在生成中</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="255"/>
-        <source>Stop after the current segment, then close Vox?</source>
-        <translation>完成当前段落后停止生成，然后关闭 Vox？</translation>
+        <location filename="../qml/Main.qml" line="256"/>
+        <source>Stop after the current generation, then close Vox?</source>
+        <translation>在当前生成结束后停止，并关闭 Vox？</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="258"/>
+        <location filename="../qml/Main.qml" line="259"/>
         <source>New Vox project</source>
         <translation>新建 Vox 工程</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="258"/>
         <location filename="../qml/Main.qml" line="259"/>
+        <location filename="../qml/Main.qml" line="260"/>
         <source>Vox project (*.vox)</source>
         <translation>Vox 工程 (*.vox)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="259"/>
+        <location filename="../qml/Main.qml" line="260"/>
         <source>Open Vox project</source>
         <translation>打开 Vox 工程</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="260"/>
+        <location filename="../qml/Main.qml" line="261"/>
         <source>Import script</source>
         <translation>导入脚本</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="260"/>
+        <location filename="../qml/Main.qml" line="261"/>
         <source>Text files (*.txt *.md)</source>
         <translation>文本文件 (*.txt *.md)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="260"/>
+        <location filename="../qml/Main.qml" line="261"/>
         <source>All files (*)</source>
         <translation>所有文件 (*)</translation>
+    </message>
+</context>
+<context>
+    <name>MaterialsDialog</name>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="8"/>
+        <source>Voice &amp; sound library</source>
+        <translation>音色与音效库</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="19"/>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="34"/>
+        <source>Reference voices</source>
+        <translation>参考音色</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="36"/>
+        <source>Sound effects</source>
+        <translation>音效</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="42"/>
+        <source>Working locally…</source>
+        <translation>正在本机处理…</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="43"/>
+        <source>Stop after current generation</source>
+        <translation>当前生成结束后停止</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="53"/>
+        <source>Your reference voices</source>
+        <translation>我的参考音色</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="54"/>
+        <source>Add voice</source>
+        <translation>添加音色</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="56"/>
+        <source>Record or import a voice, then choose it for narration or any role. References stay in this project.</source>
+        <translation>录制或导入参考音色后，可用于旁白或任意角色。素材保存在当前项目中。</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="57"/>
+        <source>No reference voices yet. Add a recording to begin.</source>
+        <translation>还没有参考音色，添加一段录音即可开始。</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="71"/>
+        <source>Listen to reference</source>
+        <translation>试听参考录音</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="72"/>
+        <location filename="../qml/MaterialsDialog.qml" line="148"/>
+        <source>Edit a copy in Echo</source>
+        <translation>在 Echo 中编辑副本</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="73"/>
+        <location filename="../qml/MaterialsDialog.qml" line="149"/>
+        <location filename="../qml/MaterialsDialog.qml" line="168"/>
+        <source>Export original WAV</source>
+        <translation>导出原始 WAV</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="77"/>
+        <source>%1 s · local reference</source>
+        <translation>%1 秒 · 本机参考音色</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="78"/>
+        <source>Synthesize a preview</source>
+        <translation>合成试听</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="83"/>
+        <source>Hello. Welcome to Vox. Every story begins with a voice.</source>
+        <translation>你好，欢迎使用 Vox。每一个故事，从声音开始。</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="83"/>
+        <source>Words for the synthesized preview</source>
+        <translation>填写合成试听的台词</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="84"/>
+        <source>After editing in Echo, import its exported WAV as a new reference and confirm the spoken words.</source>
+        <translation>在 Echo 剪辑后，将导出的 WAV 作为新参考音色导入，并确认录音台词。</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="95"/>
+        <source>Built-in sounds</source>
+        <translation>内置音效</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="106"/>
+        <location filename="../qml/MaterialsDialog.qml" line="147"/>
+        <source>Preview sound</source>
+        <translation>试听音效</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="107"/>
+        <source>Add to sound library</source>
+        <translation>添加到音效库</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="112"/>
+        <source>Generate a sound</source>
+        <translation>生成声音</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="113"/>
+        <source>Describe a sound in English or Chinese. Listen to the candidate before accepting it.</source>
+        <translation>支持中英文描述。生成后先试听，再决定是否采用。</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="114"/>
+        <source>Sound name</source>
+        <translation>音效名称</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="115"/>
+        <source>A soft bell, followed by gentle rain. No music or speech.</source>
+        <translation>一声轻柔的铃声，随后是细雨声。不含音乐或人声。</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="117"/>
+        <source>Sound effect</source>
+        <translation>音效</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="117"/>
+        <source>Short music</source>
+        <translation>短音乐</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="118"/>
+        <source>Seconds</source>
+        <translation>秒</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="120"/>
+        <source>Seed</source>
+        <translation>种子</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="122"/>
+        <source>Generation seed</source>
+        <translation>生成种子</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="125"/>
+        <location filename="../qml/MaterialsDialog.qml" line="167"/>
+        <source>Import sound WAV</source>
+        <translation>导入音效 WAV</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="127"/>
+        <source>Generate candidate</source>
+        <translation>生成候选</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="130"/>
+        <source>Project sounds</source>
+        <translation>项目音效</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="131"/>
+        <source>Accepting prepares a script-compatible copy and keeps the original. Choose accepted sounds beside each cue in your script.</source>
+        <translation>采用时会生成脚本可用的副本，并保留原始音频。之后可在脚本各提示音旁选择已采用的音效。</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="146"/>
+        <source>Accepted</source>
+        <translation>已采用</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="146"/>
+        <source>Candidate</source>
+        <translation>候选</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="154"/>
+        <source>%1 s</source>
+        <translation>%1 秒</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="155"/>
+        <source>Discard candidate</source>
+        <translation>丢弃候选</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="156"/>
+        <source>Accept for scripts</source>
+        <translation>采用为音效</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="161"/>
+        <source>For trimming, fades and mixing, open a copy in Echo. Import its WAV export here as a new sound candidate.</source>
+        <translation>裁剪、淡入淡出和混音可交给 Echo；将其导出的 WAV 导入此处，即可作为新的音效候选。</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="167"/>
+        <source>PCM16 WAV audio (*.wav)</source>
+        <translation>PCM16 WAV 音频 (*.wav)</translation>
+    </message>
+    <message>
+        <location filename="../qml/MaterialsDialog.qml" line="168"/>
+        <source>WAV audio (*.wav)</source>
+        <translation>WAV 音频 (*.wav)</translation>
     </message>
 </context>
 <context>
@@ -779,9 +1102,166 @@ Write the script. Direct the voices. Keep the take.</source>
     </message>
 </context>
 <context>
+    <name>ReferenceDialog</name>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="8"/>
+        <source>Add reference voice</source>
+        <translation>添加参考音色</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="21"/>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="38"/>
+        <source>A voice from a recording</source>
+        <translation>从录音中采样音色</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="39"/>
+        <source>Record clear speech or import a mono/stereo PCM16 WAV. Include the exact words spoken; this is a reference for new speech, not model training.</source>
+        <translation>录制清晰的语音，或导入单声道、立体声 PCM16 WAV，并填写准确台词。参考录音用于合成新语音，无需训练模型。</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="40"/>
+        <source>Voice name</source>
+        <translation>音色名称</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="42"/>
+        <source>No microphone</source>
+        <translation>未发现麦克风</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="43"/>
+        <source>Stop recording</source>
+        <translation>停止录音</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="43"/>
+        <source>Record</source>
+        <translation>录音</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="44"/>
+        <source>Import WAV</source>
+        <translation>导入 WAV</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="48"/>
+        <source>Waiting for microphone access…</source>
+        <translation>正在等待麦克风授权…</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="48"/>
+        <source>%1 s · up to 60 s</source>
+        <translation>%1 秒 · 最长 60 秒</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="49"/>
+        <source>Microphone level</source>
+        <translation>麦克风音量</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="55"/>
+        <source>Listen to reference</source>
+        <translation>试听参考录音</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="57"/>
+        <source>Exact words in the reference</source>
+        <translation>参考录音的准确台词</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="60"/>
+        <source>Enter every spoken word from the reference, in its original language.</source>
+        <translation>按录音原语言填写完整、准确的台词。</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="62"/>
+        <source>Use sample text to read aloud</source>
+        <translation>使用朗读示例</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="62"/>
+        <source>Welcome to Vox. A quiet morning, a familiar voice, and a story waiting to be told.</source>
+        <translation>欢迎使用 Vox。一个安静的早晨，一段熟悉的声音，一个等待讲述的故事。</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="63"/>
+        <source>I own this voice or have permission to use it for local, disclosed synthetic speech.</source>
+        <translation>这是我的声音，或我已获准在本机使用，并标记为合成语音。</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="20"/>
+        <source>Saved only in this Vox project.</source>
+        <translation>仅保存在此 Vox 项目中。</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="22"/>
+        <source>Save reference voice</source>
+        <translation>保存参考音色</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="68"/>
+        <source>Import reference voice</source>
+        <translation>导入参考音色</translation>
+    </message>
+    <message>
+        <location filename="../qml/ReferenceDialog.qml" line="68"/>
+        <source>PCM16 WAV audio (*.wav)</source>
+        <translation>PCM16 WAV 音频 (*.wav)</translation>
+    </message>
+</context>
+<context>
+    <name>ReferenceRecorder</name>
+    <message>
+        <location filename="../src/reference_recorder.cpp" line="40"/>
+        <source>Microphone access is denied. Enable Vox in System Settings, then try again.</source>
+        <translation>麦克风访问被拒绝，请在系统设置中为 Vox 开启权限后重试。</translation>
+    </message>
+    <message>
+        <location filename="../src/reference_recorder.cpp" line="54"/>
+        <source>Microphone access was not granted.</source>
+        <translation>尚未获得麦克风权限。</translation>
+    </message>
+    <message>
+        <location filename="../src/reference_recorder.cpp" line="68"/>
+        <source>No microphone is available.</source>
+        <translation>没有可用的麦克风。</translation>
+    </message>
+    <message>
+        <location filename="../src/reference_recorder.cpp" line="82"/>
+        <source>This microphone format is not supported.</source>
+        <translation>暂不支持此麦克风的录音格式。</translation>
+    </message>
+    <message>
+        <location filename="../src/reference_recorder.cpp" line="90"/>
+        <source>Could not start the microphone.</source>
+        <translation>无法启动麦克风。</translation>
+    </message>
+    <message>
+        <location filename="../src/reference_recorder.cpp" line="100"/>
+        <source>Microphone recording stopped unexpectedly.</source>
+        <translation>麦克风录音意外停止。</translation>
+    </message>
+    <message>
+        <location filename="../src/reference_recorder.cpp" line="171"/>
+        <source>Record at least half a second of clear speech.</source>
+        <translation>请至少录制半秒清晰的语音。</translation>
+    </message>
+    <message>
+        <location filename="../src/reference_recorder.cpp" line="178"/>
+        <location filename="../src/reference_recorder.cpp" line="195"/>
+        <source>Could not save the recording.</source>
+        <translation>无法保存录音。</translation>
+    </message>
+</context>
+<context>
     <name>ScriptEditor</name>
     <message>
-        <location filename="../qml/ScriptEditor.qml" line="34"/>
+        <location filename="../qml/ScriptEditor.qml" line="45"/>
         <source>Start with your words.
 
 Write a narration, import an existing script, or choose a form on the left.</source>
@@ -790,7 +1270,7 @@ Write a narration, import an existing script, or choose a form on the left.</sou
 写一段旁白，导入已有的脚本，或从左侧选择一种形式。</translation>
     </message>
     <message>
-        <location filename="../qml/ScriptEditor.qml" line="41"/>
+        <location filename="../qml/ScriptEditor.qml" line="52"/>
         <source>Script editor</source>
         <translation>脚本编辑器</translation>
     </message>
@@ -803,28 +1283,28 @@ Write a narration, import an existing script, or choose a form on the left.</sou
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="16"/>
+        <location filename="../qml/SettingsDialog.qml" line="21"/>
         <source>Appearance</source>
         <translation>外观</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="18"/>
+        <location filename="../qml/SettingsDialog.qml" line="23"/>
         <source>Theme</source>
         <translation>主题</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="21"/>
-        <location filename="../qml/SettingsDialog.qml" line="30"/>
+        <location filename="../qml/SettingsDialog.qml" line="24"/>
+        <location filename="../qml/SettingsDialog.qml" line="28"/>
         <source>Follow system</source>
         <translation>跟随系统</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="21"/>
+        <location filename="../qml/SettingsDialog.qml" line="24"/>
         <source>Light</source>
         <translation>亮色</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="21"/>
+        <location filename="../qml/SettingsDialog.qml" line="24"/>
         <source>Dark</source>
         <translation>暗色</translation>
     </message>
@@ -834,53 +1314,83 @@ Write a narration, import an existing script, or choose a form on the left.</sou
         <translation>界面语言</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="36"/>
+        <location filename="../qml/SettingsDialog.qml" line="31"/>
+        <source>Script editor</source>
+        <translation>脚本编辑区</translation>
+    </message>
+    <message>
+        <location filename="../qml/SettingsDialog.qml" line="32"/>
+        <source>Default font for scripts only. Interface text and exported audio are unaffected.</source>
+        <translation>默认字体仅用于脚本编辑区，不影响界面文字和导出音频。</translation>
+    </message>
+    <message>
+        <location filename="../qml/SettingsDialog.qml" line="40"/>
+        <source>Script font</source>
+        <translation>脚本字体</translation>
+    </message>
+    <message>
+        <location filename="../qml/SettingsDialog.qml" line="42"/>
+        <source>Script font size</source>
+        <translation>脚本字号</translation>
+    </message>
+    <message>
+        <location filename="../qml/SettingsDialog.qml" line="50"/>
+        <source>Show line numbers</source>
+        <translation>显示行号</translation>
+    </message>
+    <message>
+        <location filename="../qml/SettingsDialog.qml" line="51"/>
+        <source>Reset font</source>
+        <translation>恢复默认字体</translation>
+    </message>
+    <message>
+        <location filename="../qml/SettingsDialog.qml" line="54"/>
         <source>Voice synthesis</source>
         <translation>语音合成</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="38"/>
+        <location filename="../qml/SettingsDialog.qml" line="55"/>
         <source>Infer Runtime is connected</source>
         <translation>Infer Runtime 已连接</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="38"/>
+        <location filename="../qml/SettingsDialog.qml" line="55"/>
         <source>Infer Runtime needs a connection</source>
         <translation>需要连接 Infer Runtime</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="45"/>
+        <location filename="../qml/SettingsDialog.qml" line="56"/>
         <source>Vox uses its own local authorization. Import the credential issued for Vox in Infer Console.</source>
         <translation>Vox 使用独立的本地授权。请导入 Infer Console 为 Vox 签发的凭据。</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="48"/>
+        <location filename="../qml/SettingsDialog.qml" line="58"/>
         <source>Import credential</source>
         <translation>导入凭据</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="49"/>
+        <location filename="../qml/SettingsDialog.qml" line="59"/>
         <source>Check connection</source>
         <translation>检查连接</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="52"/>
+        <location filename="../qml/SettingsDialog.qml" line="62"/>
         <source>Edit in Echo</source>
         <translation>在 Echo 中编辑</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="53"/>
+        <location filename="../qml/SettingsDialog.qml" line="63"/>
         <source>Open accepted audio in Echo’s independent editor. Return its WAV export to review a new take.</source>
         <translation>将已采用的音频送到 Echo 独立编辑。导出 WAV 后返回这里，作为新的候选版本审核。</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="56"/>
-        <location filename="../qml/SettingsDialog.qml" line="60"/>
+        <location filename="../qml/SettingsDialog.qml" line="66"/>
+        <location filename="../qml/SettingsDialog.qml" line="71"/>
         <source>Choose Echo executable</source>
         <translation>选择 Echo 可执行文件</translation>
     </message>
     <message>
-        <location filename="../qml/SettingsDialog.qml" line="59"/>
+        <location filename="../qml/SettingsDialog.qml" line="70"/>
         <source>Choose Vox credential</source>
         <translation>选择 Vox 凭据</translation>
     </message>
@@ -888,97 +1398,122 @@ Write a narration, import an existing script, or choose a form on the left.</sou
 <context>
     <name>VoicePanel</name>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="27"/>
+        <location filename="../qml/VoicePanel.qml" line="37"/>
+        <source>Audio / open library…</source>
+        <translation>音频 / 打开音效库…</translation>
+    </message>
+    <message>
+        <location filename="../qml/VoicePanel.qml" line="53"/>
         <source>VOICES &amp; DIRECTION</source>
         <translation>声音与演绎</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="28"/>
+        <location filename="../qml/VoicePanel.qml" line="56"/>
+        <source>Voice library</source>
+        <translation>音色库</translation>
+    </message>
+    <message>
+        <location filename="../qml/VoicePanel.qml" line="57"/>
+        <source>Sounds</source>
+        <translation>音效库</translation>
+    </message>
+    <message>
+        <location filename="../qml/VoicePanel.qml" line="59"/>
         <source>Default voice</source>
         <translation>默认声音</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="40"/>
+        <location filename="../qml/VoicePanel.qml" line="71"/>
         <source>Audition this voice</source>
         <translation>试听这个声音</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="42"/>
+        <location filename="../qml/VoicePanel.qml" line="73"/>
         <source>Language</source>
         <translation>配音语言</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="51"/>
+        <location filename="../qml/VoicePanel.qml" line="82"/>
         <source>Pace</source>
         <translation>语速</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="61"/>
+        <location filename="../qml/VoicePanel.qml" line="92"/>
         <source>Speech pace</source>
         <translation>配音语速</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="64"/>
+        <location filename="../qml/VoicePanel.qml" line="94"/>
+        <source>Reference voices use 1× pace and neutral delivery.</source>
+        <translation>参考音色支持 1× 语速与自然平稳的演绎。</translation>
+    </message>
+    <message>
+        <location filename="../qml/VoicePanel.qml" line="96"/>
         <source>Roles</source>
         <translation>角色</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="66"/>
+        <location filename="../qml/VoicePanel.qml" line="98"/>
         <source>Declare roles in your script, then choose a voice for each one.</source>
         <translation>在脚本中声明角色，再为每个角色选择声音。</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="84"/>
+        <location filename="../qml/VoicePanel.qml" line="116"/>
         <source>Choose a voice</source>
         <translation>选择声音</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="88"/>
+        <location filename="../qml/VoicePanel.qml" line="120"/>
         <source>Audition role voice</source>
         <translation>试听角色声音</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="92"/>
+        <location filename="../qml/VoicePanel.qml" line="124"/>
         <source>Sound cues</source>
         <translation>音效提示</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="104"/>
+        <location filename="../qml/VoicePanel.qml" line="141"/>
+        <source>Open sound library</source>
+        <translation>打开音效库</translation>
+    </message>
+    <message>
+        <location filename="../qml/VoicePanel.qml" line="37"/>
         <source>From script</source>
         <translation>使用脚本声明</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="104"/>
+        <location filename="../qml/VoicePanel.qml" line="15"/>
+        <source>Reference · %1</source>
+        <translation>参考 · %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/VoicePanel.qml" line="33"/>
+        <source>Hello. Welcome to Vox. Every story begins with a voice.</source>
+        <translation>你好，欢迎使用 Vox。每一个故事，从声音开始。</translation>
+    </message>
+    <message>
+        <location filename="../qml/VoicePanel.qml" line="37"/>
         <source>Chime</source>
         <translation>提示音</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="104"/>
+        <location filename="../qml/VoicePanel.qml" line="37"/>
         <source>Skip</source>
         <translation>跳过</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="104"/>
-        <source>Imported WAV</source>
-        <translation>导入的 WAV</translation>
-    </message>
-    <message>
-        <location filename="../qml/VoicePanel.qml" line="109"/>
-        <source>Import cue WAV</source>
-        <translation>导入音效 WAV</translation>
-    </message>
-    <message>
-        <location filename="../qml/VoicePanel.qml" line="114"/>
+        <location filename="../qml/VoicePanel.qml" line="146"/>
         <source>Generated speech is labeled as synthetic. Your accepted takes stay available when you revise the script.</source>
         <translation>生成的配音会标为合成音频。修改脚本后，已采用的录音版本仍会保留。</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="117"/>
+        <location filename="../qml/VoicePanel.qml" line="150"/>
         <source>Import sound cue</source>
         <translation>导入音效</translation>
     </message>
     <message>
-        <location filename="../qml/VoicePanel.qml" line="117"/>
+        <location filename="../qml/VoicePanel.qml" line="150"/>
         <source>WAV audio (*.wav)</source>
         <translation>WAV 音频 (*.wav)</translation>
     </message>

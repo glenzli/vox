@@ -13,3 +13,6 @@ void startAppearanceSmoke(QGuiApplication &, QQmlApplicationEngine &,
                           const QString &path);
 void startEditorSmoke(QGuiApplication &, QQmlApplicationEngine &,
                       UiPreferences &, DesktopBackend &, const QString &path);
+
+void startStudioSmoke(QGuiApplication &, QQmlApplicationEngine &,
+                      UiPreferences &, DesktopBackend &, const QString &);

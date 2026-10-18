@@ -20,6 +20,8 @@ pub struct Document {
     pub text: String,
     pub format: ScriptFormat,
     pub voice: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reference_voice: Option<crate::AuthorizedVoiceReference>,
     pub language: String,
     pub speed_milli: u16,
     pub options: SpeechScriptOptions,
@@ -30,6 +32,7 @@ impl Default for Document {
             text: String::new(),
             format: ScriptFormat::Plain,
             voice: crate::SPEECH_PRESETS[0].alias.into(),
+            reference_voice: None,
             language: "auto".into(),
             speed_milli: 1000,
             options: SpeechScriptOptions::default(),
@@ -48,13 +51,23 @@ impl Document {
         .map_err(|_| Error::new("invalid_voice"))?;
         let mut op = SpeechSynthesisOperation::new(
             self.language.clone(),
-            SpeechVoiceSelection::Preset(voice),
+            self.reference_voice.clone().map_or(
+                SpeechVoiceSelection::Preset(voice),
+                SpeechVoiceSelection::AuthorizedReference,
+            ),
             self.speed_milli,
             true,
         )
         .map_err(|_| Error::new("invalid_settings"))?;
         if self.format == ScriptFormat::ProductionScript {
             op.script = Some(self.options.clone());
+        }
+        if (self.reference_voice.is_some()
+            || (self.format == ScriptFormat::ProductionScript
+                && !self.options.reference_roles.is_empty()))
+            && self.speed_milli != 1000
+        {
+            return Err(Error::new("clone_controls_unsupported"));
         }
         if !crate::supported_speech_operation(&op) || !self.options.is_valid() {
             return Err(Error::new("invalid_settings"));
@@ -70,7 +83,22 @@ impl Document {
         if self.format == ScriptFormat::Plain {
             return serde_json::json!({"ready": !self.text.trim().is_empty() && self.operation().is_ok(),"roles":[],"cues":[],"issues":[],"spoken_passages":usize::from(!self.text.trim().is_empty())});
         }
-        let (plan, _spoken_lines) = parse_speech_script_for_review(&self.text);
+        let (mut plan, _spoken_lines) = parse_speech_script_for_review(&self.text);
+        for event in &plan.events {
+            if let crate::speech_script::SpeechScriptEventKind::Speech { role, delivery, .. } =
+                &event.kind
+            {
+                let reference = self.options.reference_roles.contains_key(role)
+                    || (!self.options.roles.contains_key(role) && self.reference_voice.is_some());
+                if reference && *delivery != crate::speech_script::SpeechDelivery::Neutral {
+                    plan.issues.push(crate::speech_script::SpeechScriptIssue {
+                        line: event.line,
+                        code: "clone_controls_unsupported".into(),
+                        text: String::new(),
+                    });
+                }
+            }
+        }
         serde_json::json!({"ready":plan.ready(&self.options)&&self.operation().is_ok(),"roles":plan.roles.keys().collect::<Vec<_>>(),"cues":plan.cues.keys().collect::<Vec<_>>(),"issues":plan.issues,"readiness":plan.readiness(&self.options),"spoken_passages":plan.readiness(&self.options).spoken_passages,"events":plan.events,"pause_ms":plan.pause_millis(),"shared_voices":plan.shared_voices(&self.options)})
     }
 }
@@ -116,4 +144,8 @@ pub struct Manifest {
     pub runs: Vec<RenderRun>,
     #[serde(default)]
     pub handoffs: Vec<crate::handoff::Ticket>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub voice_library: Vec<super::materials::ReferenceVoice>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sound_library: Vec<super::materials::SoundMaterial>,
 }

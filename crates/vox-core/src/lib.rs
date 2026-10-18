@@ -16,3 +16,5 @@ pub use infer_runtime::{
     SpeechSynthesisControl, supported_speech_operation,
 };
 pub use provenance::*;
+
+pub mod materials;

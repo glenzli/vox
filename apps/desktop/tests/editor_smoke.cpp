@@ -207,6 +207,22 @@ private:
       return;
     }
     preferences_.setLineNumbers(true);
+    preferences_.setEditorFontSize(23);
+    const auto family = preferences_.fontFamilies().contains("Menlo")
+                            ? QString("Menlo")
+                            : preferences_.fontFamilies().first();
+    preferences_.setEditorFontFamily(family);
+    if (UiPreferences().editorFontSize() != 23 ||
+        UiPreferences().editorFontFamily() != family ||
+        document_->toPlainText() != script_) {
+      fail("Font preference did not persist or altered source");
+      return;
+    }
+    const auto font = editor_->property("font").value<QFont>();
+    if (font.pixelSize() != 23 || font.family() != family) {
+      fail("Editor did not apply the chosen font");
+      return;
+    }
     preferences_.setTheme("dark");
     editor_->setProperty("cursorPosition", 0);
     QTimer::singleShot(350, this, [this] {

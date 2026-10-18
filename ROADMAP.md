@@ -10,6 +10,12 @@
 - Selected audition with actual PCM peaks, explicit acceptance, source restoration and WAV export.
 - Neutral icon-led desktop, English/Chinese and live light/dark/system themes.
 - Echo independent editor through pinned file handoff and explicit WAV return for review.
+- Installed script fonts and size, live preview/reset, syntax highlighting and logical line numbers.
+- Versioned project reference voices: microphone recording/import, exact transcript, permitted local
+  use, original audition, clone preview and default/per-role selection.
+- Eight procedural sound effects plus imported/generated local sound/music candidates. Explicit
+  acceptance prepares mono 24 kHz script PCM while retaining the original and its Job/prompt receipt.
+- Voice and sound working copies open in Echo; edited exports return as new reviewed materials.
 
 Implementation, focused checks, packaged checks and real Runtime/Echo evidence are recorded
 separately in [validation](docs/VALIDATION.md). Source implementation is not a public release.
@@ -23,8 +29,8 @@ dialogue and listening templates reuse the same pipeline. Larger forms need real
    exact role/cue choices. Retain Shape compatibility until independently accepted.
 2. Persistent segment alternatives, re-recording and pronunciation controls with exact source
    and settings invalidation.
-3. Runtime-supported voice design or references with explicit consent, disclosure and provenance.
-   The initial preset workflow does not expose these as executable.
+3. Runtime-supported voice design from descriptions, extending the executable reference workflow
+   only when its independent input, authorization and output contracts are proved.
 4. Time-aligned or video-led dubbing with its own media and synchronization boundary.
 5. Native Echo completion receipts/live return after proving the bounded file workflow.
    Advanced adjustment and mixing remain Echo responsibilities.

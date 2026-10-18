@@ -530,3 +530,65 @@ fn repeated_dialogue_reuses_exact_pcm_and_receipts_and_transmits_delivery() {
         "missing role fails before synthesis"
     );
 }
+
+#[test]
+fn complete_clone_uses_exact_reference_and_independent_local_job_contract() {
+    let reference_bytes = wav(24000, 1, 24000);
+    let content = ContentRef::new(
+        ContentDigest::from_bytes(&reference_bytes),
+        "audio/wav",
+        reference_bytes.len() as u64,
+    )
+    .unwrap();
+    let mut reference = AuthorizedVoiceReference::new(
+        RevisionId::new(),
+        "consent",
+        VoiceAuthorizationScope::VoiceClone,
+        true,
+        true,
+    )
+    .unwrap();
+    reference.audio = Some(content.clone());
+    reference.transcript = Some("Exact reference words".into());
+    let operation = operation(SpeechVoiceSelection::AuthorizedReference(reference));
+    let mut req = request(&operation);
+    req.inputs
+        .push(ExecutionInput::materialized(content, reference_bytes).unwrap());
+    let mut job = speech_job();
+    job.intent = "speech.clone_voice".into();
+    job.capability_contract = Some("infer.audio.voice-clone@20260811.1".into());
+    job.deployment = "mlx_qwen3_tts_base_1_7b".into();
+    job.model_build = "qwen3_tts_base_1_7b_8bit".into();
+    job.routing.capability_floor = "foundational".into();
+    job.routing.named_route.as_mut().unwrap().ordered_ids = vec![job.deployment.clone()];
+    for c in &mut job.routing.candidates {
+        c.deployment = job.deployment.clone();
+    }
+    for a in &mut job.attempts {
+        a.deployment = job.deployment.clone();
+    }
+    job.constraints["capability_floor"] = serde_json::json!("foundational");
+    job.constraints["named_route"]["ordered_ids"] = serde_json::json!([job.deployment]);
+    let fake = FakeSdk::new()
+        .speech(AudioBytesResponse {
+            bytes: wav(24000, 1, 2400),
+            content_type: "audio/wav".into(),
+            job_id: job.id.clone(),
+            logical_model: "speech.clone_voice".into(),
+        })
+        .job(job);
+    let seen = fake.seen_speeches.clone();
+    let executor = InferRuntimeSpeechExecutor::with_sdk(Box::new(fake));
+    let output = executor.execute(&req).unwrap();
+    assert_eq!(
+        output.external_provenance.unwrap().intent,
+        "speech.clone_voice"
+    );
+    let seen = seen.lock().unwrap();
+    assert_eq!(seen[0].model, "speech.clone_voice");
+    assert!(seen[0].voice.is_none() && seen[0].instructions.is_none());
+    assert_eq!(
+        seen[0].metadata["infer.deployment_ids"],
+        "mlx_qwen3_tts_base_1_7b"
+    );
+}

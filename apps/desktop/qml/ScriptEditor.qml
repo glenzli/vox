@@ -37,8 +37,8 @@ Item {
             selectByMouse: true
             persistentSelection: true
             readOnly: root.readOnly
-            font.family: root.productionScript ? "monospace" : root.proseFontFamily
-            font.pixelSize: root.productionScript ? 15 : 18
+            font.family: preferences.editorFontFamily
+            font.pixelSize: preferences.editorFontSize
             color: Theme.text
             selectionColor: Theme.selected
             selectedTextColor: Theme.text

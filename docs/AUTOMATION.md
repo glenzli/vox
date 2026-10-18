@@ -41,3 +41,23 @@ before another mutation because its journal can advance the version.
 Playback returns a verified temporary WAV and real PCM peaks without playing it. Export never
 clobbers a file. No command accesses another app's database, grants Runtime authority, launches
 arbitrary shell commands or silently enables cloud execution.
+
+## Project material operations
+
+All project writes use the current `version`; `status` returns the updated manifest/analysis.
+`import_reference` takes `name`, exact `transcript`, local PCM16 WAV `file`, `consent: true` and an
+honest `recorded` origin. `bind_reference` takes immutable library `id` and a `role` (empty for default).
+`reference_preview` takes `id` and bounded `text`, producing temporary synthetic audio without
+acceptance. Arbitrary file paths never become a voice identity or a provider credential.
+
+`add_builtin` takes one catalog `key`; `import_sound` takes a WAV `file` and `name`.
+`generate_sound` takes `name` and `spec: {prompt, seconds: 1..30, seed: u32, music: bool}`. It creates
+only a library candidate; `accept_sound` prepares a script copy, and `bind_sound` binds its `id` to a
+cue `label`. `discard_sound` removes only unaccepted candidates. `material_file`, `export_material`
+and `material_echo` take `kind: "voice" | "sound"` and `id`; export additionally takes a new
+`destination`. Echo edits are reimported as new material, preserving originals.
+
+`cancel` suppresses a generated candidate after the current model request returns; it does not
+claim provider-side interruption. The worker admits one foreground generation at a time.
+`test_studio_live.py` explicitly exercises real local generation using a synthetic reference in a
+new external project; `--resume` continues that named test project after an interrupted check.

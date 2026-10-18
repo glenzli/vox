@@ -130,12 +130,24 @@ impl ExternalExecutionProvenance {
                     && segment.runtime.speech_segments.is_empty()
                     && segment.runtime.speech_script.is_none()
                     && segment.runtime.is_bounded()
-                    && segment.runtime.intent == "speech.synthesize"
+                    && matches!(
+                        segment.runtime.intent.as_str(),
+                        "speech.synthesize" | "speech.clone_voice"
+                    )
                     && segment.runtime.app_id == self.app_id
                     && segment.runtime.contract_revision == self.contract_revision
-                    && segment.runtime.capability_contract == self.capability_contract
-                    && segment.runtime.deployment == self.deployment
-                    && segment.runtime.model_build == self.model_build
+                    && match segment.runtime.intent.as_str() {
+                        "speech.clone_voice" => {
+                            segment.runtime.capability_contract.as_deref()
+                                == Some("infer.audio.voice-clone@20260811.1")
+                                && segment.runtime.deployment == "mlx_qwen3_tts_base_1_7b"
+                        }
+                        _ => {
+                            segment.runtime.capability_contract.as_deref()
+                                == Some("infer.audio.speech@20260811.1")
+                                && segment.runtime.deployment == "mlx_qwen3_tts_custom_voice_1_7b"
+                        }
+                    }
                     && segment.runtime.policy == self.policy
                     && segment.runtime.requested_policy == self.requested_policy
                     && segment.runtime.requested_priority == self.requested_priority

@@ -158,7 +158,7 @@ fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
     f.sync_all()?;
     Ok(())
 }
-fn with_generated_disclosure(bytes: &[u8]) -> Result<Vec<u8>> {
+pub(crate) fn with_generated_disclosure(bytes: &[u8]) -> Result<Vec<u8>> {
     parse_pcm_s16le_wav(bytes, crate::AudioOriginDisclosure::SyntheticSpeech)?;
     let comment=b"Echo source disclosure: {\"schema\":\"echo.source-disclosure.v1\",\"scope\":\"referenced_sources\",\"kinds\":[\"ai_generated\"]}\0";
     let mut chunk = b"INFOICMT".to_vec();

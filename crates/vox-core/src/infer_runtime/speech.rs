@@ -50,6 +50,8 @@ pub struct InferRuntimeSpeechExecutor {
     identity: ExecutorIdentity,
     sdk: Box<dyn InferRuntimeSdk>,
     control: SpeechSynthesisControl,
+    execution: std::sync::Mutex<()>,
+    references: std::sync::Mutex<BTreeMap<crate::RevisionId, Vec<u8>>>,
 }
 
 impl std::fmt::Debug for InferRuntimeSpeechExecutor {
@@ -88,6 +90,8 @@ impl InferRuntimeSpeechExecutor {
             .expect("built-in Infer Runtime identity is valid"),
             sdk,
             control: SpeechSynthesisControl::default(),
+            execution: std::sync::Mutex::new(()),
+            references: std::sync::Mutex::new(BTreeMap::new()),
         }
     }
 
@@ -103,17 +107,56 @@ impl InferRuntimeSpeechExecutor {
         text: &str,
         operation: &SpeechSynthesisOperation,
     ) -> Result<Segment, ExecutionFailure> {
-        let SpeechVoiceSelection::Preset(voice) = &operation.voice else {
-            return Err(failure("voice_reference_not_supported", false));
+        let (response, intent, profile) = match &operation.voice {
+            SpeechVoiceSelection::Preset(voice) => {
+                let request = local_unary_request(text, voice.alias.as_str(), operation);
+                (
+                    self.sdk
+                        .synthesize_speech(&request, REQUEST_TIMEOUT)
+                        .map_err(map_failure)?,
+                    SPEECH_INTENT,
+                    JobPolicyProfile::Speech,
+                )
+            }
+            SpeechVoiceSelection::AuthorizedReference(reference) => {
+                if !supported_speech_operation(operation) {
+                    return Err(failure("clone_controls_unsupported", false));
+                }
+                let references = self
+                    .references
+                    .lock()
+                    .map_err(|_| failure("generation_busy", false))?;
+                let bytes = references
+                    .get(&reference.source_revision_id)
+                    .ok_or_else(|| failure("reference_missing", false))?;
+                let mut request = local_unary_request(text, "", operation);
+                request.model = "speech.clone_voice".into();
+                request.voice = None;
+                request.instructions = None;
+                request
+                    .metadata
+                    .insert("infer.capability_floor".into(), "foundational".into());
+                request.metadata.insert(
+                    "infer.deployment_ids".into(),
+                    "mlx_qwen3_tts_base_1_7b".into(),
+                );
+                (
+                    self.sdk
+                        .clone_voice(
+                            &request,
+                            bytes,
+                            reference.transcript.as_deref().unwrap_or(""),
+                            REQUEST_TIMEOUT,
+                        )
+                        .map_err(map_failure)?,
+                    "speech.clone_voice",
+                    JobPolicyProfile::VoiceClone,
+                )
+            }
         };
-        let request = local_unary_request(text, voice.alias.as_str(), operation);
-        let response = self
-            .sdk
-            .synthesize_speech(&request, REQUEST_TIMEOUT)
-            .map_err(map_failure)?;
         if response.bytes.len() > MAX_AUDIO_OUTPUT_BYTES
             || response.content_type.split(';').next().map(str::trim) != Some(AUDIO_MEDIA_TYPE)
-            || response.logical_model != SPEECH_INTENT
+            || response.logical_model != intent
             || !valid_job_id(&response.job_id)
         {
             return Err(failure("infer_invalid_response", false));
@@ -121,13 +164,8 @@ impl InferRuntimeSpeechExecutor {
         parse_pcm_s16le_wav(&response.bytes, AudioOriginDisclosure::SyntheticSpeech)
             .map_err(|_| failure("invalid_audio_output", false))?;
         let job = self.sdk.job(&response.job_id).map_err(map_failure)?;
-        let provenance = parse_job_snapshot(
-            &response.job_id,
-            SPEECH_INTENT,
-            JobPolicyProfile::LocalSpeech,
-            job,
-        )
-        .map_err(|error| failure(error.code(), false))?;
+        let provenance = parse_job_snapshot(&response.job_id, intent, profile, job)
+            .map_err(|error| failure(error.code(), false))?;
         Ok(Segment {
             bytes: response.bytes.into(),
             job_id: response.job_id,
@@ -221,9 +259,13 @@ impl Executor for InferRuntimeSpeechExecutor {
     }
 
     fn execute(&self, request: &ExecutionRequest) -> Result<ExecutionOutput, ExecutionFailure> {
+        let _execution = self
+            .execution
+            .try_lock()
+            .map_err(|_| failure("generation_busy", false))?;
         if request.output_media_type != AUDIO_MEDIA_TYPE
             || request.inputs.is_empty()
-            || request.inputs.len() > 129
+            || request.inputs.len() > 162
             || request.instruction.is_empty()
             || request.instruction.len() > MAX_INSTRUCTION_BYTES
         {
@@ -243,15 +285,62 @@ impl Executor for InferRuntimeSpeechExecutor {
         operation
             .validate()
             .map_err(|_| failure("invalid_speech_request", false))?;
-        let SpeechVoiceSelection::Preset(_) = &operation.voice else {
-            return Err(failure("voice_reference_not_supported", false));
-        };
+        // Materialize reference inputs by immutable digest; no path reaches the provider.
+        let mut references = BTreeMap::new();
+        let selected = std::iter::once(&operation.voice)
+            .filter_map(|v| {
+                if let SpeechVoiceSelection::AuthorizedReference(r) = v {
+                    Some(r)
+                } else {
+                    None
+                }
+            })
+            .chain(
+                operation
+                    .script
+                    .iter()
+                    .flat_map(|s| s.reference_roles.values()),
+            );
+        for reference in selected {
+            if !reference.is_executable() {
+                return Err(failure("voice_reference_not_supported", false));
+            }
+            let content = reference
+                .audio
+                .as_ref()
+                .ok_or_else(|| failure("reference_missing", false))?;
+            let input = request
+                .inputs
+                .iter()
+                .find(|i| i.content() == content)
+                .and_then(|i| i.bytes())
+                .ok_or_else(|| failure("reference_missing", false))?;
+            if crate::ContentDigest::from_bytes(input) != content.digest
+                || input.len() as u64 != content.byte_length
+            {
+                return Err(failure("invalid_reference", false));
+            }
+            let contract = parse_pcm_s16le_wav(input, AudioOriginDisclosure::ImportedUnverified)?;
+            if contract.channels > 2 || !(500..=120_000).contains(&contract.duration_millis()) {
+                return Err(failure("invalid_reference", false));
+            }
+            references.insert(reference.source_revision_id, input.to_vec());
+        }
+        *self
+            .references
+            .lock()
+            .map_err(|_| failure("generation_busy", false))? = references;
         if !supported_speech_operation(&operation) {
             return Err(failure("unsupported_speech_preset", false));
         }
         if operation.script.is_some() {
             self.create_script(text, &operation, &request.inputs)
-        } else if request.inputs.len() == 1 {
+        } else if request.inputs.len()
+            == 1 + usize::from(matches!(
+                operation.voice,
+                SpeechVoiceSelection::AuthorizedReference(_)
+            ))
+        {
             self.create_speech(text, &operation)
         } else {
             Err(failure("invalid_speech_request", false))

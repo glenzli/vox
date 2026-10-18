@@ -270,6 +270,10 @@ pub enum VoiceAuthorizationScope {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AuthorizedVoiceReference {
     pub source_revision_id: RevisionId,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio: Option<crate::ContentRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub transcript: Option<String>,
     pub consent_receipt_id: String,
     pub scope: VoiceAuthorizationScope,
     pub local_only: bool,
@@ -292,6 +296,8 @@ impl AuthorizedVoiceReference {
         let consent_receipt_id = consent_receipt_id.into();
         let reference = Self {
             source_revision_id,
+            audio: None,
+            transcript: None,
             consent_receipt_id,
             scope,
             local_only,
@@ -299,6 +305,21 @@ impl AuthorizedVoiceReference {
         };
         reference.validate()?;
         Ok(reference)
+    }
+
+    /// Complete executable reference, separate from legacy authorization-only values.
+    pub fn is_executable(&self) -> bool {
+        self.validate().is_ok()
+            && self.scope == VoiceAuthorizationScope::VoiceClone
+            && self.audio.as_ref().is_some_and(|a| {
+                a.media_type == "audio/wav"
+                    && a.byte_length > 44
+                    && a.byte_length <= 25 * 1024 * 1024
+            })
+            && self
+                .transcript
+                .as_ref()
+                .is_some_and(|t| !t.trim().is_empty() && t.len() <= 16_384)
     }
 
     /// Revalidates a reference loaded through `serde`.
@@ -422,7 +443,8 @@ impl SpeechSynthesisOperation {
             SpeechVoiceSelection::Preset(selection) => selection.validate().is_ok(),
             SpeechVoiceSelection::AuthorizedReference(reference) => {
                 reference.validate().is_ok()
-                    && reference.scope == VoiceAuthorizationScope::SpeechSynthesis
+                    && (reference.scope == VoiceAuthorizationScope::SpeechSynthesis
+                        || reference.is_executable())
             }
         };
         if self

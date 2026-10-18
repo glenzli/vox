@@ -3,6 +3,7 @@ use infer_runtime_client::{Client, DiscoveryResolver};
 use std::path::PathBuf;
 mod job_provenance;
 mod sdk;
+pub mod sound;
 pub(crate) mod speech;
 #[cfg(test)]
 use sdk::SdkAdapterError;

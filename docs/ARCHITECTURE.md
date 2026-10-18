@@ -43,3 +43,28 @@ is never claimed as the original Runtime output.
 
 Narration, dialogue and listening share one pipeline. Future forms add actual source/selection/
 acceptance responsibilities without changing the grammar or prebuilding executor frameworks.
+
+`project::materials` owns immutable reference-voice records, permitted-use receipts, library sounds,
+explicit sound acceptance and role/cue binding. Optional empty fields preserve legacy document
+serialization/digests. Bindings retain full reference revisions; accepted speech remains tied to its
+source. Plain narration materializes only active default-reference inputs, leaving unused script
+roles/cues out of execution. New project roots and manifests/objects use owner-only Unix permissions;
+reference previews and Echo material working-copy directories are private.
+
+`ReferenceRecorder` owns permission-on-click, input selection, bounded PCM capture, sample conversion,
+preview lifetime and cancellation. Its capture is disposable until the project imports it. The desktop
+material adapter shares the existing project/version fences and worker admission; project changes
+never consume a stale callback. `MaterialsDialog` and `ReferenceDialog` own their forms and review.
+
+The official pinned SDK supplies the separate clone capability (`clone_voice_wav`). A speech executor
+serializes calls and materializes exact reference bytes by digest, scopes cloning to local Base at
+1×/neutral, and validates the independent clone Job. Mixed scripts carry per-segment preset or clone
+receipts; repeats still replay exact PCM. No human voice is captured by automated live tests.
+
+`infer_runtime::sound` owns prompt preparation, sound model choice and local Job/output validation.
+Sound choices use the Runtime’s model selector; named request routes are prohibited by that contract.
+`materials` provides procedural sounds and explicit low-pass/downmix/resampling for script copies.
+Original 44.1 kHz stereo generated audio is retained. Material Echo edits use isolated copies with
+synthetic disclosure when appropriate; manual WAV reimport creates a new candidate/reference, without
+claiming a native completion receipt or mutating an accepted source. Cancellation stops after the
+current model request and suppresses late candidates.

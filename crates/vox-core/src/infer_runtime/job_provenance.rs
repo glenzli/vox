@@ -23,7 +23,9 @@ pub(super) const SPEECH_DEPLOYMENT: &str = "mlx_qwen3_tts_custom_voice_1_7b";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum JobPolicyProfile {
-    LocalSpeech,
+    Speech,
+    VoiceClone,
+    Sound(&'static str),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -158,13 +160,25 @@ fn external_named_route(
 
 impl JobPolicyProfile {
     const fn capability_contract(self) -> &'static str {
-        INFER_RUNTIME_SPEECH_CAPABILITY
+        match self {
+            Self::Speech => INFER_RUNTIME_SPEECH_CAPABILITY,
+            Self::VoiceClone => "infer.audio.voice-clone@20260811.1",
+            Self::Sound(_) => "infer.audio.sound-generation@20260926.2",
+        }
     }
-    const fn named_deployment(self) -> &'static str {
-        SPEECH_DEPLOYMENT
+    const fn named_deployment(self) -> Option<&'static str> {
+        match self {
+            Self::Speech => Some(SPEECH_DEPLOYMENT),
+            Self::VoiceClone => Some("mlx_qwen3_tts_base_1_7b"),
+            Self::Sound(_) => None,
+        }
     }
     const fn capability_floor(self) -> &'static str {
-        "capable"
+        if matches!(self, Self::Speech) {
+            "capable"
+        } else {
+            "foundational"
+        }
     }
 }
 
@@ -214,7 +228,12 @@ fn validate_vox_policy(
         && placement == "local_only"
         && preference == "local"
         && offline_required
-        && latency.as_deref() == Some("interactive")
+        && latency.as_deref()
+            == Some(if matches!(profile, JobPolicyProfile::Sound(_)) {
+                "balanced"
+            } else {
+                "interactive"
+            })
         && snapshot.placement == "local"
         && snapshot.policy == "local-first"
         && snapshot.priority == "interactive";
@@ -228,10 +247,15 @@ fn validate_vox_policy(
         return Err(JobProvenanceError::PolicyViolation);
     }
 
+    if let JobPolicyProfile::Sound(deployment) = profile
+        && snapshot.deployment != deployment
+    {
+        return Err(JobProvenanceError::PolicyViolation);
+    }
     validate_named_route(
         constraints.get("named_route"),
         snapshot.routing.named_route.as_ref(),
-        Some(profile.named_deployment()),
+        profile.named_deployment(),
         &snapshot.deployment,
     )?;
 

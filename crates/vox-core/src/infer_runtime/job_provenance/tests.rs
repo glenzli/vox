@@ -79,7 +79,7 @@ fn typed_sdk_job_maps_exact_core_capability_and_named_route() {
     let provenance = parse_job_snapshot(
         "resp_shape_job",
         "speech.synthesize",
-        JobPolicyProfile::LocalSpeech,
+        JobPolicyProfile::Speech,
         speech_job(),
     )
     .expect("frozen SDK Job is accepted");
@@ -113,7 +113,7 @@ fn core_capability_and_app_identity_fail_closed() {
             parse_job_snapshot(
                 "resp_shape_job",
                 "speech.synthesize",
-                JobPolicyProfile::LocalSpeech,
+                JobPolicyProfile::Speech,
                 job,
             ),
             Err(JobProvenanceError::InvalidResponse)
@@ -129,7 +129,7 @@ fn local_policy_and_named_deployment_cannot_be_widened() {
         parse_job_snapshot(
             "resp_shape_job",
             "speech.synthesize",
-            JobPolicyProfile::LocalSpeech,
+            JobPolicyProfile::Speech,
             fallback,
         ),
         Err(JobProvenanceError::PolicyViolation)
@@ -146,7 +146,7 @@ fn local_policy_and_named_deployment_cannot_be_widened() {
         parse_job_snapshot(
             "resp_shape_job",
             "speech.synthesize",
-            JobPolicyProfile::LocalSpeech,
+            JobPolicyProfile::Speech,
             wrong_route,
         ),
         Err(JobProvenanceError::PolicyViolation)

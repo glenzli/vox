@@ -17,6 +17,16 @@ pub(super) trait InferRuntimeSdk: Send + Sync {
         request: &SpeechRequest,
         timeout: Duration,
     ) -> Result<AudioBytesResponse, SdkAdapterError>;
+    fn clone_voice(
+        &self,
+        request: &SpeechRequest,
+        wav: &[u8],
+        transcript: &str,
+        timeout: Duration,
+    ) -> Result<AudioBytesResponse, SdkAdapterError> {
+        let _ = (request, wav, transcript, timeout);
+        Err(SdkAdapterError::RuntimeUnavailable)
+    }
     fn job(&self, id: &str) -> Result<JobSnapshot, SdkAdapterError>;
 }
 pub(super) struct OfficialSdkClient {
@@ -67,6 +77,18 @@ impl InferRuntimeSdk for OfficialSdkClient {
         t: Duration,
     ) -> Result<AudioBytesResponse, SdkAdapterError> {
         self.run(t, self.client.synthesize_speech(r))
+    }
+    fn clone_voice(
+        &self,
+        request: &SpeechRequest,
+        wav: &[u8],
+        transcript: &str,
+        timeout: Duration,
+    ) -> Result<AudioBytesResponse, SdkAdapterError> {
+        self.run(
+            timeout,
+            self.client.clone_voice_wav(request, wav, transcript),
+        )
     }
     fn job(&self, id: &str) -> Result<JobSnapshot, SdkAdapterError> {
         self.run(Duration::from_secs(10), self.client.job(id))

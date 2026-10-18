@@ -9,6 +9,7 @@
 <key>CFBundleShortVersionString</key><string>0.1.0</string>
 <key>CFBundleVersion</key><string>1</string>
 <key>CFBundleIconFile</key><string>app-icon.icns</string>
+<key>NSMicrophoneUsageDescription</key><string>Record a local reference voice when you choose to sample your voice in Vox.</string>
 <key>NSHighResolutionCapable</key><true/>
 <key>CFBundleDocumentTypes</key><array><dict>
 <key>CFBundleTypeName</key><string>Vox Project</string>

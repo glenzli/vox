@@ -33,7 +33,10 @@ impl SpeechScriptPlan {
             match &event.kind {
                 SpeechScriptEventKind::Speech { role, .. } => {
                     spoken_passages += 1;
-                    if !role.is_empty() && !options.roles.contains_key(role) {
+                    if !role.is_empty()
+                        && !options.roles.contains_key(role)
+                        && !options.reference_roles.contains_key(role)
+                    {
                         roles.entry(role.clone()).or_insert(event.line);
                     }
                 }

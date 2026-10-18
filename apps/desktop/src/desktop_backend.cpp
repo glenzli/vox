@@ -172,7 +172,10 @@ void DesktopBackend::setFormat(const QString &format) {
     mutate([&](auto &d) { d.insert("format", format); });
 }
 void DesktopBackend::setVoice(const QString &alias) {
-  mutate([&](auto &d) { d.insert("voice", alias); });
+  mutate([&](auto &d) {
+    d.insert("voice", alias);
+    d.remove("reference_voice");
+  });
 }
 void DesktopBackend::setLanguage(const QString &language) {
   mutate([&](auto &d) { d.insert("language", language); });
@@ -184,6 +187,9 @@ void DesktopBackend::bindRole(const QString &role, const QString &alias) {
   mutate([&](auto &d) {
     auto options = d["options"].toObject();
     auto roles = options["roles"].toObject();
+    auto references = options["reference_roles"].toObject();
+    references.remove(role);
+    options.insert("reference_roles", references);
     if (alias.isEmpty())
       roles.remove(role);
     else
@@ -539,6 +545,11 @@ void DesktopBackend::messageCode(const QString &code) {
   emit messageChanged();
 }
 QString DesktopBackend::message() const {
+  if (m_messageCode == "material_saved")
+    return tr("Material saved in this project");
+  if (m_messageCode == "sound_generated")
+    return tr(
+        "Sound candidate is ready. Listen, then accept it for script use.");
   if (m_messageCode == "saved")
     return tr("All changes saved");
   if (m_messageCode == "project_created")
@@ -569,6 +580,34 @@ QString DesktopBackend::message() const {
   return errorText(m_messageCode);
 }
 QString DesktopBackend::errorText(const QString &code) const {
+  if (code == "voice_consent_required")
+    return tr("Confirm that you may use this voice for local synthesis.");
+  if (code == "reference_text_required")
+    return tr("Name the voice and enter the exact words spoken in its "
+              "reference recording.");
+  if (code == "reference_duration")
+    return tr(
+        "Use a mono or stereo WAV reference between 0.5 and 120 seconds.");
+  if (code == "reference_missing" || code == "invalid_reference")
+    return tr("The reference voice is missing or changed. Import it again.");
+  if (code == "clone_controls_unsupported")
+    return tr(
+        "Reference voices currently require 1× pace and neutral delivery.");
+  if (code == "material_not_accepted")
+    return tr("Listen and accept this sound before using it in a script.");
+  if (code == "material_missing" || code == "invalid_material")
+    return tr("This material is missing or invalid.");
+  if (code == "invalid_sound_request")
+    return tr(
+        "Describe a sound in at most 2000 bytes and choose 1–30 seconds.");
+  if (code == "prompt_preparation_failed")
+    return tr("The sound description could not be prepared faithfully. Revise "
+              "it or try again.");
+  if (code == "sound_too_long")
+    return tr("Use a mono or stereo sound of at most 120 seconds.");
+  if (code == "generation_cancelled")
+    return tr("Sound generation cancelled. No candidate was added.");
+
   if (code == "invalid_pause")
     return tr(
         "Use a pause between 0 and 120 seconds, for example [pause: 0.8s].");

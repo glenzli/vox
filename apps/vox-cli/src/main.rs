@@ -47,13 +47,22 @@ fn execute(v: &Value) -> Result<Value> {
     let action = field(v, "action")?;
     if action == "capabilities" {
         return Ok(
-            json!({"schema":"vox.capabilities/1","project_schema":"vox.project/1","voices":voices(),"languages":["auto","Chinese","English","Japanese","Korean","German","French","Russian","Portuguese","Spanish","Italian"],"operations":["create","open","save","adopt","validate","render","cancel","accept","discard","playback","export","import_script","import_cue","restore_source","begin_echo","review_echo"],"forms":["narration","dialogue","listening"],"voice_reference":false,"acceptance":"explicit","runtime_app":"vox"}),
+            json!({"schema":"vox.capabilities/1","project_schema":"vox.project/1","voices":voices(),"languages":["auto","Chinese","English","Japanese","Korean","German","French","Russian","Portuguese","Spanish","Italian"],"operations":["create","open","save","adopt","validate","render","cancel","accept","discard","playback","export","import_script","import_cue","import_reference","bind_reference","add_builtin","import_sound","generate_sound","accept_sound","discard_sound","bind_sound","material_file","export_material","restore_source","begin_echo","review_echo"],"forms":["narration","dialogue","listening"],"voice_reference":true,"sound_generation":true,"builtin_sounds":vox_core::materials::BUILTIN_SOUNDS,"acceptance":"explicit","runtime_app":"vox"}),
         );
     }
     if action == "probe" {
         return Ok(vox_core::infer_runtime::probe(
             v["endpoint"].as_str().unwrap_or(""),
         ));
+    }
+    if action == "builtin_preview" {
+        let key = field(v, "key")?;
+        let bytes = vox_core::materials::builtin_wav(key)?;
+        let directory = std::env::temp_dir().join("vox-builtins");
+        private_directory(&directory)?;
+        let file = directory.join(format!("{key}.wav"));
+        std::fs::write(&file, bytes)?;
+        return Ok(json!({"file":file}));
     }
     if action == "create" {
         let p = Project::create(
@@ -96,6 +105,49 @@ fn execute(v: &Value) -> Result<Value> {
             let mut draft = p.read()?.draft;
             draft.text = text;
             p.save(version(v)?, draft, None)?
+        }
+        "import_reference" => p.import_reference(
+            version(v)?,
+            field(v, "name")?,
+            field(v, "transcript")?,
+            Path::new(field(v, "file")?),
+            v["consent"].as_bool().unwrap_or(false),
+            v["recorded"].as_bool().unwrap_or(false),
+        )?,
+        "bind_reference" => p.bind_reference(
+            version(v)?,
+            v["role"].as_str().unwrap_or(""),
+            field(v, "id")?,
+        )?,
+        "add_builtin" => {
+            let key = field(v, "key")?;
+            p.add_sound(
+                version(v)?,
+                key,
+                &vox_core::materials::builtin_wav(key)?,
+                "builtin",
+                None,
+            )?
+        }
+        "import_sound" => {
+            p.import_sound(version(v)?, field(v, "name")?, Path::new(field(v, "file")?))?
+        }
+        "accept_sound" => p.accept_sound(version(v)?, field(v, "id")?)?,
+        "discard_sound" => p.discard_sound(version(v)?, field(v, "id")?)?,
+        "bind_sound" => p.bind_sound(version(v)?, field(v, "label")?, field(v, "id")?)?,
+        "material_echo" => {
+            return Ok(json!({"file":p.material_echo(field(v,"kind")?,field(v,"id")?)?}));
+        }
+        "material_file" => {
+            return Ok(json!({"file":p.material_file(field(v,"kind")?,field(v,"id")?)?}));
+        }
+        "export_material" => {
+            p.export_material(
+                field(v, "kind")?,
+                field(v, "id")?,
+                Path::new(field(v, "destination")?),
+            )?;
+            return Ok(json!({"exported":true}));
         }
         "import_cue" => p.import_cue(
             version(v)?,
@@ -164,7 +216,10 @@ fn main() {
             );
             continue;
         }
-        if action == "render" || action == "voice_preview" {
+        if matches!(
+            action,
+            "render" | "voice_preview" | "reference_preview" | "generate_sound"
+        ) {
             if busy
                 .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
                 .is_err()
@@ -176,7 +231,22 @@ fn main() {
             let control = control.clone();
             let busy = busy.clone();
             let worker = std::thread::spawn(move || {
-                let result = if v["action"] == "voice_preview" {
+                let result = if v["action"] == "generate_sound" {
+                    (|| {
+                        let p = project(&v)?;
+                        let spec = serde_json::from_value(v["spec"].clone())?;
+                        let m = p.generate_sound(
+                            version(&v)?,
+                            v["endpoint"].as_str().unwrap_or(""),
+                            field(&v, "name")?,
+                            spec,
+                            &control,
+                        )?;
+                        Ok(snapshot(&p, m))
+                    })()
+                } else if v["action"] == "reference_preview" {
+                    reference_preview(&v, control)
+                } else if v["action"] == "voice_preview" {
                     voice_preview(&v, control)
                 } else {
                     (|| {
@@ -278,10 +348,72 @@ fn voice_preview(v: &Value, control: SpeechSynthesisControl) -> Result<Value> {
         return Err(Error::new("speech_cancelled"));
     }
     let directory = std::env::temp_dir().join("vox-voice-samples");
-    std::fs::create_dir_all(&directory)?;
+    private_directory(&directory)?;
     let file: PathBuf = directory.join(format!("{}.wav", TransformationId::new()));
     std::fs::write(&file, &result.bytes)?;
     Ok(
         json!({"file":file,"voice":doc.voice,"synthetic":true,"peaks":vox_core::audio::waveform_peaks(&result.bytes,160)?}),
     )
+}
+
+fn reference_preview(v: &Value, control: SpeechSynthesisControl) -> Result<Value> {
+    use vox_core::{CapabilityId, ExecutionRequest, Executor, TransformationId};
+    let p = project(v)?;
+    let m = p.read()?;
+    if m.version != version(v)? {
+        return Err(Error::new("stale_project"));
+    }
+    let reference = m
+        .voice_library
+        .iter()
+        .find(|r| r.id == field(v, "id").unwrap_or(""))
+        .ok_or_else(|| Error::new("reference_missing"))?
+        .reference
+        .clone();
+    let doc = Document {
+        text: v["text"]
+            .as_str()
+            .unwrap_or("Hello. 欢迎使用 Vox，让文字成为声音。")
+            .into(),
+        reference_voice: Some(reference),
+        ..Document::default()
+    };
+    if doc.text.len() > 512 {
+        return Err(Error::new("sample_too_large"));
+    }
+    let request = ExecutionRequest::new_materialized(
+        TransformationId::new(),
+        CapabilityId::new("audio.speech_synthesize").map_err(|_| Error::new("invalid_request"))?,
+        p.render_inputs(&doc)?,
+        serde_json::to_vec(&doc.operation()?)?,
+        "audio/wav",
+    )
+    .map_err(|_| Error::new("invalid_request"))?;
+    let executor = vox_core::InferRuntimeSpeechExecutor::new(
+        v["endpoint"].as_str().unwrap_or(""),
+        vox_core::infer_runtime::credential_path(),
+    )
+    .map_err(|_| Error::new("credential_unavailable"))?
+    .with_control(control.clone());
+    let result = executor.execute(&request)?;
+    if control.is_cancelled() {
+        return Err(Error::new("speech_cancelled"));
+    }
+    let dir = std::env::temp_dir().join("vox-voice-samples");
+    private_directory(&dir)?;
+    let file = dir.join(format!("{}.wav", TransformationId::new()));
+    std::fs::write(&file, &result.bytes)?;
+    Ok(
+        json!({"file":file,"synthetic":true,"provenance":result.external_provenance,"peaks":vox_core::audio::waveform_peaks(&result.bytes,160)?}),
+    )
+}
+
+fn private_directory(path: &Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(path)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o700))?;
+    }
+    Ok(())
 }

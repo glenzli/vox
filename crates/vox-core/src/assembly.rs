@@ -60,7 +60,7 @@ pub(crate) enum ScriptActionKind {
     },
     Speech {
         text: String,
-        operation: SpeechSynthesisOperation,
+        operation: Box<SpeechSynthesisOperation>,
     },
     Local {
         pcm: Vec<u8>,
@@ -98,6 +98,9 @@ pub(crate) fn compile(
                 if let Some(voice) = options.roles.get(role) {
                     selected.voice = SpeechVoiceSelection::Preset(voice.clone());
                 }
+                if let Some(voice) = options.reference_roles.get(role) {
+                    selected.voice = SpeechVoiceSelection::AuthorizedReference(voice.clone());
+                }
                 if let Some(language) = language {
                     selected.language.clone_from(language);
                 }
@@ -113,7 +116,7 @@ pub(crate) fn compile(
                         event,
                         kind: ScriptActionKind::Speech {
                             text: part.to_owned(),
-                            operation: selected.clone(),
+                            operation: Box::new(selected.clone()),
                         },
                     });
                 }
@@ -380,7 +383,10 @@ pub fn validate_output(
                     return Err(invalid_script());
                 }
             }
-            ScriptActionKind::Speech { text, .. } => {
+            ScriptActionKind::Speech {
+                text,
+                operation: selected,
+            } => {
                 if piece.replay_of.is_some() {
                     return Err(invalid_script());
                 }
@@ -391,6 +397,11 @@ pub fn validate_output(
                 let end = input_start + u32::try_from(text.len()).map_err(|_| invalid_script())?;
                 if piece.speech_segment
                     != Some(u32::try_from(speech_index).map_err(|_| invalid_script())?)
+                    || segment.runtime.intent
+                        != match selected.voice {
+                            SpeechVoiceSelection::Preset(_) => "speech.synthesize",
+                            SpeechVoiceSelection::AuthorizedReference(_) => "speech.clone_voice",
+                        }
                     || segment.frames != piece.frames
                     || segment.input_start != input_start
                     || segment.input_end != end

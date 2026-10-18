@@ -248,12 +248,12 @@ ApplicationWindow {
     }
     Dialog {
         id: stopDialog
-        title: qsTr("A voice is still rendering")
+        title: qsTr("Audio is still being generated")
         anchors.centerIn: Overlay.overlay
         width: 440
         modal: true
         standardButtons: Dialog.Ok | Dialog.Cancel
-        Label { text: qsTr("Stop after the current segment, then close Vox?"); color: Theme.text }
+        Label { text: qsTr("Stop after the current generation, then close Vox?"); color: Theme.text }
         onAccepted: { window.exitWhenStopped = true; backend.cancel() }
     }
     Native.FileDialog { id: newFile; title: qsTr("New Vox project"); fileMode: Native.FileDialog.SaveFile; defaultSuffix: "vox"; nameFilters: [qsTr("Vox project (*.vox)")]; onAccepted: backend.createProject(selectedFile) }

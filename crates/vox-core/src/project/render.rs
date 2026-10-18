@@ -6,7 +6,7 @@ use crate::{
 };
 use std::{fs::OpenOptions, sync::Arc};
 impl Project {
-    pub(super) fn render_inputs(&self, document: &Document) -> Result<Vec<ExecutionInput>> {
+    pub fn render_inputs(&self, document: &Document) -> Result<Vec<ExecutionInput>> {
         let text = document.text.as_bytes().to_vec();
         let content = ContentRef::new(
             ContentDigest::from_bytes(&text),
@@ -18,11 +18,29 @@ impl Project {
             ExecutionInput::materialized(content, text)
                 .map_err(|_| Error::new("invalid_content"))?,
         ];
-        for cue in document.options.cues.values() {
+        let script_options =
+            (document.format == ScriptFormat::ProductionScript).then_some(&document.options);
+        for cue in script_options.into_iter().flat_map(|o| o.cues.values()) {
             if let crate::speech_script::SpeechCueAction::Audio { content } = cue {
                 inputs.push(
                     ExecutionInput::materialized(content.clone(), self.object(content)?)
                         .map_err(|_| Error::new("invalid_cue"))?,
+                );
+            }
+        }
+        for reference in document.reference_voice.iter().chain(
+            script_options
+                .into_iter()
+                .flat_map(|o| o.reference_roles.values()),
+        ) {
+            let content = reference
+                .audio
+                .as_ref()
+                .ok_or_else(|| Error::new("reference_missing"))?;
+            if !inputs.iter().any(|i| i.content() == content) {
+                inputs.push(
+                    ExecutionInput::materialized(content.clone(), self.object(content)?)
+                        .map_err(|_| Error::new("invalid_reference"))?,
                 );
             }
         }
