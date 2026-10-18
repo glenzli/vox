@@ -1,6 +1,8 @@
 # Vox
 
-[English](README.en.md) · 简体中文
+[简体中文](#简体中文) · [English](#english)
+
+## 简体中文
 
 **脚本驱动的配音制作。**
 
@@ -8,7 +10,13 @@ Vox 是独立的 Qt 桌面应用，用于旁白、多角色对话和听力材料
 本地合成到试听、采用与导出，保留每一版脚本和已采用的录音。当前为开发预览，尚未发布正式版本；
 最初验证的平台为 macOS Apple Silicon。
 
-## 制作流程
+### 界面预览
+
+![Vox 中文亮色界面：脚本高亮、角色音色和录音版本](docs/screenshots/editor-light-zh.png)
+
+脚本编辑、角色配音和录音版本集中在一个工作区。截图来自 macOS 开发预览的独立演示项目。
+
+### 制作流程
 
 1. 新建 `.vox` 项目，编写或导入 UTF-8 文本，选择旁白、对话或听力模板。
 2. 为默认旁白和各角色选择预设音色或参考音色，设置配音语言、语速与音效提示。
@@ -16,7 +24,7 @@ Vox 是独立的 Qt 桌面应用，用于旁白、多角色对话和听力材料
 4. 需要裁剪、淡入淡出或混音时，在 [Echo](https://github.com/glenzli/echo) 中编辑副本，
    将导出的 WAV 返回 Vox，作为新候选试听和采用。
 
-## 功能
+### 功能
 
 | 功能 | 当前支持 |
 | --- | --- |
@@ -40,10 +48,13 @@ Vox 是独立的 Qt 桌面应用，用于旁白、多角色对话和听力材料
 Echo 返回的音频先进入候选列表；24 位到 16 位 PCM 的转换需要明确选择。
 两款应用通过文件交接，各自管理项目和数据库。
 
-## 本地运行
+### 本地运行
 
 需要 Rust 1.96+、CMake 3.28+、Ninja，以及包含 Quick、Quick Controls、Multimedia、SVG 和
 Linguist Tools 的 Qt 6.9+。构建脚本使用离线 Cargo 依赖缓存，首次运行前需准备锁定的依赖。
+
+此开发预览锁定的 Infer Runtime SDK 提交为 `8dc48ce`，目前尚待推送到其源仓库。
+在该提交可从远端获取前，首次构建需要已准备好这版 SDK 的本地 Cargo Git 缓存。
 
 ```sh
 ./scripts/build_and_promote_debug.sh
@@ -55,7 +66,7 @@ Linguist Tools 的 Qt 6.9+。构建脚本使用离线 Cargo 依赖缓存，首�
 `VOX_BUILD_DIR` 和 `VOX_CARGO_TARGET_DIR` 指定其他仓库外路径。应用包包含 `vox-cli`；
 开发机器仍需安装 Qt。可分发打包、签名公证与正式发布另行进行。
 
-### 连接 Infer Runtime
+#### 连接 Infer Runtime
 
 Vox 使用自己的 `vox` 应用授权，合成限定为本地、零费用且不回退的执行路径。
 在 Infer Console 签发独立凭据后，可从 Vox 设置导入。操作辅助脚本见：
@@ -68,7 +79,7 @@ python3 scripts/provision_infer.py --help
 音效生成和中文提示词准备权限。授权变更需在 Console 队列空闲时进行。Vox 不使用 Shape 凭据；
 Runtime 离线时，脚本编辑和已保存音频仍可使用。
 
-## 开发与文档
+### 开发与文档
 
 | 目录 | 职责 |
 | --- | --- |
@@ -88,8 +99,122 @@ Runtime 离线时，脚本编辑和已保存音频仍可使用。
 目前可导入导出的文本和脚本，尚不自动转换整个 `.shape` 项目。分段重录、通过描述设计音色、
 视频配音等形态列入后续规划。
 
-## 许可证
+### 许可证
 
 Vox 采用 [MIT License](LICENSE)。迁移代码和依赖的来源及许可见
 [第三方声明](THIRD_PARTY_NOTICES.md)与 [Shape 来源清单](docs/SHAPE_PROVENANCE.json)。
 模型权重不随项目分发，其许可由相应提供方规定。
+
+---
+
+## English
+
+**Script-led voice production.**
+
+Vox is an independent Qt desktop application for narration, multi-speaker dialogue and listening
+materials. Write scripts, direct voices, synthesize locally, then audition, accept and export takes
+while keeping exact script versions and accepted audio. This is a development preview, not a published
+release. macOS Apple Silicon is the initial verified platform.
+
+### Interface preview
+
+![Vox in English and dark mode: script highlighting, voice direction and accepted takes](docs/screenshots/editor-dark-en.png)
+
+Script editing, voice direction and takes share one workspace. These screenshots show the macOS development preview with an isolated demo project.
+
+### Workflow
+
+1. Create a `.vox` project, write or import UTF-8 text, and choose a narration, dialogue or listening template.
+2. Choose presets or reference voices for narration and individual roles; set language, pace and sound cues.
+3. Render a candidate, listen and compare, explicitly accept your preferred take, then export WAV.
+   Earlier accepted takes remain available after script revisions.
+4. For trimming, fades or mixing, edit a copy in [Echo](https://github.com/glenzli/echo), then return its
+   exported WAV to Vox for review and acceptance as a new candidate.
+
+### Features
+
+| Feature | Available now |
+| --- | --- |
+| Script editor | Syntax highlighting, logical line numbers, wrapping, grouped speech/repeat reading with source navigation, and independent script font/size settings with preview and reset |
+| Multi-speaker production | Shape-compatible roles, delivery, scenes, pauses, cues and repeats; repeats replay identical PCM without another model call |
+| Voice presets | Nine presets, with automatic or explicit speech language |
+| Reference voices | Record a microphone sample or import mono/stereo PCM16 WAV, enter its exact transcript and confirm permitted use; assign to narration or any role |
+| Sound library | Eight procedural built-in effects, WAV import, and local Stable Audio 3 sound-effect and short-music generation |
+| Versions and materials | Independent projects, autosaved drafts, immutable materials, and explicit script/audio acceptance |
+| Echo handoff | Independent editing copies for takes, voice references and sounds, preserving originals with manual WAV return |
+| Interface | Compact icon-led tools, a neutral black/white/gray palette, English/Chinese, and light/dark/system themes |
+
+Original reference audio, exact transcripts and permitted-use confirmations stay in the project.
+Microphone access is requested only when Record is pressed. The current Base clone route supports
+1× pace and neutral delivery. Automated checks use synthetic references and injected audio samples;
+real microphone capture requires a suitable device and first-use system permission.
+
+Sound generation supports 1–30 seconds, an explicit seed and English or Chinese descriptions.
+Chinese descriptions use local prompt preparation; original and effective prompts and Runtime receipts
+are retained. After audition and explicit acceptance, Vox prepares a script-compatible audio copy while
+keeping the original WAV for export or Echo editing.
+
+Echo returns enter the candidate list first. PCM24-to-PCM16 conversion requires an explicit choice.
+The applications exchange files and retain independent project stores and databases.
+
+### Run locally
+
+Requires Rust 1.96+, CMake 3.28+, Ninja and Qt 6.9+ with Quick, Quick Controls, Multimedia, SVG and
+Linguist Tools. Build scripts use the offline Cargo dependency cache; prepare the locked dependencies
+before the first build.
+
+This preview pins Infer Runtime SDK commit `8dc48ce`, which is still pending publication in its
+source repository. Until it is available remotely, the first build requires a local Cargo Git
+cache containing that SDK revision.
+
+```sh
+./scripts/build_and_promote_debug.sh
+./scripts/run_debug.sh
+./scripts/run_debug.sh /absolute/path/MyProject.vox
+```
+
+Build products and the current Debug app live in the sibling `.vox-local-build`, outside the checkout.
+`VOX_LOCAL_BUILD_ROOT`, `VOX_BUILD_DIR` and `VOX_CARGO_TARGET_DIR` select other external paths.
+The app contains `vox-cli`; Qt must still be installed on the development host. Redistributable
+packaging, notarization and public release are separate work.
+
+#### Connect Infer Runtime
+
+Vox uses its own `vox` App authorization for local-only, zero-cost, no-fallback synthesis.
+Issue a separate credential in Infer Console and import it in Vox settings. The operator helper is
+documented through:
+
+```sh
+python3 scripts/provision_infer.py --help
+```
+
+The default credential path is `~/.config/vox/infer-credential`. `--studio` additionally requests
+Vox-only local reference voices, sound generation and Chinese prompt preparation. Apply grants while
+Console queues are idle. Vox does not use Shape's credential. Offline editing and saved audio remain usable.
+
+### Development and documentation
+
+| Owner | Responsibility |
+| --- | --- |
+| `crates/vox-core/src/domain` | Portable audio contracts and Shape-compatible script grammar |
+| `crates/vox-core/src/assembly.rs` | Bounded script compilation, PCM assembly and validation |
+| `crates/vox-core/src/infer_runtime` | Official SDK, Vox identity, local synthesis and progress |
+| `crates/vox-core/src/project` | Independent bundles, drafts, immutable materials and acceptance |
+| `crates/vox-core/src/handoff.rs` | Echo working copies, explicit return and PCM24 conversion |
+| `apps/vox-cli` | Shared JSON operations for the desktop, users and automation |
+| `apps/desktop` | Qt/QML authoring, voice direction, audition and review |
+
+See [architecture](docs/ARCHITECTURE.md), [automation](docs/AUTOMATION.md),
+[script rules](docs/SPEECH_SCRIPT.md), [validation](docs/VALIDATION.md), [roadmap](ROADMAP.md),
+and [icon provenance](assets/branding/README.md).
+
+This migration reuses Shape's speech production code with its provenance and license retained.
+Shape's existing projects and speech interface remain intact. Exported text/scripts can be imported;
+entire `.shape` projects are not automatically converted. Persistent per-segment re-recording,
+voice design from descriptions and video dubbing remain future work.
+
+### License
+
+Vox is available under the [MIT License](LICENSE). Migrated code and dependency attribution are
+recorded in [third-party notices](THIRD_PARTY_NOTICES.md) and the [Shape source manifest](docs/SHAPE_PROVENANCE.json).
+Model weights are not distributed with the project; their providers determine their licenses.
