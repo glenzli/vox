@@ -22,12 +22,17 @@ public:
     QDir().mkpath(output_);
     path_ = output_ + "/fixture-" +
             QUuid::createUuid().toString(QUuid::WithoutBraces) + ".vox";
-    source_ = QString::fromUtf8(
-        "[production: dialogue]\n[role: Guide]\n[role: 旁白]\n"
-        "[language: Chinese]\n你好，Vox。\n[pause: 0.3s]\n"
-        "[repeat: 2; gap: 0.4s]\n[speaker: Guide]\n[language: English]\n"
-        "Every story begins with a voice.\n[end-repeat]\n"
-        "[note: speaker: keep this authored note]");
+    longRole_ = QString(120, QLatin1Char('W'));
+    source_ =
+        QString::fromUtf8(
+            "[production: dialogue]\n[role: Guide]\n[role: 旁白]\n") +
+        "[role: " + longRole_ + "]\n" +
+        QString::fromUtf8(
+            "[language: Chinese]\n你好，Vox。\n[pause: 0.3s]\n"
+            "[repeat: 2; gap: 0.4s]\n[speaker: Guide]\n[language: English]\n"
+            "Every story begins with a voice.\n[end-repeat]\n"
+            "[note: speaker: keep this authored note]\n") +
+        "[speaker: " + longRole_ + "]\nA passage with a long role.";
     connect(&backend_, &DesktopBackend::requestFinished, this,
             [this](const QString &action, bool ok) {
               if (action == "create") {
@@ -89,10 +94,18 @@ private:
            backend_.document()["text"].toString() == source_;
   }
   void inspectLight() {
-    auto *rejected = item("readingText-5");
-    auto *spoken = item("readingText-10");
-    auto *group = item("readingRepeat-7");
-    auto *title = item("readingRepeatTitle-7");
+    auto *render = item("renderButton");
+    auto *readiness = item("renderReadiness");
+    if (!render || render->isEnabled() || !readiness ||
+        !readiness->property("text").toString().contains("Guide") ||
+        !readiness->property("text").toString().contains(longRole_)) {
+      fail("Missing role voices were not exposed before rendering");
+      return;
+    }
+    auto *rejected = item("readingText-6");
+    auto *spoken = item("readingText-11");
+    auto *group = item("readingRepeat-8");
+    auto *title = item("readingRepeatTitle-8");
     if (!preserved() || !rejected || !spoken || !group || !title ||
         item("formatChoice")->property("currentIndex").toInt() != 1 ||
         item("defaultVoice")->property("currentIndex").toInt() != 5 ||
@@ -104,15 +117,31 @@ private:
         group->height() < 100 || group->height() > 240 ||
         !group->mapRectToScene(group->boundingRect())
              .contains(spoken->mapRectToScene(spoken->boundingRect())) ||
-        item("readingEntry-4") || item("readingEntry-8") ||
-        item("readingEntry-9") || !item("readingEntry-12")) {
+        item("readingEntry-5") || item("readingEntry-9") ||
+        item("readingEntry-10") || !item("readingEntry-13")) {
       qCritical() << "Reading state" << preserved() << rejected << spoken
                   << group << title
                   << (rejected ? rejected->property("text") : QVariant{})
                   << (title ? title->property("text") : QVariant{})
-                  << (group ? group->height() : 0) << item("readingEntry-12");
+                  << (group ? group->height() : 0) << item("readingEntry-13");
       fail("Grouped reading, rejected source, authored notes or geometry "
            "failed");
+      return;
+    }
+    auto *longEntry = item("readingEntry-15");
+    auto *longRole = item("readingRole-15");
+    auto *longEdit = item("readingEdit-15");
+    auto *longText = item("readingText-15");
+    if (!longEntry || !longRole || !longEdit || !longText ||
+        longRole->property("text").toString() != longRole_ ||
+        !longEntry->boundingRect().contains(
+            longEdit->mapRectToItem(longEntry, longEdit->boundingRect())) ||
+        !longEntry->boundingRect().contains(
+            longRole->mapRectToItem(longEntry, longRole->boundingRect())) ||
+        longRole->mapRectToItem(longEntry, longRole->boundingRect()).bottom() >
+            longText->mapRectToItem(longEntry, longText->boundingRect())
+                .top()) {
+      fail("Long role metadata clipped or hid source navigation");
       return;
     }
     window_->grabWindow().save(output_ + "/reading-light-zh.png");
@@ -122,13 +151,13 @@ private:
       if (!preserved() ||
           item("formatChoice")->property("currentIndex").toInt() != 1 ||
           item("defaultVoice")->property("currentIndex").toInt() != 5 ||
-          item("readingRepeatTitle-7")->property("text").toString() !=
+          item("readingRepeatTitle-8")->property("text").toString() !=
               "Repeat 2×") {
         fail("Live reading translation changed source or stayed stale");
         return;
       }
       window_->grabWindow().save(output_ + "/reading-dark-en.png");
-      auto *edit = item("readingEdit-5");
+      auto *edit = item("readingEdit-6");
       if (!edit || !QMetaObject::invokeMethod(edit, "clicked")) {
         fail("Reading source navigation is missing");
         return;
@@ -152,7 +181,10 @@ private:
     window_->setProperty("reading", true);
     QTimer::singleShot(0, this, [this] {
       if (item("scriptReader")->property("current").toBool() ||
-          (item("readingText-10") && item("readingText-10")->isVisible())) {
+          (item("readingText-11") && item("readingText-11")->isVisible()) ||
+          item("renderButton")->isEnabled() ||
+          item("renderReadiness")->property("text").toString() !=
+              QString::fromUtf8("Checking script…")) {
         fail("A prior-source preview remained visible after editing");
         return;
       }
@@ -163,7 +195,10 @@ private:
   void inspectPlain() {
     auto *text = item("readingText-1");
     if (!preserved() || !text || text->property("text").toString() != source_ ||
-        text->property("textFormat").toInt() != Qt::PlainText) {
+        text->property("textFormat").toInt() != Qt::PlainText ||
+        !item("renderButton")->isEnabled() ||
+        item("renderReadiness")->property("text").toString() !=
+            "Ready to render") {
       fail("Plain reading did not retain literal authored text");
       return;
     }
@@ -171,12 +206,22 @@ private:
     qInfo() << "Grouped reading, invalid-source visibility, authored notes, "
                "live themes/languages, source navigation and exact persistence "
                "passed";
-    app_.quit();
+    // Generation can finish while the close confirmation is still visible.
+    // Accepting that confirmation must close immediately, without waiting for
+    // an unrelated future worker response.
+    auto *stopDialog = window_->findChild<QObject *>("stopDialog");
+    if (!stopDialog || !QMetaObject::invokeMethod(stopDialog, "open") ||
+        !QMetaObject::invokeMethod(stopDialog, "accepted")) {
+      fail("Close confirmation is missing");
+      return;
+    }
+    QTimer::singleShot(
+        300, this, [this] { fail("Completed generation blocked closing"); });
   }
   QGuiApplication &app_;
   UiPreferences &preferences_;
   DesktopBackend &backend_;
-  QString output_, path_, source_;
+  QString output_, path_, source_, longRole_;
   QByteArray before_;
   QQuickWindow *window_;
   int stage_ = 0;

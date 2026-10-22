@@ -13,7 +13,8 @@ public:
   using Callback = std::function<void(const QJsonObject &)>;
   explicit WorkerClient(QObject *parent = nullptr);
   ~WorkerClient() override;
-  void request(std::function<QJsonObject()> build, Callback done);
+  void request(std::function<QJsonObject()> build, Callback done,
+               bool cancellable = false);
   void cancel();
 signals:
   void progress(int completed, int total);
@@ -24,6 +25,7 @@ private:
     std::function<QJsonObject()> build;
     Callback done;
     QString id;
+    bool cancellable = false, cancelled = false;
   };
   QProcess m_process;
   QQueue<Request> m_queue;

@@ -107,6 +107,9 @@ pub struct SpeechSegmentProvenance {
     pub input_start: u32,
     pub input_end: u32,
     pub input_digest: ContentDigest,
+    /// Actual submitted text when pronunciation differs from the authored slice.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub spoken_digest: Option<ContentDigest>,
     pub output_digest: ContentDigest,
     pub frames: u64,
     pub runtime: Box<ExternalExecutionProvenance>,

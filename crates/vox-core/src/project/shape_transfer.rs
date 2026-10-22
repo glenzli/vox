@@ -269,6 +269,7 @@ impl Project {
                 contract: contract.clone(),
                 origin: "shape_import".into(),
                 generation: None,
+                metadata: None,
             });
         }
         if let Some(audio) = &verified.transfer.accepted_audio {
@@ -316,6 +317,7 @@ impl Project {
                 parent_audio: None,
                 source_project: Some(verified.transfer.origin.project_id.clone()),
                 edit: None,
+                segment_assembly: None,
             });
             m.audio_head = Some(id);
             if source.is_none() {
@@ -443,6 +445,7 @@ fn document(
         d.language = op.language.clone();
         d.speed_milli = op.speed_milli;
         d.delivery = op.delivery;
+        d.pronunciation_rules = op.pronunciation_rules.clone();
         match &op.voice {
             SpeechVoiceSelection::Preset(voice) => {
                 d.voice = voice.alias.as_str().into();

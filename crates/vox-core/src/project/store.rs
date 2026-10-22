@@ -40,6 +40,9 @@ impl Project {
             audio: vec![],
             audio_head: None,
             runs: vec![],
+            segment_candidates: vec![],
+            accepted_segments: vec![],
+            segment_selections: std::collections::BTreeMap::new(),
             handoffs: vec![],
             voice_library: vec![],
             sound_library: vec![],
@@ -86,6 +89,7 @@ impl Project {
             return Err(Error::new("invalid_project"));
         }
         super::materials::validate_libraries(&m)?;
+        super::segments::validate_records(&m)?;
         if !super::shape_transfer::unsupported(&m, &m.draft) {
             m.draft.operation()?;
         }
@@ -313,6 +317,9 @@ impl Project {
                         &bytes,
                     )?;
                 }
+            }
+            if r.origin == "segment_assembly" {
+                self.validate_segment_assembly(m, r)?;
             }
             let r = m.candidates.remove(index);
             m.audio_head = Some(r.id.clone());

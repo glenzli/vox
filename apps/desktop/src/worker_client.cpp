@@ -21,9 +21,9 @@ WorkerClient::WorkerClient(QObject *parent) : QObject(parent) {
 }
 WorkerClient::~WorkerClient() {
   disconnect(&m_process, nullptr, this, nullptr);
+  cancel();
   m_queue.clear();
   if (m_process.state() != QProcess::NotRunning) {
-    cancel();
     m_process.closeWriteChannel();
     if (!m_process.waitForFinished(1000)) {
       m_process.terminate();
@@ -34,9 +34,10 @@ WorkerClient::~WorkerClient() {
     }
   }
 }
-void WorkerClient::request(std::function<QJsonObject()> build, Callback done) {
-  m_queue.enqueue(
-      {std::move(build), std::move(done), QString::number(++m_sequence)});
+void WorkerClient::request(std::function<QJsonObject()> build, Callback done,
+                           bool cancellable) {
+  m_queue.enqueue({std::move(build), std::move(done),
+                   QString::number(++m_sequence), cancellable});
   if (m_process.state() == QProcess::NotRunning) {
     failed();
     return;
@@ -46,13 +47,23 @@ void WorkerClient::request(std::function<QJsonObject()> build, Callback done) {
 void WorkerClient::pump() {
   if (m_running || m_queue.isEmpty() || m_process.state() != QProcess::Running)
     return;
+  if (m_queue.head().cancelled) {
+    auto current = m_queue.dequeue();
+    current.done(QJsonObject{{"ok", false}, {"error", "request_cancelled"}});
+    QTimer::singleShot(0, this, &WorkerClient::pump);
+    return;
+  }
   auto request = m_queue.head().build();
   request.insert("request_id", m_queue.head().id);
   m_running = true;
   m_process.write(QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n');
 }
 void WorkerClient::cancel() {
-  m_process.write("{\"action\":\"cancel\",\"request_id\":\"cancel\"}\n");
+  for (auto &request : m_queue)
+    if (request.cancellable)
+      request.cancelled = true;
+  if (m_running && !m_queue.isEmpty() && m_queue.head().cancellable)
+    m_process.write("{\"action\":\"cancel\",\"request_id\":\"cancel\"}\n");
 }
 void WorkerClient::receive() {
   m_buffer += m_process.readAllStandardOutput();

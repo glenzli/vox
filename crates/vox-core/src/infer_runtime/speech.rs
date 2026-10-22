@@ -26,6 +26,7 @@ mod script;
 mod voices;
 pub use narration::SpeechSynthesisControl;
 use narration::{CachedNarration, Segment, split_text};
+pub(crate) use voices::SPEECH_LANGUAGES;
 pub use voices::{
     INFER_SPEECH_VOICE_CATALOG_REVISION, SPEECH_PRESETS, SpeechPreset, supported_speech_operation,
 };
@@ -199,10 +200,19 @@ impl InferRuntimeSpeechExecutor {
         let mut input_start = 0_u32;
         for (index, part) in parts.iter().enumerate() {
             self.control.check_cancelled()?;
+            let mut selected = operation.clone();
+            selected.pronunciation_rules = crate::pronunciation::for_context(
+                part,
+                &operation.pronunciation_rules,
+                &operation.language,
+                None,
+            );
+            let spoken = crate::pronunciation::apply(part, &selected.pronunciation_rules)
+                .ok_or_else(|| failure("invalid_pronunciation", false))?;
             let segment = if let Some(cached) = cache.segments.get(index) {
                 cached.clone()
             } else {
-                self.create_segment(part, operation)?
+                self.create_segment(&spoken, &selected)?
             };
             assembly.push(&segment.bytes)?;
             let contract =
@@ -219,6 +229,8 @@ impl InferRuntimeSpeechExecutor {
                 input_start,
                 input_end,
                 input_digest: ContentDigest::from_bytes(part.as_bytes()),
+                spoken_digest: (spoken != *part)
+                    .then(|| ContentDigest::from_bytes(spoken.as_bytes())),
                 output_digest: ContentDigest::from_bytes(&segment.bytes),
                 frames: contract.frame_count,
                 runtime: Box::new(segment.provenance),
@@ -231,6 +243,9 @@ impl InferRuntimeSpeechExecutor {
         let job_id = first.job_id.clone();
         let mut provenance = *first.runtime.clone();
         let bytes = if parts.len() == 1 {
+            if receipts[0].spoken_digest.is_some() {
+                provenance.speech_segments = receipts;
+            }
             cache.segments[0].bytes.to_vec()
         } else {
             provenance.speech_segments = receipts;

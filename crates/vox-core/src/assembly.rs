@@ -112,11 +112,23 @@ pub(crate) fn compile(
                     if speech_count > 512 {
                         return Err(invalid_script());
                     }
+                    let mut part_operation = selected.clone();
+                    part_operation.pronunciation_rules = crate::pronunciation::for_context(
+                        part,
+                        &operation.pronunciation_rules,
+                        &selected.language,
+                        Some(role),
+                    );
+                    if crate::pronunciation::apply(part, &part_operation.pronunciation_rules)
+                        .is_none()
+                    {
+                        return Err(invalid_script());
+                    }
                     actions.push(ScriptAction {
                         event,
                         kind: ScriptActionKind::Speech {
                             text: part.to_owned(),
-                            operation: Box::new(selected.clone()),
+                            operation: Box::new(part_operation),
                         },
                     });
                 }
@@ -395,6 +407,8 @@ pub fn validate_output(
                     .get(speech_index)
                     .ok_or_else(invalid_script)?;
                 let end = input_start + u32::try_from(text.len()).map_err(|_| invalid_script())?;
+                let spoken = crate::pronunciation::apply(text, &selected.pronunciation_rules)
+                    .ok_or_else(invalid_script)?;
                 if piece.speech_segment
                     != Some(u32::try_from(speech_index).map_err(|_| invalid_script())?)
                     || segment.runtime.intent
@@ -406,6 +420,8 @@ pub fn validate_output(
                     || segment.input_start != input_start
                     || segment.input_end != end
                     || segment.input_digest != ContentDigest::from_bytes(text.as_bytes())
+                    || segment.spoken_digest
+                        != (spoken != *text).then(|| ContentDigest::from_bytes(spoken.as_bytes()))
                 {
                     return Err(invalid_script());
                 }

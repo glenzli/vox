@@ -9,7 +9,7 @@ Never infer success from process exit or a health endpoint.
 {"action":"create","path":"/absolute/new/Story.vox","title":"Story","request_id":"1"}
 ```
 
-Mutations return `result.project`, `result.path` and `result.analysis`. Use the returned
+Mutations return `result.project`, `result.path`, `result.analysis` and `result.segment_plan`. Use the returned
 `project.version` as the next mutation's `version`; never guess or increment it on the client.
 
 | Action | Additional input |
@@ -33,7 +33,7 @@ Mutations return `result.project`, `result.path` and `result.analysis`. Use the 
 | `review_echo` | `path`, expected `version`, original `handoff`, returned file, explicit `allow_pcm24` |
 
 Read the complete initial document from the project. Preserve its options revision and versioned
-preset bindings. `production_script` uses canonical rules; `plain` speaks exact input text.
+preset bindings. `production_script` uses canonical rules; `plain` speaks the authored text after explicitly configured pronunciation rules.
 Role/cue prerequisites remain distinct from provider availability.
 
 Render requires the working draft to match the adopted source and produces a candidate. Only
@@ -60,9 +60,40 @@ cue `label`. `discard_sound` removes only unaccepted candidates. `material_file`
 and `material_echo` take `kind: "voice" | "sound"` and `id`; export additionally takes a new
 `destination`. Echo edits are reimported as new material, preserving originals.
 
-`cancel` suppresses a generated candidate after the current model request returns; it does not
-claim provider-side interruption. The worker admits one foreground generation at a time.
+`cancel` stops before the next sound request. A validated current sound result is retained as a
+candidate; no provider-side interruption is claimed. The worker admits one foreground generation at a time.
 `test_studio_live.py` explicitly exercises real local generation using a synthetic reference in a
 new external project; `--resume` continues that named test project after an interrupted check.
 
 Shape transfer schema, exact manifest fencing, replay behavior and preserved-draft semantics are documented in [Shape transfer](SHAPE_TRANSFER.md).
+
+## Segment production and pronunciation
+
+Save the complete document, then adopt it before generating segments. `pronunciation_rules` is an
+optional document array of `{text, spoken, language?, role?}`. Empty rules are omitted, preserving
+legacy document digests. Rules affect spoken input; they never replace authored source bytes.
+
+| Action | Additional input |
+| --- | --- |
+| `segment_plan` | Existing `path`; returns exact current draft plan and reusable candidates |
+| `render_segment` | `path`, expected `version`, exact `segment_key` from current plan |
+| `accept_segment` | `path`, expected `version`, `segment_id`; explicit selection for assembly |
+| `segment_playback` | `path`, `segment_id`; verified WAV and peaks |
+| `assemble_segments` | `path`, expected `version`; all current segments must have selected takes |
+| `export_subtitles` | `path`, assembled `audio_id`, new `destination`, `format: "srt"` or `"vtt"` |
+
+Assembly creates a whole-take candidate. `accept` remains the only operation advancing the whole
+audio head. Repeated passages reuse the same PCM; subtitle timings include local pauses and cues.
+Caption text comes from the source, not its pronunciation substitutions. A segment candidate is
+never silently accepted. After failure or cancellation, read status before another mutation.
+
+## Sound batches
+
+`generate_sound_batch` adds `category: "sfx" | "ambience" | "short_music"` and `variations: 1..4`
+to the existing `name`/`spec` request. Category selects the local SFX or instrumental-music route.
+Each variant uses a distinct seed. No complete-song mode is provided.
+
+The response includes `sound_batch: {batch_id, requested, completed, state, error}` alongside the
+latest project snapshot. Check `state`: `completed`, `cancelled`, or `partial_failed`. Completed
+candidates survive cancellation or a later variation failure. Inspect each result before acceptance.
+Loop audition is a playback convenience; it does not claim seamless loop generation.

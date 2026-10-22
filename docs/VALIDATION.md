@@ -224,3 +224,88 @@ Ninja 1.13.2 and Qt 6.11.2), not a newly provisioned operating system or a new R
 session. The bilingual README now documents the initial online fetch before the offline build.
 Only publication documentation changed after this build; production source and the lockfile match
 the validated checkout.
+
+## Desktop use review and asynchronous state fixes — 2026-10-22
+
+Three parallel GPT-6.1 Sol/max reviews covered project durability, desktop/material workflows and
+script editing/reading. The integrated changes retain draft edits across asynchronous replies, pin
+take-operation targets, fence project transitions, cancel queued/preparing generation, and wait for
+pending imports before closing. Executor initialization errors now finalize failed render journals.
+Editor project identity clears cross-project undo history; same-cursor navigation scrolls correctly;
+long reading metadata wraps without hiding the edit action. PCM16 reference capture retains boundary
+samples and enforces its 60-second buffer cap. No project format or grammar change is required.
+
+- `scripts/build_and_promote_debug.sh` passed formatting, Clippy, all **85 Rust tests** and all
+  **six packaged desktop checks**. The final catalog contains **325 complete Chinese messages**.
+  Later QML corrections passed the full desktop suite, followed by focused project/appearance/reading
+  checks for the final recording-card accessibility action; unchanged Rust evidence was reused.
+- Signed Cocoa appearance, editor, studio and reading checks passed. A native interaction exposed
+  the close-confirmation race when generation completes before confirmation; its regression now
+  passes both packaged and Cocoa checks. Native focus checks ran with only their own test window.
+  macOS emitted sandbox-extension/IMK diagnostics without failing the final checks.
+- Native pointer/accessibility use on an isolated project exercised editing, role assignment,
+  reading, synthesis, playback, acceptance, WAV export and built-in sound preview. Missing role
+  voices are now named before rendering; dirty text waits for current analysis. Sound preview clears
+  take selection so take-specific export/Echo actions do not target unrelated audio.
+- The final worker produced a **5.48 s, 24 kHz, mono PCM16** dialogue through Vox's own Runtime
+  authorization. Its segment Jobs are `audio_0237132e298148b385570d60132ef2a1` and
+  `audio_52198425b9eb47f8bfe18ed3bd2a0019`. Native playback reached the end, the take was accepted,
+  and exported bytes match the accepted object. Export SHA-256 is
+  `5a3a536986ba0aa6b027a3e788d42443283733a8f367449179e02e4a61f25056`.
+- Synthetic recorder fixtures validate conversion/import/cancellation without capturing a person.
+  Real microphone permission, acoustic quality and device hot-plug were not exercised. Echo and
+  AI sound generation were not repeated in this review; their earlier live receipts remain scoped
+  to the previous runs above.
+- The existing user project remains byte-identical: version 14, 239 characters and two accepted
+  takes. The validated app is promoted to the normal `current-debug/Vox.app` pointer; this review
+  does not commit or push its source changes.
+
+Logs, snapshots, source/artifact identities and the final live report are under
+`/private/tmp/vox-review-20261022-c_4c7028/`. The initial source gate is `gate.log`, final desktop
+checks are `ui-final.log` and `audio-ui.log`, native checks are in `native/`, and consolidated
+evidence is `report.json`. All generated files and test projects remain outside the checkout.
+
+## Segment production and sound workspaces — 2026-10-22
+
+Three parallel GPT-6.1 Sol/max tasks implemented persistent segment alternatives and assembly,
+pronunciation rules, measured subtitles, and independent SFX, ambience and short instrumental
+music workspaces. Full songs are outside the product scope. Voice design, performance conversion
+and timecoded/video dubbing remain roadmap items, not implemented capabilities.
+
+- The required `scripts/build_and_promote_debug.sh` gate passed formatting, Clippy and all
+  **108 Rust tests**. Two new desktop checks exposed a QML delegate-scope error and a test fixture
+  digest-decoding error; both were corrected. The final integrated desktop build passed all
+  **eight packaged checks** and contains **446 complete Chinese messages**. A subsequent change
+  keeps the stop control visible during segment generation; the production and sound checks
+  passed again. Unchanged Rust evidence was reused.
+- Signed native Cocoa production and sound-workspace checks passed, covering pronunciation
+  persistence, source navigation, cancelled preparation, concurrent edits, audition fences,
+  category and language changes, explicit acceptance, reopening and exact original export.
+  English/dark and Chinese/light screenshots are retained with the test output.
+- Real generation through Vox's own authenticated local Runtime connection produced two speech
+  segments, regenerated just the first, retained the second selection, and assembled a **6.07 s**
+  take with pauses, a repeated passage and its cue. Reselecting the earlier first segment restored
+  the original take's exact bytes. SRT/VTT exports contain the authored words, use measured audio
+  durations and include the repeated passage twice; pronunciation substitution only changes
+  synthesis input. The WAV export SHA-256 is
+  `cc0e97d840d0748b23c5025bc028534d3e7b48446b8c0f43e7a615081e68b604`.
+- The same real run generated two SFX variants, one ambience and one short instrumental music
+  candidate through the local Stable Audio routes. Distinct seeds, explicit acceptance, original
+  WAV export, source preservation and byte-identical reopening passed. These checks establish
+  generation and data flow; they do not establish perceptual quality or seamless looping.
+- Native use on the isolated live project exercised segment regeneration, audition, acceptance,
+  assembly, sound-category navigation and loop audition. It exposed two usability defects:
+  accepting a segment renumbered alternatives, and entering a sound workspace retained a speech
+  playback target. Stable alternative ordering and clearing the playback context corrected both.
+- Automatic Runtime discovery intermittently reported unavailable during the run. The local health
+  and explicitly addressed authenticated probe succeeded, and a subsequent ordinary discovery
+  probe and the app's Check connection action both recovered. No fixed-port fallback was added;
+  this observation is retained as an environment limitation without claiming a diagnosed cause.
+- The original user project remains byte-identical at version 14, with 239 characters and two
+  accepted takes. The updated preview is available at the normal `current-debug/Vox.app` pointer.
+  Echo editing and microphone capture were not repeated in this expansion; their earlier evidence
+  stays scoped to the earlier runs. No source commit or push is part of this validation.
+
+Evidence is under `/private/tmp/vox-expand-20261022/`: `gate.log`, `context-final.log`,
+`controls-final.log`, `native-production-final/`, `native-sound-final/`, `live-2/report.json` and
+the consolidated `report.json`. Media, fixtures and build products remain outside the checkout.

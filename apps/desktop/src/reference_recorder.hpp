@@ -54,6 +54,6 @@ private:
   double m_level = 0;
   quint64 m_generation = 0;
   bool m_requesting = false;
-  void begin(int deviceIndex, quint64 generation);
+  void begin(const QByteArray &deviceID, quint64 generation);
   void drain();
 };

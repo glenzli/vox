@@ -398,6 +398,8 @@ impl PresetVoiceSelection {
 /// Persisted creative parameters of one speech synthesis Operator.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SpeechSynthesisOperation {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pronunciation_rules: Vec<crate::PronunciationRule>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub delivery: Option<crate::speech_script::SpeechDelivery>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -422,6 +424,7 @@ impl SpeechSynthesisOperation {
         synthetic_disclosure_required: bool,
     ) -> Result<Self, DomainError> {
         let operation = Self {
+            pronunciation_rules: Vec::new(),
             script: None,
             delivery: None,
             language: language.into(),
@@ -451,6 +454,7 @@ impl SpeechSynthesisOperation {
             .script
             .as_ref()
             .is_some_and(|script| !script.is_valid())
+            || !crate::pronunciation::valid_rules(&self.pronunciation_rules)
             || self.language.is_empty()
             || self.language.len() > MAX_LANGUAGE_TAG_BYTES
             || !self

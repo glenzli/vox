@@ -7,6 +7,28 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
+mod sound_batch;
+pub use sound_batch::{SoundBatchOutcome, SoundBatchState, SoundCategory};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SoundMetadata {
+    pub category: SoundCategory,
+    /// Exact authored text, before the category's bounded prompt constraint.
+    pub authored_prompt: String,
+    pub batch_id: String,
+    pub variation: u8,
+    pub variations: u8,
+}
+impl SoundMetadata {
+    fn valid(&self) -> bool {
+        !self.authored_prompt.trim().is_empty()
+            && self.authored_prompt.len() <= 2000
+            && uuid::Uuid::parse_str(&self.batch_id).is_ok()
+            && (1..=4).contains(&self.variations)
+            && (1..=self.variations).contains(&self.variation)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReferenceVoice {
     pub id: String,
@@ -25,6 +47,8 @@ pub struct SoundMaterial {
     pub contract: AudioValueContract,
     pub origin: String,
     pub generation: Option<crate::infer_runtime::sound::SoundReceipt>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<SoundMetadata>,
 }
 fn valid_name(name: &str) -> bool {
     !name.trim().is_empty() && name.len() <= 256 && !name.chars().any(char::is_control)
@@ -34,11 +58,13 @@ pub(super) fn validate_libraries(m: &Manifest) -> Result<()> {
         !valid_name(&v.name)
             || v.id != v.reference.source_revision_id.to_string()
             || !v.reference.is_executable()
-    }) || m
-        .sound_library
-        .iter()
-        .any(|v| !valid_name(&v.name) || uuid::Uuid::parse_str(&v.id).is_err())
-    {
+    }) || m.sound_library.iter().any(|v| {
+        !valid_name(&v.name)
+            || uuid::Uuid::parse_str(&v.id).is_err()
+            || v.metadata
+                .as_ref()
+                .is_some_and(|metadata| !metadata.valid())
+    }) {
         return Err(Error::new("invalid_material"));
     }
     // Bindings must match a complete immutable project-owned source, never an arbitrary path/claim.
@@ -148,6 +174,18 @@ impl Project {
         origin: &str,
         generation: Option<crate::infer_runtime::sound::SoundReceipt>,
     ) -> Result<Manifest> {
+        self.add_sound_with_metadata(expected, name, bytes, origin, generation, None)
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn add_sound_with_metadata(
+        &self,
+        expected: u64,
+        name: &str,
+        bytes: &[u8],
+        origin: &str,
+        generation: Option<crate::infer_runtime::sound::SoundReceipt>,
+        metadata: Option<SoundMetadata>,
+    ) -> Result<Manifest> {
         if !valid_name(name) {
             return Err(Error::new("invalid_material"));
         }
@@ -183,6 +221,7 @@ impl Project {
                 contract,
                 origin: origin.into(),
                 generation,
+                metadata,
             });
             Ok(())
         })

@@ -224,6 +224,87 @@ fn long_speech_preserves_text_pcm_and_each_runtime_receipt() {
 }
 
 #[test]
+fn narration_pronunciation_submits_spoken_text_and_preserves_authored_receipt() {
+    let text = "PCP 银行。";
+    let mut request = request_text(text);
+    let mut op: SpeechSynthesisOperation = serde_json::from_slice(&request.instruction).unwrap();
+    op.pronunciation_rules = vec![crate::PronunciationRule {
+        text: "PCP".into(),
+        spoken: "pee see pee".into(),
+        language: None,
+        role: None,
+    }];
+    request.instruction = serde_json::to_vec(&op).unwrap();
+    let mut job = speech_job();
+    job.id = "resp_segment_0".into();
+    let fake = FakeSdk::new().speech(response(0)).job(job);
+    let seen = fake.seen_speeches.clone();
+    let output = InferRuntimeSpeechExecutor::with_sdk(Box::new(fake))
+        .execute(&request)
+        .unwrap();
+    assert_eq!(seen.lock().unwrap()[0].input, "pee see pee 银行。");
+    assert_eq!(request.inputs[0].bytes().unwrap(), text.as_bytes());
+    let p = output.external_provenance.unwrap();
+    assert!(p.is_bounded());
+    let receipt = &p.speech_segments[0];
+    assert_eq!(
+        receipt.input_digest,
+        ContentDigest::from_bytes(text.as_bytes())
+    );
+    assert_eq!(
+        receipt.spoken_digest,
+        Some(ContentDigest::from_bytes("pee see pee 银行。".as_bytes()))
+    );
+}
+
+#[test]
+fn production_pronunciation_is_role_scoped_and_revalidated_without_source_rewrite() {
+    let text = "[role: A; language: Chinese]\n[role: B; language: Chinese]\n[speaker: A]\n银行。\n[pause: 0.01s]\n[speaker: B]\n银行。";
+    let mut request = request_text(text);
+    let mut op: SpeechSynthesisOperation = serde_json::from_slice(&request.instruction).unwrap();
+    op.script = Some(crate::speech_script::SpeechScriptOptions::default());
+    let SpeechVoiceSelection::Preset(voice) = &op.voice else {
+        panic!()
+    };
+    for role in ["A", "B"] {
+        op.script
+            .as_mut()
+            .unwrap()
+            .roles
+            .insert(role.into(), voice.clone());
+    }
+    op.pronunciation_rules = vec![crate::PronunciationRule {
+        text: "行".into(),
+        spoken: "hang".into(),
+        language: Some("Chinese".into()),
+        role: Some("A".into()),
+    }];
+    request.instruction = serde_json::to_vec(&op).unwrap();
+    let mut fake = FakeSdk::new();
+    for i in 0..2 {
+        let mut job = speech_job();
+        job.id = format!("resp_segment_{i}");
+        fake = fake.speech(response(i)).job(job);
+    }
+    let seen = fake.seen_speeches.clone();
+    let output = InferRuntimeSpeechExecutor::with_sdk(Box::new(fake))
+        .execute(&request)
+        .unwrap();
+    let seen = seen.lock().unwrap();
+    assert_eq!(seen[0].input, "银hang。");
+    assert_eq!(seen[1].input, "银行。");
+    let mut p = output.external_provenance.unwrap();
+    assert!(
+        crate::assembly::validate_output(text, &op, &request.inputs, &p, &output.bytes).is_ok()
+    );
+    p.speech_segments[0].spoken_digest = None;
+    assert!(
+        crate::assembly::validate_output(text, &op, &request.inputs, &p, &output.bytes).is_err()
+    );
+    assert_eq!(request.inputs[0].bytes().unwrap(), text.as_bytes());
+}
+
+#[test]
 fn retry_reuses_completed_segments_but_changed_text_invalidates_cache() {
     use crate::infer_runtime::sdk::SdkAdapterError;
     let text = "旁白内容。".repeat(70);

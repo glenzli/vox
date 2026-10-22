@@ -11,6 +11,7 @@
 #include <QQuickWindow>
 #include <QTimer>
 #include <QUuid>
+#include <QtEndian>
 #include <cmath>
 
 // Exercise capture conversion and disposable-file ownership without recording a
@@ -18,6 +19,34 @@
 class ReferenceRecorderSmoke {
 public:
   static bool fixture(const QString &path) {
+    ReferenceRecorder exact;
+    exact.m_format.setSampleRate(24000);
+    exact.m_format.setChannelCount(1);
+    exact.m_format.setSampleFormat(QAudioFormat::Int16);
+    QByteArray signedSamples;
+    for (const qint16 value : {qint16(-32768), qint16(-16384), qint16(0),
+                               qint16(16384), qint16(32767)}) {
+      const auto sample = qToLittleEndian(value);
+      signedSamples.append(reinterpret_cast<const char *>(&sample), 2);
+    }
+    QBuffer exactInput(&signedSamples);
+    exactInput.open(QIODevice::ReadOnly);
+    exact.m_input = &exactInput;
+    exact.drain();
+    exact.m_input = nullptr;
+    if (exact.m_pcm != signedSamples)
+      return false;
+    exact.cancel();
+    exact.m_format.setSampleRate(1);
+    QByteArray overLimit(124, '\0');
+    QBuffer limitedInput(&overLimit);
+    limitedInput.open(QIODevice::ReadOnly);
+    exact.m_input = &limitedInput;
+    exact.drain();
+    exact.m_input = nullptr;
+    if (exact.m_pcm.size() != 120)
+      return false;
+
     ReferenceRecorder recorder;
     recorder.m_format.setSampleRate(48000);
     recorder.m_format.setChannelCount(2);
@@ -88,7 +117,14 @@ public:
                                  .toMap()["id"]
                                  .toString();
                 backend_.addBuiltin("bell");
+                backend_.editText("Input entered while a sound is imported.");
               } else if (action == "add_builtin" && stage_ == 2) {
+                if (!backend_.dirty() || backend_.busy() ||
+                    backend_.document()["text"] !=
+                        "Input entered while a sound is imported.") {
+                  fail("Material import erased input or blocked editing");
+                  return;
+                }
                 stage_ = 3;
                 sound_ = backend_.project()["sound_library"]
                              .toList()

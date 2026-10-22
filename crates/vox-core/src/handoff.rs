@@ -138,6 +138,7 @@ impl Project {
             parent_audio: Some(parent.id.clone()),
             source_project: None,
             edit: Some(receipt),
+            segment_assembly: None,
         };
         self.update(expected, |m| {
             if m.source_head.as_ref() != Some(&r.source_revision) {

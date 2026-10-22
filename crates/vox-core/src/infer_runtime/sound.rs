@@ -25,6 +25,16 @@ pub struct SoundReceipt {
     pub output_digest: ContentDigest,
 }
 impl SoundSpec {
+    pub fn validate(&self) -> Result<()> {
+        if self.prompt.trim().is_empty()
+            || self.prompt.len() > 2000
+            || self.prompt.chars().any(char::is_control)
+            || !(1..=30).contains(&self.seconds)
+        {
+            return Err(Error::new("invalid_sound_request"));
+        }
+        Ok(())
+    }
     fn deployment(&self) -> &'static str {
         if self.music {
             "stable_audio_3_sm_music_mlx"
@@ -64,12 +74,16 @@ pub fn generate(
     spec: SoundSpec,
     control: &crate::SpeechSynthesisControl,
 ) -> Result<(Vec<u8>, SoundReceipt)> {
-    if spec.prompt.trim().is_empty()
-        || spec.prompt.len() > 2000
-        || !(1..=30).contains(&spec.seconds)
-    {
-        return Err(Error::new("invalid_sound_request"));
-    }
+    generate_with_prepared(endpoint, spec, control, None)
+}
+
+pub(crate) fn generate_with_prepared(
+    endpoint: &str,
+    spec: SoundSpec,
+    control: &crate::SpeechSynthesisControl,
+    prepared: Option<PreparedSoundPrompt>,
+) -> Result<(Vec<u8>, SoundReceipt)> {
+    spec.validate()?;
     if control.is_cancelled() {
         return Err(Error::new("generation_cancelled"));
     }
@@ -85,10 +99,13 @@ pub fn generate(
         .map_err(|_| Error::new("infer_unavailable"))?;
     runtime.block_on(async {
         tokio::time::timeout(Duration::from_secs(600), async {
-            let prepared = client
-                .prepare_sound_prompt(&spec.prompt)
-                .await
-                .map_err(map_error)?;
+            let prepared = match prepared {
+                Some(prepared) => prepared,
+                None => client
+                    .prepare_sound_prompt(&spec.prompt)
+                    .await
+                    .map_err(map_error)?,
+            };
             prepared
                 .validate_for_generation(&spec.prompt, "vox")
                 .map_err(|_| Error::new("prompt_preparation_failed"))?;
@@ -146,9 +163,8 @@ pub fn generate(
                 output_digest: ContentDigest::from_bytes(&response.wav),
             };
             receipt.validate(&response.wav)?;
-            if control.is_cancelled() {
-                return Err(Error::new("generation_cancelled"));
-            }
+            // A validated completed request remains reviewable. Cancellation is
+            // checked before the next request and never discards completed audio.
             Ok((response.wav, receipt))
         })
         .await

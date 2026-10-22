@@ -6,6 +6,7 @@
 #include <QJsonDocument>
 #include <QStandardPaths>
 #include <QUuid>
+#include <utility>
 
 DesktopBackend::DesktopBackend(QObject *parent)
     : QObject(parent), m_worker(this), m_probeWorker(this),
@@ -49,11 +50,19 @@ void DesktopBackend::command(const QString &action, const QJsonObject &fields,
                              WorkerClient::Callback done, bool includeProject) {
   const auto path = m_path;
   const auto projectID = m_project["id"].toString();
+  const auto epoch = m_projectEpoch;
   const auto edit = m_editSequence;
+  const bool cancellable =
+      QStringList{"render", "render_segment", "voice_preview", "reference_preview",
+                  "generate_sound", "generate_sound_batch", "import_shape_transfer"}
+          .contains(action);
+  ++m_pendingRequests;
+  emit pendingChanged();
   m_worker.request(
-      [this, action, fields, includeProject, path, projectID] {
+      [this, action, fields, includeProject, path, projectID, epoch] {
         if (includeProject &&
-            (path != m_path || projectID != m_project["id"].toString()))
+            (path != m_path || projectID != m_project["id"].toString() ||
+             epoch != m_projectEpoch))
           return QJsonObject{{"action", "capabilities"}};
         auto request = fields;
         request.insert("action", action);
@@ -63,15 +72,24 @@ void DesktopBackend::command(const QString &action, const QJsonObject &fields,
         }
         return request;
       },
-      [this, action, done, edit, path, includeProject,
-       projectID](const QJsonObject &r) {
+      [this, action, done, edit, path, includeProject, projectID, epoch,
+       cancellable](const QJsonObject &response) {
+        --m_pendingRequests;
+        emit pendingChanged();
         if (includeProject &&
-            (path != m_path || projectID != m_project["id"].toString())) {
+            (path != m_path || projectID != m_project["id"].toString() ||
+             epoch != m_projectEpoch)) {
           if (done)
             done(QJsonObject{{"ok", false}, {"error", "stale_project"}});
           emit requestFinished(action, false);
           return;
         }
+        auto r = response;
+        if (cancellable && r["error"].toString() == "request_cancelled")
+          r.insert("error", action == "generate_sound" ? "generation_cancelled"
+                            : action == "import_shape_transfer"
+                                ? "shape_transfer_cancelled"
+                                : "speech_cancelled");
         const bool ok = r["ok"].toBool();
         if (!ok)
           messageCode(r["error"].toString());
@@ -80,7 +98,8 @@ void DesktopBackend::command(const QString &action, const QJsonObject &fields,
         else if (ok && r["result"].toObject().contains("project"))
           apply(r["result"].toObject(), edit);
         emit requestFinished(action, ok);
-      });
+      },
+      cancellable);
 }
 void DesktopBackend::apply(const QJsonObject &result, quint64 capturedEdit,
                            bool reset) {
@@ -90,12 +109,16 @@ void DesktopBackend::apply(const QJsonObject &result, quint64 capturedEdit,
   m_project = project;
   m_path = result["path"].toString();
   m_analysis = result["analysis"].toObject();
+  m_segmentPlan = result["segment_plan"].toObject();
   if (reset || capturedEdit == m_editSequence) {
     m_draft = project["draft"].toObject();
     m_dirty = false;
     emit documentChanged();
   }
   if (reset) {
+    ++m_projectEpoch;
+    ++m_selectionSequence;
+    ++m_playbackSequence;
     m_selected.clear();
     m_preparedID.clear();
     m_waveform.clear();
@@ -129,74 +152,87 @@ QVariantList DesktopBackend::recentProjects() const {
   return out;
 }
 void DesktopBackend::createProject(const QUrl &url) {
-  if (m_rendering)
+  if (busy())
     return;
-  saveThen([this, url] {
-    const auto path = url.toLocalFile();
-    command(
-        "create",
-        {{"path", path}, {"title", QFileInfo(path).completeBaseName()}},
-        [this](const QJsonObject &r) {
-          if (r["ok"].toBool()) {
-            ++m_editSequence;
-            apply(r["result"].toObject(), m_editSequence, true);
-            messageCode("project_created");
-          }
-        },
-        false);
-  });
+  setProjectChanging(true);
+  saveThen(
+      [this, url] {
+        const auto path = url.toLocalFile();
+        command(
+            "create",
+            {{"path", path}, {"title", QFileInfo(path).completeBaseName()}},
+            [this](const QJsonObject &r) {
+              setProjectChanging(false);
+              if (r["ok"].toBool()) {
+                ++m_editSequence;
+                apply(r["result"].toObject(), m_editSequence, true);
+                messageCode("project_created");
+              }
+            },
+            false);
+      },
+      [this] { setProjectChanging(false); });
 }
 void DesktopBackend::openProject(const QUrl &url) {
-  if (m_rendering)
+  if (busy())
     return;
-  saveThen([this, url] {
-    command(
-        "open", {{"path", url.toLocalFile()}},
-        [this](const QJsonObject &r) {
-          if (r["ok"].toBool()) {
-            ++m_editSequence;
-            apply(r["result"].toObject(), m_editSequence, true);
-            messageCode("project_opened");
-          }
-        },
-        false);
-  });
+  setProjectChanging(true);
+  saveThen(
+      [this, url] {
+        command(
+            "open", {{"path", url.toLocalFile()}},
+            [this](const QJsonObject &r) {
+              setProjectChanging(false);
+              if (r["ok"].toBool()) {
+                ++m_editSequence;
+                apply(r["result"].toObject(), m_editSequence, true);
+                messageCode("project_opened");
+              }
+            },
+            false);
+      },
+      [this] { setProjectChanging(false); });
 }
 void DesktopBackend::importShapeTransfer(const QUrl &transfer,
                                          const QUrl &destination,
                                          const QString &expectedBlake3) {
-  if (m_rendering)
+  if (busy())
     return;
-  m_rendering = true;
-  emit renderingChanged();
-  saveThen([this, transfer, destination, expectedBlake3] {
-    command(
-        "import_shape_transfer",
-        {{"file", transfer.toLocalFile()},
-         {"path", destination.toLocalFile()},
-         {"expected_blake3", expectedBlake3.isEmpty()
-                                 ? QJsonValue{}
-                                 : QJsonValue{expectedBlake3}}},
-        [this](const QJsonObject &r) {
-          m_rendering = false;
-          emit renderingChanged();
-          if (r["ok"].toBool()) {
-            ++m_editSequence;
-            apply(r["result"].toObject(), m_editSequence, true);
-            messageCode("shape_imported");
-          }
-        },
-        false);
-  });
+  setRendering(true);
+  saveThen(
+      [this, transfer, destination, expectedBlake3] {
+        if (m_cancelRequested) {
+          setRendering(false);
+          messageCode("shape_transfer_cancelled");
+          return;
+        }
+        command(
+            "import_shape_transfer",
+            {{"file", transfer.toLocalFile()},
+             {"path", destination.toLocalFile()},
+             {"expected_blake3", expectedBlake3.isEmpty()
+                                     ? QJsonValue{}
+                                     : QJsonValue{expectedBlake3}}},
+            [this](const QJsonObject &r) {
+              setRendering(false);
+              if (r["ok"].toBool()) {
+                ++m_editSequence;
+                apply(r["result"].toObject(), m_editSequence, true);
+                messageCode("shape_imported");
+              }
+            },
+            false);
+      },
+      [this] { setRendering(false); });
 }
 void DesktopBackend::restoreShapeDraft(const QString &kind) {
-  if (m_rendering || m_path.isEmpty())
+  if (busy() || m_path.isEmpty())
     return;
   saveThen([this, kind] { command("restore_shape_draft", {{"kind", kind}}); });
 }
 void DesktopBackend::mutate(
     const std::function<void(QJsonObject &)> &mutation) {
-  if (m_rendering || m_path.isEmpty())
+  if (busy() || m_path.isEmpty())
     return;
   mutation(m_draft);
   ++m_editSequence;
@@ -256,18 +292,19 @@ void DesktopBackend::bindCue(const QString &label, const QString &action) {
   });
 }
 void DesktopBackend::save() {
-  if (!m_dirty || m_path.isEmpty() || m_rendering)
+  if (!m_dirty || m_path.isEmpty() || busy())
     return;
   saveThen([] {});
 }
-void DesktopBackend::saveThen(std::function<void()> continuation) {
+void DesktopBackend::saveThen(std::function<void()> continuation,
+                              std::function<void()> failed) {
   if (m_path.isEmpty() || !m_dirty) {
     continuation();
     return;
   }
   if (m_savePending) {
-    QTimer::singleShot(40, this,
-                       [this, continuation] { saveThen(continuation); });
+    m_saveContinuations.append(
+        {m_projectEpoch, std::move(continuation), std::move(failed)});
     return;
   }
   m_saveTimer.stop();
@@ -275,59 +312,82 @@ void DesktopBackend::saveThen(std::function<void()> continuation) {
   const auto edit = m_editSequence;
   const auto draft = m_draft;
   command("save", {{"document", draft}},
-          [this, edit, continuation](const QJsonObject &r) {
+          [this, edit, continuation, failed](const QJsonObject &r) {
             m_savePending = false;
+            const auto waiting = std::exchange(m_saveContinuations, {});
             if (r["ok"].toBool()) {
               apply(r["result"].toObject(), edit);
               if (m_dirty)
-                saveThen(continuation);
+                saveThen(continuation, failed);
               else {
                 messageCode("saved");
                 continuation();
               }
+              for (const auto &next : waiting) {
+                if (next.epoch == m_projectEpoch)
+                  saveThen(next.continuation, next.failed);
+                else if (next.failed)
+                  next.failed();
+              }
             } else {
-              m_rendering = false;
-              emit renderingChanged();
+              if (failed)
+                failed();
+              for (const auto &next : waiting)
+                if (next.failed)
+                  next.failed();
             }
           });
 }
 void DesktopBackend::render() {
-  if (m_rendering || m_path.isEmpty())
+  if (busy() || m_path.isEmpty())
     return;
-  m_rendering = true;
+  setRendering(true);
   m_completed = 0;
   m_total = 0;
-  emit renderingChanged();
   emit progressChanged();
-  saveThen([this] {
-    command("adopt", {}, [this](const QJsonObject &r) {
-      if (!r["ok"].toBool()) {
-        m_rendering = false;
-        emit renderingChanged();
-        return;
-      }
-      apply(r["result"].toObject(), m_editSequence);
-      command("render", {},
-              [this](const QJsonObject &r) { finishRender(r, false); });
-    });
-  });
+  saveThen(
+      [this] {
+        if (m_cancelRequested) {
+          setRendering(false);
+          messageCode("speech_cancelled");
+          return;
+        }
+        if (!m_analysis["ready"].toBool()) {
+          setRendering(false);
+          messageCode("script_not_ready");
+          return;
+        }
+        command("adopt", {}, [this](const QJsonObject &r) {
+          if (!r["ok"].toBool()) {
+            setRendering(false);
+            return;
+          }
+          apply(r["result"].toObject(), m_editSequence);
+          if (m_cancelRequested) {
+            setRendering(false);
+            messageCode("speech_cancelled");
+            return;
+          }
+          command("render", {},
+                  [this](const QJsonObject &r) { finishRender(r, false); });
+        });
+      },
+      [this] { setRendering(false); });
 }
 void DesktopBackend::cancel() {
   if (m_rendering) {
+    m_cancelRequested = true;
     m_worker.cancel();
     messageCode("stop_requested");
   }
 }
 void DesktopBackend::finishRender(const QJsonObject &r, bool sample) {
-  m_rendering = false;
-  emit renderingChanged();
+  setRendering(false);
   if (r["ok"].toBool()) {
     if (sample) {
-      selectAudio("");
       const auto result = r["result"].toObject();
-      m_waveform = result["peaks"].toArray().toVariantList();
-      emit waveformChanged();
-      emit playFile(QUrl::fromLocalFile(result["file"].toString()));
+      playPreview(QUrl::fromLocalFile(result["file"].toString()),
+                  result["peaks"].toArray().toVariantList());
       messageCode("voice_sample");
     } else {
       apply(r["result"].toObject(), m_editSequence);
@@ -341,10 +401,9 @@ void DesktopBackend::finishRender(const QJsonObject &r, bool sample) {
   }
 }
 void DesktopBackend::auditionVoice(const QString &alias) {
-  if (m_rendering)
+  if (busy())
     return;
-  m_rendering = true;
-  emit renderingChanged();
+  setRendering(true);
   m_completed = 0;
   m_total = 1;
   emit progressChanged();
@@ -352,65 +411,104 @@ void DesktopBackend::auditionVoice(const QString &alias) {
       "voice_preview", {{"voice", alias}},
       [this](const QJsonObject &r) { finishRender(r, true); }, false);
 }
+void DesktopBackend::setRendering(bool rendering) {
+  if (m_rendering == rendering)
+    return;
+  m_rendering = rendering;
+  if (rendering)
+    m_cancelRequested = false;
+  emit renderingChanged();
+  emit busyChanged();
+}
+void DesktopBackend::setProjectChanging(bool changing) {
+  if (m_projectChanging == changing)
+    return;
+  m_projectChanging = changing;
+  emit busyChanged();
+}
+void DesktopBackend::playPreview(const QUrl &file, const QVariantList &peaks) {
+  m_selected.clear();
+  ++m_selectionSequence;
+  ++m_playbackSequence;
+  m_preparedID.clear();
+  m_preparedFile = QUrl{};
+  m_waveform = peaks;
+  emit selectionChanged();
+  emit waveformChanged();
+  emit playFile(file);
+}
 void DesktopBackend::selectAudio(const QString &id) {
-  if (m_selected == id)
+  ++m_playbackSequence;
+  if (m_selected == id && !id.isEmpty())
     return;
   m_selected = id;
+  const auto selection = ++m_selectionSequence;
   m_waveform.clear();
   m_preparedID.clear();
   emit selectionChanged();
   emit waveformChanged();
   if (id.isEmpty())
     return;
-  command("playback", {{"audio_id", id}}, [this, id](const QJsonObject &r) {
-    if (r["ok"].toBool() && id == m_selected) {
-      const auto result = r["result"].toObject();
-      m_preparedFile = QUrl::fromLocalFile(result["file"].toString());
-      m_preparedID = id;
-      m_waveform = result["peaks"].toArray().toVariantList();
-      emit waveformChanged();
-    }
-  });
+  command("playback", {{"audio_id", id}},
+          [this, id, selection](const QJsonObject &r) {
+            if (r["ok"].toBool() && id == m_selected &&
+                selection == m_selectionSequence) {
+              const auto result = r["result"].toObject();
+              m_preparedFile = QUrl::fromLocalFile(result["file"].toString());
+              m_preparedID = id;
+              m_waveform = result["peaks"].toArray().toVariantList();
+              emit waveformChanged();
+            }
+          });
 }
 void DesktopBackend::playSelected() {
   if (m_selected.isEmpty() || m_path.isEmpty())
     return;
+  const auto playback = ++m_playbackSequence;
   if (m_preparedID == m_selected) {
     emit playFile(m_preparedFile);
     return;
   }
   const auto id = m_selected;
-  command("playback", {{"audio_id", id}}, [this, id](const QJsonObject &r) {
-    if (r["ok"].toBool() && id == m_selected)
-      emit playFile(
-          QUrl::fromLocalFile(r["result"].toObject()["file"].toString()));
-  });
+  command("playback", {{"audio_id", id}},
+          [this, id, playback](const QJsonObject &r) {
+            if (r["ok"].toBool() && id == m_selected &&
+                playback == m_playbackSequence)
+              emit playFile(QUrl::fromLocalFile(
+                  r["result"].toObject()["file"].toString()));
+          });
 }
 void DesktopBackend::acceptSelected() {
-  if (m_rendering || m_selected.isEmpty())
+  if (busy() || m_selected.isEmpty())
     return;
-  saveThen([this] {
-    command("accept", {{"audio_id", m_selected}}, [this](const QJsonObject &r) {
+  const auto id = m_selected;
+  saveThen([this, id] {
+    const auto edit = m_editSequence;
+    command("accept", {{"audio_id", id}}, [this, edit](const QJsonObject &r) {
       if (r["ok"].toBool()) {
-        apply(r["result"].toObject(), m_editSequence);
+        apply(r["result"].toObject(), edit);
         messageCode("accepted");
       }
     });
   });
 }
 void DesktopBackend::discardSelected() {
-  if (m_rendering || m_selected.isEmpty())
+  if (busy() || m_selected.isEmpty())
     return;
-  command("discard", {{"audio_id", m_selected}}, [this](const QJsonObject &r) {
-    if (r["ok"].toBool()) {
-      apply(r["result"].toObject(), m_editSequence);
-      selectAudio(m_project["audio_head"].toString());
-      messageCode("discarded");
-    }
-  });
+  const auto id = m_selected;
+  const auto edit = m_editSequence;
+  command("discard", {{"audio_id", id}},
+          [this, id, edit](const QJsonObject &r) {
+            if (r["ok"].toBool()) {
+              apply(r["result"].toObject(), edit);
+              if (m_selected == id)
+                selectAudio(m_project["audio_head"].toString());
+              messageCode("discarded");
+            }
+          });
 }
 void DesktopBackend::exportSelected(const QUrl &url) {
-  if (m_selected.isEmpty())
+  if (m_selected.isEmpty() || m_projectChanging)
     return;
   command("export",
           {{"audio_id", m_selected}, {"destination", url.toLocalFile()}},
@@ -420,16 +518,20 @@ void DesktopBackend::exportSelected(const QUrl &url) {
           });
 }
 void DesktopBackend::importScript(const QUrl &url) {
+  if (busy() || m_path.isEmpty())
+    return;
   saveThen(
       [this, url] { command("import_script", {{"file", url.toLocalFile()}}); });
 }
 void DesktopBackend::importCue(const QString &label, const QUrl &url) {
+  if (busy() || m_path.isEmpty())
+    return;
   saveThen([this, label, url] {
     command("import_cue", {{"label", label}, {"file", url.toLocalFile()}});
   });
 }
 void DesktopBackend::restoreSource(const QString &id) {
-  if (m_rendering)
+  if (busy() || m_path.isEmpty())
     return;
   saveThen([this, id] { command("restore_source", {{"source_id", id}}); });
 }
@@ -526,7 +628,7 @@ bool DesktopBackend::hasEchoHandoff() const {
               .isEmpty();
 }
 void DesktopBackend::editInEcho() {
-  if (m_rendering || m_selected.isEmpty())
+  if (busy() || m_selected.isEmpty())
     return;
   if (m_echoOpening || m_echoLauncher.busy()) {
     messageCode("echo_busy");
@@ -543,14 +645,15 @@ void DesktopBackend::editInEcho() {
   QDir().mkpath(parent);
   const auto directory =
       parent + "/" + QUuid::createUuid().toString(QUuid::WithoutBraces);
+  const auto edit = m_editSequence;
   command("begin_echo", {{"audio_id", m_selected}, {"destination", directory}},
-          [this](const QJsonObject &r) {
+          [this, edit](const QJsonObject &r) {
             if (!r["ok"].toBool()) {
               m_echoOpening = false;
               return;
             }
             const auto result = r["result"].toObject();
-            apply(result, m_editSequence);
+            apply(result, edit);
             m_settings.setValue("echo/ticket/" + m_project["id"].toString(),
                                 result["handoff_file"].toString());
             emit stateChanged();
@@ -558,19 +661,21 @@ void DesktopBackend::editInEcho() {
           });
 }
 void DesktopBackend::returnFromEcho(const QUrl &url, bool allowPCM24) {
-  if (m_rendering)
+  if (busy() || m_path.isEmpty())
     return;
   const auto ticket =
       m_settings.value("echo/ticket/" + m_project["id"].toString()).toString();
+  const auto edit = m_editSequence;
+  const auto selection = m_selectionSequence;
   command("review_echo",
           {{"handoff", ticket},
            {"file", url.toLocalFile()},
            {"allow_pcm24", allowPCM24}},
-          [this](const QJsonObject &r) {
+          [this, edit, selection](const QJsonObject &r) {
             if (r["ok"].toBool()) {
-              apply(r["result"].toObject(), m_editSequence);
+              apply(r["result"].toObject(), edit);
               const auto c = m_project["candidates"].toArray();
-              if (!c.isEmpty())
+              if (!c.isEmpty() && selection == m_selectionSequence)
                 selectAudio(c.last().toObject()["id"].toString());
               messageCode("echo_returned");
             }
@@ -587,6 +692,20 @@ void DesktopBackend::messageCode(const QString &code) {
   emit messageChanged();
 }
 QString DesktopBackend::message() const {
+  if (m_messageCode == "segment_rendered")
+    return tr("Segment candidate ready. Listen and choose the take to use.");
+  if (m_messageCode == "segment_accepted")
+    return tr("Segment selected for assembly");
+  if (m_messageCode == "segments_assembled")
+    return tr("Assembled take ready for review. Earlier audio is kept.");
+  if (m_messageCode == "subtitles_exported")
+    return tr("Subtitles exported");
+  if (m_messageCode == "sound_batch_completed")
+    return tr("Sound variations are ready. Listen and keep your preferred candidates.");
+  if (m_messageCode == "sound_batch_cancelled")
+    return tr("Generation stopped. Completed sound candidates are kept.");
+  if (m_messageCode == "sound_batch_partial_failed")
+    return tr("Some variations could not be generated. Completed candidates are kept.");
   if (m_messageCode == "material_saved")
     return tr("Material saved in this project");
   if (m_messageCode == "sound_generated")
@@ -625,6 +744,15 @@ QString DesktopBackend::message() const {
   return errorText(m_messageCode);
 }
 QString DesktopBackend::errorText(const QString &code) const {
+  if (code == "segments_not_accepted" || code == "segment_selection_missing")
+    return tr("Choose an accepted take for every segment before assembly.");
+  if (code == "segment_missing" || code == "segment_candidate_missing" ||
+      code == "stale_segment")
+    return tr("This segment changed. Review the current script and generate a new alternative.");
+  if (code == "invalid_pronunciation")
+    return tr("Check pronunciation rules for empty text, duplicate matches or unsupported filters.");
+  if (code == "subtitles_unavailable")
+    return tr("Assemble a take from segments before exporting measured subtitles.");
   if (code == "shape_settings_incomplete")
     return tr("Some imported voice settings need review. Select supported "
               "voices or reimport missing references before rendering.");

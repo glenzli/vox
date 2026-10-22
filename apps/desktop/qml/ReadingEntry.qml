@@ -24,28 +24,45 @@ Rectangle {
             visible: entry.card
             Layout.fillWidth: true
             spacing: 8
-            Rectangle {
-                implicitWidth: identity.implicitWidth + 12
-                implicitHeight: 20
-                radius: 4
-                color: Theme.selected
+            Flow {
+                id: metadata
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                spacing: 8
+                Rectangle {
+                    width: Math.min(identity.implicitWidth + 12, metadata.width)
+                    height: Math.max(20, identity.implicitHeight + 6)
+                    radius: 4
+                    color: Theme.selected
+                    Label {
+                        id: identity
+                        objectName: "readingRole-" + entry.block.line
+                        anchors.centerIn: parent
+                        width: Math.max(0, parent.width - 12)
+                        text: entry.rejected ? (entry.issues.indexOf("missing_speaker") >= 0 ? qsTr("Choose a role") : qsTr("Needs attention")) : (entry.block.role || qsTr("Narration"))
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap
+                        font.pixelSize: 11
+                        font.weight: Font.DemiBold
+                    }
+                }
                 Label {
-                    id: identity
-                    anchors.centerIn: parent
-                    text: entry.rejected ? (entry.issues.indexOf("missing_speaker") >= 0 ? qsTr("Choose a role") : qsTr("Needs attention")) : (entry.block.role || qsTr("Narration"))
-                    textFormat: Text.PlainText
+                    visible: entry.speech
+                    width: Math.min(implicitWidth, metadata.width)
+                    text: { let key = entry.block.language || "auto"; return (backend.languages.find(v => v.key === key) || {}).label || key }
+                    wrapMode: Text.Wrap
                     font.pixelSize: 11
-                    font.weight: Font.DemiBold
+                    color: Theme.secondary
+                }
+                Label {
+                    visible: entry.speech && entry.block.delivery !== "neutral"
+                    width: Math.min(implicitWidth, metadata.width)
+                    text: entry.deliveries[entry.block.delivery] || ""
+                    wrapMode: Text.Wrap
+                    font.pixelSize: 11
+                    color: Theme.secondary
                 }
             }
-            Label {
-                visible: entry.speech
-                text: { let key = entry.block.language || "auto"; return (backend.languages.find(v => v.key === key) || {}).label || key }
-                font.pixelSize: 11
-                color: Theme.secondary
-            }
-            Label { visible: entry.speech && entry.block.delivery !== "neutral"; text: entry.deliveries[entry.block.delivery] || ""; font.pixelSize: 11; color: Theme.secondary }
-            Item { Layout.fillWidth: true }
             Label { text: qsTr("Line %1").arg(entry.block.line); font.pixelSize: 10; color: Theme.secondary }
             IconButton {
                 objectName: "readingEdit-" + entry.block.line

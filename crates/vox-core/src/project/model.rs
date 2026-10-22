@@ -29,6 +29,8 @@ pub struct Document {
     pub language: String,
     pub speed_milli: u16,
     pub options: SpeechScriptOptions,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pronunciation_rules: Vec<crate::PronunciationRule>,
 }
 impl Default for Document {
     fn default() -> Self {
@@ -42,6 +44,7 @@ impl Default for Document {
             language: "auto".into(),
             speed_milli: 1000,
             options: SpeechScriptOptions::default(),
+            pronunciation_rules: Vec::new(),
         }
     }
 }
@@ -68,6 +71,9 @@ impl Document {
         )
         .map_err(|_| Error::new("invalid_settings"))?;
         op.delivery = self.delivery;
+        op.pronunciation_rules = self.pronunciation_rules.clone();
+        op.validate()
+            .map_err(|_| Error::new("invalid_pronunciation"))?;
         if self.format == ScriptFormat::ProductionScript {
             op.script = Some(self.options.clone());
         }
@@ -130,6 +136,8 @@ pub struct AudioRevision {
     pub source_project: Option<String>,
     #[serde(default)]
     pub edit: Option<crate::handoff::EditReceipt>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub segment_assembly: Option<super::SegmentAssembly>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderRun {
@@ -151,6 +159,12 @@ pub struct Manifest {
     pub audio: Vec<AudioRevision>,
     pub audio_head: Option<String>,
     pub runs: Vec<RenderRun>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub segment_candidates: Vec<super::SegmentRevision>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub accepted_segments: Vec<super::SegmentRevision>,
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub segment_selections: std::collections::BTreeMap<String, String>,
     #[serde(default)]
     pub handoffs: Vec<crate::handoff::Ticket>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

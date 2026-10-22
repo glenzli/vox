@@ -4,19 +4,33 @@ import QtQuick.Layouts
 Rectangle {
     id: sidebar
     color: Theme.window
+    property string productionMode: "speech"
+    signal modeRequested(string mode)
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 14
         spacing: 8
         Label { text: qsTr("PRODUCTION"); color: Theme.secondary; font.pixelSize: 10; font.letterSpacing: 1.5 }
-        RowLayout {
-            IconButton { symbol: "file"; hint: qsTr("Script"); enabled: false }
-            Label { text: qsTr("Script"); font.weight: Font.Medium }
+        Repeater {
+            model: [
+                {key: "speech", title: qsTr("Voice"), icon: "waveform"},
+                {key: "sfx", title: qsTr("Sound effects"), icon: "headphones"},
+                {key: "ambience", title: qsTr("Ambience"), icon: "volume"},
+                {key: "short_music", title: qsTr("Short music"), icon: "play"}
+            ]
+            delegate: ActionButton {
+                required property var modelData
+                objectName: "productionMode-" + modelData.key
+                Layout.fillWidth: true
+                text: modelData.title; symbol: modelData.icon
+                primary: sidebar.productionMode === modelData.key
+                onClicked: sidebar.modeRequested(modelData.key)
+            }
         }
         Label { text: qsTr("Start with a form"); color: Theme.secondary; visible: backend.path.length > 0 && !(backend.document.text || "").length; font.pixelSize: 12 }
-        ActionButton { Layout.fillWidth: true; text: qsTr("Narration"); symbol: "file"; enabled: !backend.rendering && !(backend.document.text || "").length && backend.path.length > 0; onClicked: backend.useTemplate("narration") }
-        ActionButton { Layout.fillWidth: true; text: qsTr("Dialogue"); symbol: "users"; enabled: !backend.rendering && !(backend.document.text || "").length && backend.path.length > 0; onClicked: backend.useTemplate("dialogue") }
-        ActionButton { Layout.fillWidth: true; text: qsTr("Listening"); symbol: "headphones"; enabled: !backend.rendering && !(backend.document.text || "").length && backend.path.length > 0; onClicked: backend.useTemplate("listening") }
+        ActionButton { Layout.fillWidth: true; visible: sidebar.productionMode === "speech" && !(backend.document.text || "").length; text: qsTr("Narration"); symbol: "file"; enabled: !backend.busy && backend.path.length > 0; onClicked: backend.useTemplate("narration") }
+        ActionButton { Layout.fillWidth: true; visible: sidebar.productionMode === "speech" && !(backend.document.text || "").length; text: qsTr("Dialogue"); symbol: "users"; enabled: !backend.busy && backend.path.length > 0; onClicked: backend.useTemplate("dialogue") }
+        ActionButton { Layout.fillWidth: true; visible: sidebar.productionMode === "speech" && !(backend.document.text || "").length; text: qsTr("Listening"); symbol: "headphones"; enabled: !backend.busy && backend.path.length > 0; onClicked: backend.useTemplate("listening") }
         Label {
             visible: !!backend.project.shape_import
             Layout.fillWidth: true
@@ -41,7 +55,7 @@ Rectangle {
                 Layout.fillWidth: true
                 text: modelData.kind === "speech" ? qsTr("Restore Shape speech draft") : qsTr("Restore Shape writing draft")
                 symbol: "file"
-                enabled: !backend.rendering
+                enabled: !backend.busy
                 onClicked: backend.restoreShapeDraft(modelData.kind)
             }
         }
@@ -66,7 +80,7 @@ Rectangle {
                 height: 32
                 text: qsTr("Script %1").arg((backend.project.sources || []).length-index)
                 font.pixelSize: 12
-                enabled: !backend.rendering
+                enabled: !backend.busy
                 highlighted: modelData.id === backend.project.source_head
                 ToolTip.visible: hovered
                 ToolTip.text: qsTr("Restore this script into the working draft")

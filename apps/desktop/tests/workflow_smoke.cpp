@@ -11,9 +11,204 @@
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QStyleHints>
+#include <QTemporaryDir>
 #include <QTimer>
 #include <QUuid>
 #include <memory>
+
+namespace {
+// A protocol fixture makes the callback/edit ordering deterministic. The real
+// worker persistence path is exercised separately below.
+class BackendWorkflowSmoke final : public QObject {
+public:
+  explicit BackendWorkflowSmoke(QGuiApplication &app)
+      : QObject(&app), app_(app) {
+    QFile worker(directory_.filePath("worker.py"));
+    if (!worker.open(QIODevice::WriteOnly) ||
+        worker.write(R"PY(#!/usr/bin/python3
+import json, sys
+project = None
+path = ''
+for line in sys.stdin:
+    request = json.loads(line)
+    action = request['action']
+    ok = True
+    result = {}
+    error = ''
+    if action == 'create':
+        path = request['path']
+        project = {'id': path, 'version': 0, 'draft': {'text': '', 'format': 'plain'},
+                   'candidates': [{'id': 'first'}, {'id': 'second'}], 'audio': []}
+    elif action == 'save':
+        if request['document']['text'] == 'force save failure':
+            ok, error = False, 'file_error'
+        else:
+            project['draft'] = request['document']
+            project['version'] += 1
+    elif action == 'accept':
+        project['accepted_id'] = request['audio_id']
+        project['version'] += 1
+    elif action == 'discard':
+        project['discarded_id'] = request['audio_id']
+        project['version'] += 1
+    elif action in ('render', 'adopt', 'voice_preview'):
+        project = dict(project or {}, unexpected_generation=action)
+    if action in ('create', 'open', 'save', 'accept', 'discard', 'adopt', 'render'):
+        result = {'path': path, 'project': project,
+                  'analysis': {'ready': bool(project['draft']['text']) and
+                               'missing' not in project['draft']['text']}}
+    elif action == 'playback':
+        result = {'file': '/nonexistent/' + request['audio_id'] + '.wav', 'peaks': [0.25]}
+    elif action == 'material_file':
+        result = {'file': '/nonexistent/material.wav'}
+    print(json.dumps({'request_id': request['request_id'], 'ok': ok,
+                      'error': error, 'result': result}), flush=True)
+)PY") < 0) {
+      fail("Could not create the worker workflow fixture");
+      return;
+    }
+    worker.close();
+    worker.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner |
+                          QFileDevice::ExeOwner);
+    const auto original = qgetenv("VOX_CLI_BINARY");
+    qputenv("VOX_CLI_BINARY", worker.fileName().toUtf8());
+    backend_ = std::make_unique<DesktopBackend>();
+    if (original.isNull())
+      qunsetenv("VOX_CLI_BINARY");
+    else
+      qputenv("VOX_CLI_BINARY", original);
+    connect(backend_.get(), &DesktopBackend::requestFinished, this,
+            [this](const QString &action, bool ok) { finished(action, ok); });
+    connect(backend_.get(), &DesktopBackend::playFile, this,
+            [this](const QUrl &) { ++played_; });
+    backend_->auditionVoice("ryan");
+    backend_->cancel();
+  }
+
+private:
+  void fail(const char *message) {
+    qCritical() << message;
+    app_.exit(13);
+  }
+  void finished(const QString &action, bool ok) {
+    auto &b = *backend_;
+    if (action == "capabilities" || action == "playback")
+      return;
+    if (stage_ == 0 && action == "voice_preview") {
+      if (ok || b.busy() || b.project().contains("unexpected_generation")) {
+        fail("A queued preview was dispatched after cancellation");
+        return;
+      }
+      stage_ = 1;
+      b.createProject(QUrl::fromLocalFile(directory_.filePath("first.vox")));
+      if (!b.busy() || b.rendering())
+        fail("Project replacement did not expose its own busy state");
+      b.editText("This edit must be rejected while replacing the project.");
+      return;
+    }
+    if (stage_ == 7 && action == "save" && !ok) {
+      if (b.busy() || b.pending() || !b.dirty() ||
+          b.document()["text"] != "force save failure" ||
+          b.path() != directory_.filePath("first.vox")) {
+        fail("A failed save lost the draft or stranded project switching");
+        return;
+      }
+      qInfo() << "Desktop async draft, take selection, cancellation, readiness "
+                 "and failed-switch fences passed";
+      app_.quit();
+      return;
+    }
+    if (!ok) {
+      fail(qPrintable("Backend workflow failed: " + action + ": " +
+                      b.message()));
+      return;
+    }
+    if (stage_ == 1 && action == "create") {
+      if (b.busy() || b.dirty() || !b.document()["text"].toString().isEmpty()) {
+        fail("Project replacement accepted an edit from the previous identity");
+        return;
+      }
+      stage_ = 2;
+      b.selectAudio("first");
+      b.editText("Draft saved before accepting.");
+      b.save();
+      b.acceptSelected();
+      b.selectAudio("second");
+      return;
+    }
+    if (stage_ == 2 && action == "save") {
+      // saveThen has already queued accept with the originally clicked id.
+      b.editText("New input while accepting.");
+      return;
+    }
+    if (stage_ == 2 && action == "accept") {
+      if (b.project()["accepted_id"] != "first" ||
+          b.selectedAudio() != "second" || !b.dirty() ||
+          b.document()["text"] != "New input while accepting.") {
+        fail("Accept changed its target or erased newer input");
+        return;
+      }
+      stage_ = 3;
+      b.discardSelected();
+      b.selectAudio("first");
+      b.editText("New input while discarding.");
+      return;
+    }
+    if (stage_ == 3 && action == "discard") {
+      if (b.project()["discarded_id"] != "second" ||
+          b.selectedAudio() != "first" || !b.dirty() ||
+          b.document()["text"] != "New input while discarding.") {
+        fail("Discard changed the later selection or erased newer input");
+        return;
+      }
+      stage_ = 4;
+      b.render();
+      b.cancel();
+      return;
+    }
+    if (stage_ == 4 && action == "save") {
+      if (b.busy() || b.project().contains("unexpected_generation")) {
+        fail("Cancellation during save still adopted or rendered a script");
+        return;
+      }
+      stage_ = 5;
+      b.editText("missing role");
+      b.render();
+      return;
+    }
+    if (stage_ == 5 && action == "save") {
+      if (b.busy() || b.project().contains("unexpected_generation")) {
+        fail("An unready script was adopted before validation");
+        return;
+      }
+      stage_ = 6;
+      b.playMaterial("sound", "fixture");
+      b.selectAudio("second");
+      return;
+    }
+    if (stage_ == 6 && action == "material_file") {
+      if (played_ != 0 || b.selectedAudio() != "second") {
+        fail("A late material preview replaced the user's later audio choice");
+        return;
+      }
+      b.previewFile(QUrl::fromLocalFile(directory_.filePath("worker.py")));
+      if (played_ != 1 || !b.selectedAudio().isEmpty() ||
+          !b.waveform().isEmpty()) {
+        fail("An independent preview retained the selected take identity");
+        return;
+      }
+      b.editText("force save failure");
+      stage_ = 7;
+      b.save();
+      b.createProject(QUrl::fromLocalFile(directory_.filePath("next.vox")));
+    }
+  }
+  QGuiApplication &app_;
+  QTemporaryDir directory_;
+  std::unique_ptr<DesktopBackend> backend_;
+  int stage_ = 0, played_ = 0;
+};
+} // namespace
 
 void startWorkflowSmoke(QGuiApplication &app, QQmlApplicationEngine &engine,
                         UiPreferences &preferences, DesktopBackend &backend,
@@ -33,7 +228,7 @@ void startWorkflowSmoke(QGuiApplication &app, QQmlApplicationEngine &engine,
       [&, directory, stage](const QString &action, bool ok) {
         if (*stage == 1 && action == "create" && ok)
           return;
-        if (*stage == 1 && action == "save" && !ok) {
+        if (*stage == 1 && action == "playback" && !ok) {
           QFile oldFile(directory + "/project.json"),
               newFile(directory + ".next.vox/project.json");
           if (!oldFile.open(QIODevice::ReadOnly) ||
@@ -53,9 +248,17 @@ void startWorkflowSmoke(QGuiApplication &app, QQmlApplicationEngine &engine,
             app.exit(13);
             return;
           }
+          if (backend.busy() || backend.dirty() ||
+              !backend.selectedAudio().isEmpty()) {
+            qCritical()
+                << "Project replacement retained stale draft/audio state";
+            app.exit(13);
+            return;
+          }
           qInfo() << "Vox UI, localization, appearance, persistence and "
                      "queued-project fence passed";
-          app.quit();
+          *stage = 2;
+          new BackendWorkflowSmoke(app);
           return;
         }
         if (!ok) {
@@ -132,6 +335,7 @@ void startWorkflowSmoke(QGuiApplication &app, QQmlApplicationEngine &engine,
           }
           *stage = 1;
           backend.createProject(QUrl::fromLocalFile(directory + ".next.vox"));
+          backend.selectAudio("old-project-only");
           backend.editText("This queued edit belongs to the previous project.");
           backend.save();
         }

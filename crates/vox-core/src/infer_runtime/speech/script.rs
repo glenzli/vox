@@ -80,10 +80,12 @@ impl InferRuntimeSpeechExecutor {
                 ScriptActionKind::Local { pcm } => (pcm, None),
                 ScriptActionKind::Speech { text, operation } => {
                     let index = receipts.len();
+                    let spoken = crate::pronunciation::apply(&text, &operation.pronunciation_rules)
+                        .ok_or_else(assembly::invalid_script)?;
                     let segment = if let Some(cached) = cache.segments.get(index) {
                         cached.clone()
                     } else {
-                        self.create_segment(&text, &operation)?
+                        self.create_segment(&spoken, &operation)?
                     };
                     let (contract, pcm) = decode_pcm_s16le_wav(
                         &segment.bytes,
@@ -102,6 +104,8 @@ impl InferRuntimeSpeechExecutor {
                         input_start,
                         input_end,
                         input_digest: ContentDigest::from_bytes(text.as_bytes()),
+                        spoken_digest: (spoken != text)
+                            .then(|| ContentDigest::from_bytes(spoken.as_bytes())),
                         output_digest: ContentDigest::from_bytes(&segment.bytes),
                         frames: contract.frame_count,
                         runtime: Box::new(segment.provenance.clone()),

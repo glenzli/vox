@@ -14,6 +14,7 @@ class DesktopBackend final : public QObject {
   Q_PROPERTY(QVariantMap project READ project NOTIFY stateChanged)
   Q_PROPERTY(QVariantMap document READ document NOTIFY documentChanged)
   Q_PROPERTY(QVariantMap analysis READ analysis NOTIFY stateChanged)
+  Q_PROPERTY(QVariantMap segmentPlan READ segmentPlan NOTIFY stateChanged)
   Q_PROPERTY(QVariantList voices READ voices NOTIFY capabilitiesChanged)
   Q_PROPERTY(
       QVariantList builtinSounds READ builtinSounds NOTIFY capabilitiesChanged)
@@ -24,6 +25,8 @@ class DesktopBackend final : public QObject {
   Q_PROPERTY(
       QString importedDraftKind READ importedDraftKind NOTIFY documentChanged)
   Q_PROPERTY(bool dirty READ dirty NOTIFY documentChanged)
+  Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
+  Q_PROPERTY(bool pending READ pending NOTIFY pendingChanged)
   Q_PROPERTY(bool rendering READ rendering NOTIFY renderingChanged)
   Q_PROPERTY(bool runtimeReady READ runtimeReady NOTIFY runtimeChanged)
   Q_PROPERTY(QString runtimeError READ runtimeError NOTIFY runtimeChanged)
@@ -39,6 +42,7 @@ public:
   QVariantMap project() const { return m_project.toVariantMap(); }
   QVariantMap document() const { return m_draft.toVariantMap(); }
   QVariantMap analysis() const { return m_analysis.toVariantMap(); }
+  QVariantMap segmentPlan() const { return m_segmentPlan.toVariantMap(); }
   QVariantList voices() const;
   QVariantList builtinSounds() const;
   QVariantList languages() const;
@@ -50,6 +54,8 @@ public:
   QString path() const { return m_path; }
   QString importedDraftKind() const;
   bool dirty() const { return m_dirty; }
+  bool busy() const { return m_rendering || m_projectChanging; }
+  bool pending() const { return m_pendingRequests > 0; }
   bool rendering() const { return m_rendering; }
   bool runtimeReady() const { return m_runtimeReady; }
   QString runtimeError() const { return m_runtimeError; }
@@ -81,6 +87,10 @@ public:
   Q_INVOKABLE void importSound(const QUrl &file);
   Q_INVOKABLE void generateSound(const QString &name, const QString &prompt,
                                  int seconds, int seed, bool music);
+  Q_INVOKABLE void generateSoundBatch(const QString &name,
+                                      const QString &prompt, int seconds,
+                                      int seed, const QString &category,
+                                      int variations);
   Q_INVOKABLE void acceptSound(const QString &id);
   Q_INVOKABLE void discardSound(const QString &id);
   Q_INVOKABLE void bindSound(const QString &label, const QString &id);
@@ -94,6 +104,13 @@ public:
   Q_INVOKABLE void importCue(const QString &label, const QUrl &url);
   Q_INVOKABLE void save();
   Q_INVOKABLE void render();
+  Q_INVOKABLE void renderSegment(const QString &key);
+  Q_INVOKABLE void acceptSegment(const QString &id);
+  Q_INVOKABLE void playSegment(const QString &id);
+  Q_INVOKABLE void assembleSegments();
+  Q_INVOKABLE void setPronunciationRules(const QVariantList &rules);
+  Q_INVOKABLE void exportSubtitles(const QString &audioID, const QUrl &url,
+                                   const QString &format);
   Q_INVOKABLE void cancel();
   Q_INVOKABLE void auditionVoice(const QString &alias);
   Q_INVOKABLE void selectAudio(const QString &id);
@@ -119,6 +136,8 @@ signals:
   void documentChanged();
   void capabilitiesChanged();
   void renderingChanged();
+  void busyChanged();
+  void pendingChanged();
   void runtimeChanged();
   void messageChanged();
   void progressChanged();
@@ -132,7 +151,7 @@ private:
   WorkerClient m_probeWorker;
   EchoLauncher m_echoLauncher;
   QSettings m_settings;
-  QJsonObject m_project, m_draft, m_analysis;
+  QJsonObject m_project, m_draft, m_analysis, m_segmentPlan;
   QJsonArray m_voices;
   QVariantList m_waveform;
   QUrl m_preparedFile;
@@ -142,14 +161,28 @@ private:
        m_savePending = false;
   bool m_probing = false;
   bool m_echoOpening = false;
-  quint64 m_editSequence = 0;
+  bool m_projectChanging = false, m_cancelRequested = false;
+  quint64 m_editSequence = 0, m_projectEpoch = 0, m_selectionSequence = 0,
+          m_playbackSequence = 0;
   int m_completed = 0, m_total = 0;
+  int m_pendingRequests = 0;
+  struct SaveContinuation {
+    quint64 epoch;
+    std::function<void()> continuation, failed;
+  };
+  QList<SaveContinuation> m_saveContinuations;
   QTimer m_saveTimer;
   QTimer m_probeTimer;
   void materialCommand(const QString &action, const QJsonObject &fields,
                        bool generate = false);
+  void productionCommand(const QString &action, const QJsonObject &fields,
+                         bool generate = false);
   void mutate(const std::function<void(QJsonObject &)> &mutation);
-  void saveThen(std::function<void()> continuation);
+  void saveThen(std::function<void()> continuation,
+                std::function<void()> failed = {});
+  void setRendering(bool rendering);
+  void setProjectChanging(bool changing);
+  void playPreview(const QUrl &file, const QVariantList &peaks = {});
   void apply(const QJsonObject &result, quint64 capturedEdit,
              bool reset = false);
   void command(const QString &action, const QJsonObject &fields,

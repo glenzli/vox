@@ -8,7 +8,7 @@
 - Plain narration and Shape-compatible multi-role scripts, listening repeats, pauses, delivery
   and explicit sound-cue bindings.
 - Own Infer Runtime App, nine voice presets, local synthesis, segment progress and stop after
-  the current segment. Retry cache is in-process, not a persistent segment timeline.
+  the current segment. Whole-render retry cache remains in-process. Segment production keeps immutable candidates and explicit selections in the project.
 - Selected audition with actual PCM peaks, explicit acceptance, source restoration and WAV export.
 - Neutral icon-led desktop, English/Chinese and live light/dark/system themes.
 - Echo independent editor through pinned file handoff and explicit WAV return for review.
@@ -18,6 +18,16 @@
 - Eight procedural sound effects plus imported/generated local sound/music candidates. Explicit
   acceptance prepares mono 24 kHz script PCM while retaining the original and its Job/prompt receipt.
 - Voice and sound working copies open in Echo; edited exports return as new reviewed materials.
+
+## Production workspaces
+
+- Persistent segment alternatives, local re-generation and explicit per-segment selection; exact text,
+  pronunciation, voice and operation identity controls reuse. Assembly creates a new whole-take candidate.
+- Scoped pronunciation rules retain source bytes and belong to each source revision.
+- SRT/VTT export uses actual assembled audio durations, including pauses and repeated passages.
+- Independent sound-effect, ambience and short instrumental music workspaces using existing local
+  Runtime routes; bounded batches, retained partial results, loop audition and original-quality export.
+- Complete songs and singing production are outside the product scope.
 
 Implementation, focused checks, packaged checks and real Runtime/Echo evidence are recorded
 separately in [validation](docs/VALIDATION.md). Source implementation is not a public release.
@@ -29,12 +39,11 @@ dialogue and listening templates reuse the same pipeline. Larger forms need real
 
 1. Broader Shape project migration beyond the implemented selected speech transfer, with explicit
    material selection and independently accepted compatibility.
-2. Persistent segment alternatives, re-recording and pronunciation controls with exact source
-   and settings invalidation.
-3. Runtime-supported voice design from descriptions, extending the executable reference workflow
-   only when its independent input, authorization and output contracts are proved.
-4. Time-aligned or video-led dubbing with its own media and synchronization boundary.
-5. Native Echo completion receipts/live return after proving the bounded file workflow.
+2. Runtime-supported voice design from descriptions, extending the executable reference workflow
+   only when its independent input, authorization and output contracts are proved. Performance-driven
+   voice conversion requires its own audio-to-audio contract; it is distinct from reference cloning.
+3. Time-aligned or video-led dubbing with its own media and synchronization boundary.
+4. Native Echo completion receipts/live return after proving the bounded file workflow.
    Advanced adjustment and mixing remain Echo responsibilities.
 
 Do not add generic plugin machinery, duplicate Echo's editor, or couple application databases

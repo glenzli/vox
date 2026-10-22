@@ -111,28 +111,28 @@ impl Project {
             });
             Ok(())
         })?;
-        let executor =
-            InferRuntimeSpeechExecutor::new(endpoint, crate::infer_runtime::credential_path())
-                .map_err(|_| Error::new("credential_unavailable"))?
-                .with_control(control.clone());
-        let finished = Arc::new(std::sync::atomic::AtomicBool::new(false));
-        let done = finished.clone();
-        let observer = control.clone();
-        let poller = std::thread::spawn(move || {
-            let mut last = (usize::MAX, usize::MAX);
-            while !done.load(std::sync::atomic::Ordering::Relaxed) {
-                let now = (observer.completed(), observer.total());
-                if now != last {
-                    progress(now.0, now.1);
-                    last = now;
-                }
-                std::thread::sleep(std::time::Duration::from_millis(100));
-            }
-        });
-        let result = executor.execute(&request);
-        finished.store(true, std::sync::atomic::Ordering::Relaxed);
-        let _ = poller.join();
         let result = (|| {
+            let executor =
+                InferRuntimeSpeechExecutor::new(endpoint, crate::infer_runtime::credential_path())
+                    .map_err(|_| Error::new("credential_unavailable"))?
+                    .with_control(control.clone());
+            let finished = Arc::new(std::sync::atomic::AtomicBool::new(false));
+            let done = finished.clone();
+            let observer = control.clone();
+            let poller = std::thread::spawn(move || {
+                let mut last = (usize::MAX, usize::MAX);
+                while !done.load(std::sync::atomic::Ordering::Relaxed) {
+                    let now = (observer.completed(), observer.total());
+                    if now != last {
+                        progress(now.0, now.1);
+                        last = now;
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(100));
+                }
+            });
+            let result = executor.execute(&request);
+            finished.store(true, std::sync::atomic::Ordering::Relaxed);
+            let _ = poller.join();
             let output = result?;
             if control.is_cancelled() {
                 return Err(Error::new("speech_cancelled"));
@@ -153,6 +153,7 @@ impl Project {
                 parent_audio: None,
                 source_project: None,
                 edit: None,
+                segment_assembly: None,
             };
             self.update(reserved.version, |m| {
                 if m.source_head.as_ref() != Some(&source.id) {

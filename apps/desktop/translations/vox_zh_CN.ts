@@ -125,6 +125,10 @@
         <source>Choose Echo WAV export</source>
         <translation>选择 Echo 导出的 WAV</translation>
     </message>
+    <message>
+        <source>Export subtitles</source>
+        <translation>导出字幕</translation>
+    </message>
 </context>
 <context>
     <name>DesktopBackend</name>
@@ -624,9 +628,81 @@ Give your words a moment to breathe.</source>
         <source>Shape import cancelled. No project was created.</source>
         <translation>Shape 导入已取消，未创建项目。</translation>
     </message>
+    <message>
+        <source>Segment candidate ready. Listen and choose the take to use.</source>
+        <translation>分段候选已生成。试听并选择要采用的版本。</translation>
+    </message>
+    <message>
+        <source>Segment selected for assembly</source>
+        <translation>已选定用于拼装的分段录音</translation>
+    </message>
+    <message>
+        <source>Assembled take ready for review. Earlier audio is kept.</source>
+        <translation>拼装录音已生成，等待审阅。旧录音仍保留。</translation>
+    </message>
+    <message>
+        <source>Subtitles exported</source>
+        <translation>字幕已导出</translation>
+    </message>
+    <message>
+        <source>Sound variations are ready. Listen and keep your preferred candidates.</source>
+        <translation>声音变体已生成，试听并保留喜欢的候选。</translation>
+    </message>
+    <message>
+        <source>Generation stopped. Completed sound candidates are kept.</source>
+        <translation>生成已停止，已完成的声音候选仍保留。</translation>
+    </message>
+    <message>
+        <source>Some variations could not be generated. Completed candidates are kept.</source>
+        <translation>部分变体生成失败，已完成的候选仍保留。</translation>
+    </message>
+    <message>
+        <source>Choose an accepted take for every segment before assembly.</source>
+        <translation>请先为每个分段采用一个录音，再进行拼装。</translation>
+    </message>
+    <message>
+        <source>This segment changed. Review the current script and generate a new alternative.</source>
+        <translation>此分段已改变，请检查当前脚本并重新生成候选。</translation>
+    </message>
+    <message>
+        <source>Check pronunciation rules for empty text, duplicate matches or unsupported filters.</source>
+        <translation>请检查发音规则中的空文本、重复匹配或不支持的筛选条件。</translation>
+    </message>
+    <message>
+        <source>Assemble a take from segments before exporting measured subtitles.</source>
+        <translation>请先将分段拼装为录音，再导出带实际时长的字幕。</translation>
+    </message>
 </context>
 <context>
     <name>Main</name>
+    <message>
+        <source>Keep open</source>
+        <translation>保持打开</translation>
+    </message>
+    <message>
+        <source>Stop and close</source>
+        <translation>停止并关闭</translation>
+    </message>
+    <message>
+        <source>Review the script issues above.</source>
+        <translation>请处理上方的脚本问题。</translation>
+    </message>
+    <message>
+        <source>Resolve sound cues: %1</source>
+        <translation>请设置音效：%1</translation>
+    </message>
+    <message>
+        <source>Choose voices: %1</source>
+        <translation>请选择角色声音：%1</translation>
+    </message>
+    <message>
+        <source>Checking script…</source>
+        <translation>正在检查脚本…</translation>
+    </message>
+    <message>
+        <source>Write or import a script to begin.</source>
+        <translation>编写或导入脚本以开始。</translation>
+    </message>
     <message>
         <location filename="../qml/Main.qml" line="84"/>
         <source>Script-led voice production</source>
@@ -807,6 +883,14 @@ Write the script. Direct the voices. Keep the take.</source>
         <location filename="../qml/Main.qml" line="232"/>
         <source>All files (*)</source>
         <translation>所有文件 (*)</translation>
+    </message>
+    <message>
+        <source>Segments</source>
+        <translation>分段</translation>
+    </message>
+    <message>
+        <source>Pronunciation dictionary</source>
+        <translation>发音词典</translation>
     </message>
 </context>
 <context>
@@ -1118,6 +1202,22 @@ Write the script. Direct the voices. Keep the take.</source>
     <message>
         <source>Restore changes only the working draft. Accepted audio stays available.</source>
         <translation>恢复仅改变工作稿，已采用的录音仍然保留。</translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation>配音</translation>
+    </message>
+    <message>
+        <source>Sound effects</source>
+        <translation>音效</translation>
+    </message>
+    <message>
+        <source>Ambience</source>
+        <translation>环境声</translation>
+    </message>
+    <message>
+        <source>Short music</source>
+        <translation>短配乐</translation>
     </message>
 </context>
 <context>
@@ -1682,6 +1782,430 @@ Write a narration, import an existing script, or choose a form on the left.</sou
         <location filename="../qml/VoicePanel.qml" line="181"/>
         <source>WAV audio (*.wav)</source>
         <translation>WAV 音频 (*.wav)</translation>
+    </message>
+</context>
+<context>
+    <name>PronunciationDialog</name>
+    <message>
+        <source>Pronunciation dictionary</source>
+        <translation>发音词典</translation>
+    </message>
+    <message>
+        <source>Saving…</source>
+        <translation>保存中…</translation>
+    </message>
+    <message>
+        <source>Save rules to refresh the preview.</source>
+        <translation>保存规则后更新预览。</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+    <message>
+        <source>Save rules</source>
+        <translation>保存规则</translation>
+    </message>
+    <message>
+        <source>Rules change the text sent to the voice engine. Your authored script stays unchanged. Match an exact word or phrase, with optional language and role filters.</source>
+        <translation>规则只改变送入语音引擎的文本，脚本原文保持不变。匹配指定文字，并可限定语言和角色。</translation>
+    </message>
+    <message>
+        <source>Written text</source>
+        <translation>原文</translation>
+    </message>
+    <message>
+        <source>Read as</source>
+        <translation>读作</translation>
+    </message>
+    <message>
+        <source>All languages</source>
+        <translation>所有语言</translation>
+    </message>
+    <message>
+        <source>All roles (or enter a role)</source>
+        <translation>所有角色（或输入角色名）</translation>
+    </message>
+    <message>
+        <source>Add rule</source>
+        <translation>添加规则</translation>
+    </message>
+    <message>
+        <source>No pronunciation rules yet.</source>
+        <translation>尚未添加发音规则。</translation>
+    </message>
+    <message>
+        <source>All roles</source>
+        <translation>所有角色</translation>
+    </message>
+    <message>
+        <source>Remove rule</source>
+        <translation>移除规则</translation>
+    </message>
+    <message>
+        <source>Effective spoken text</source>
+        <translation>实际朗读文本</translation>
+    </message>
+    <message>
+        <source>Checking script…</source>
+        <translation>检查脚本中…</translation>
+    </message>
+    <message>
+        <source>Line %1 · %2</source>
+        <translation>第 %1 行 · %2</translation>
+    </message>
+    <message>
+        <source>Narration</source>
+        <translation>旁白</translation>
+    </message>
+    <message>
+        <source>Use a shorter written phrase.</source>
+        <translation>请缩短要匹配的原文。</translation>
+    </message>
+    <message>
+        <source>Use a shorter pronunciation.</source>
+        <translation>请缩短读法文本。</translation>
+    </message>
+    <message>
+        <source>Use a shorter role name.</source>
+        <translation>请缩短角色名称。</translation>
+    </message>
+    <message>
+        <source>A rule already exists for this text and filters. Remove it before adding a replacement.</source>
+        <translation>已有相同文字和筛选条件的规则，请先移除旧规则再替换。</translation>
+    </message>
+</context>
+<context>
+    <name>SegmentsPanel</name>
+    <message>
+        <source>Speech segments</source>
+        <translation>配音分段</translation>
+    </message>
+    <message>
+        <source>Pronunciation</source>
+        <translation>发音词典</translation>
+    </message>
+    <message>
+        <source>Regenerate a passage, compare its alternatives, then accept the one to use. Assemble accepted segments into a take for final review.</source>
+        <translation>单独生成或重录一段，比较候选并采用。随后将选定的分段拼装为录音，进行最终审阅。</translation>
+    </message>
+    <message>
+        <source>Checking script…</source>
+        <translation>检查脚本中…</translation>
+    </message>
+    <message>
+        <source>All segments accepted</source>
+        <translation>所有分段已采用</translation>
+    </message>
+    <message>
+        <source>%1 segments · accept one alternative for each passage</source>
+        <translation>共 %1 段 · 请为每段采用一个候选</translation>
+    </message>
+    <message>
+        <source>Write spoken text to create segments.</source>
+        <translation>输入配音文本后显示分段。</translation>
+    </message>
+    <message>
+        <source>Narration</source>
+        <translation>旁白</translation>
+    </message>
+    <message>
+        <source>Accepted</source>
+        <translation>已采用</translation>
+    </message>
+    <message>
+        <source>Needs a take</source>
+        <translation>待生成录音</translation>
+    </message>
+    <message>
+        <source>Edit line %1</source>
+        <translation>编辑第 %1 行</translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation>第 %1 行</translation>
+    </message>
+    <message>
+        <source>Source passage</source>
+        <translation>原文段落</translation>
+    </message>
+    <message>
+        <source>Spoken: %1</source>
+        <translation>读作：%1</translation>
+    </message>
+    <message>
+        <source>Take %1 · %2 s%3</source>
+        <translation>录音 %1 · %2 秒%3</translation>
+    </message>
+    <message>
+        <source>Listen to this alternative</source>
+        <translation>试听此候选</translation>
+    </message>
+    <message>
+        <source>Accept</source>
+        <translation>采用</translation>
+    </message>
+    <message>
+        <source>Regenerate</source>
+        <translation>重新生成</translation>
+    </message>
+    <message>
+        <source>Generate</source>
+        <translation>生成</translation>
+    </message>
+    <message>
+        <source>This alternative belongs to an earlier script. Regenerate to accept a take for the current source.</source>
+        <translation>此候选属于较早的脚本版本，请重新生成后用于当前版本。</translation>
+    </message>
+    <message>
+        <source>Earlier accepted takes stay available.</source>
+        <translation>此前采用的录音仍然保留。</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation>字幕</translation>
+    </message>
+    <message>
+        <source>Assemble take</source>
+        <translation>拼装录音</translation>
+    </message>
+    <message>
+        <source>In use</source>
+        <translation>正在使用</translation>
+    </message>
+</context>
+<context>
+    <name>SoundWorkspace</name>
+    <message>
+        <source>Ambience</source>
+        <translation>环境声</translation>
+    </message>
+    <message>
+        <source>Short music</source>
+        <translation>短配乐</translation>
+    </message>
+    <message>
+        <source>Sound effects</source>
+        <translation>音效</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>内置</translation>
+    </message>
+    <message>
+        <source>Imported</source>
+        <translation>已导入</translation>
+    </message>
+    <message>
+        <source>Shape import</source>
+        <translation>来自 Shape</translation>
+    </message>
+    <message>
+        <source>Import WAV</source>
+        <translation>导入 WAV</translation>
+    </message>
+    <message>
+        <source>1–30 seconds</source>
+        <translation>1–30 秒</translation>
+    </message>
+    <message>
+        <source>Local generation</source>
+        <translation>本地生成</translation>
+    </message>
+    <message>
+        <source>Short instrumental music. No vocals or singing are requested; audition each result.</source>
+        <translation>生成短器乐，提示要求不含人声或歌唱；请逐个试听确认。</translation>
+    </message>
+    <message>
+        <source>Describe an environmental bed. Loop audition helps you hear how it repeats.</source>
+        <translation>描述一段环境氛围。循环试听可帮助判断重复播放的效果。</translation>
+    </message>
+    <message>
+        <source>Describe a single effect or a short sequence in English or Chinese.</source>
+        <translation>用中文或英文描述单个音效或一小段声音序列。</translation>
+    </message>
+    <message>
+        <source>Sound name</source>
+        <translation>声音名称</translation>
+    </message>
+    <message>
+        <source>Sparse piano and soft strings, a calm instrumental ending.</source>
+        <translation>稀疏的钢琴与柔和弦乐，一段平静的器乐结尾。</translation>
+    </message>
+    <message>
+        <source>Steady rain in a quiet forest, distant leaves moving, no speech or music.</source>
+        <translation>安静森林中的持续雨声，远处树叶轻轻摇动，不要说话或音乐。</translation>
+    </message>
+    <message>
+        <source>A soft bell, then two quiet wooden knocks. No speech or music.</source>
+        <translation>轻柔的铃声，接着两次轻轻的木头敲击。不要说话或音乐。</translation>
+    </message>
+    <message>
+        <source>Seconds</source>
+        <translation>秒数</translation>
+    </message>
+    <message>
+        <source>Seed</source>
+        <translation>种子</translation>
+    </message>
+    <message>
+        <source>Generation seed</source>
+        <translation>生成种子</translation>
+    </message>
+    <message>
+        <source>Variations</source>
+        <translation>变体数</translation>
+    </message>
+    <message>
+        <source>Generate %1 candidates</source>
+        <translation>生成 %1 个候选</translation>
+    </message>
+    <message>
+        <source>Generate candidate</source>
+        <translation>生成候选</translation>
+    </message>
+    <message>
+        <source>Completed variations are kept as candidates when you stop.</source>
+        <translation>停止后，已完成的变体仍保留为候选。</translation>
+    </message>
+    <message>
+        <source>Stop after current generation</source>
+        <translation>当前生成完成后停止</translation>
+    </message>
+    <message>
+        <source>Project sounds</source>
+        <translation>项目声音</translation>
+    </message>
+    <message>
+        <source>All project sounds</source>
+        <translation>所有项目声音</translation>
+    </message>
+    <message>
+        <source>Loop audition</source>
+        <translation>循环试听</translation>
+    </message>
+    <message>
+        <source>Repeats playback; it does not create a seamless loop.</source>
+        <translation>重复播放，不会生成无缝循环。</translation>
+    </message>
+    <message>
+        <source>Preview sound</source>
+        <translation>试听声音</translation>
+    </message>
+    <message>
+        <source>Accepted</source>
+        <translation>已采用</translation>
+    </message>
+    <message>
+        <source>Candidate</source>
+        <translation>候选</translation>
+    </message>
+    <message>
+        <source>Sound details</source>
+        <translation>声音详情</translation>
+    </message>
+    <message>
+        <source>Edit a copy in Echo</source>
+        <translation>在 Echo 中编辑副本</translation>
+    </message>
+    <message>
+        <source>Export original WAV</source>
+        <translation>导出原始 WAV</translation>
+    </message>
+    <message>
+        <source>Discard candidate</source>
+        <translation>丢弃候选</translation>
+    </message>
+    <message>
+        <source>Accept</source>
+        <translation>采用</translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation>%1 秒</translation>
+    </message>
+    <message>
+        <source>Variation %1 of %2 · seed %3</source>
+        <translation>变体 %1/%2 · 种子 %3</translation>
+    </message>
+    <message>
+        <source>Seed %1</source>
+        <translation>种子 %1</translation>
+    </message>
+    <message>
+        <source>Generation prompt: %1</source>
+        <translation>生成提示词：%1</translation>
+    </message>
+    <message>
+        <source>Original WAV is retained. Accepting also prepares a copy for script cues.</source>
+        <translation>保留原始 WAV。采用时还会准备用于脚本音效提示的副本。</translation>
+    </message>
+    <message>
+        <source>Generate or import sounds, then listen and accept the candidates you want to keep.</source>
+        <translation>生成或导入声音，试听后采用希望保留的候选。</translation>
+    </message>
+    <message>
+        <source>Built-in sounds</source>
+        <translation>内置声音</translation>
+    </message>
+    <message>
+        <source>Preview built-in sound</source>
+        <translation>试听内置声音</translation>
+    </message>
+    <message>
+        <source>Add to sound library</source>
+        <translation>加入声音库</translation>
+    </message>
+    <message>
+        <source>Export keeps the original quality. Use Echo for trimming, fades and mixing; import its WAV as a new candidate.</source>
+        <translation>导出保留原始音质。可在 Echo 中裁剪、淡入淡出或混音，再将其 WAV 导入为新候选。</translation>
+    </message>
+    <message>
+        <source>Import sound WAV</source>
+        <translation>导入声音 WAV</translation>
+    </message>
+    <message>
+        <source>PCM16 WAV audio (*.wav)</source>
+        <translation>PCM16 WAV 音频 (*.wav)</translation>
+    </message>
+    <message>
+        <source>WAV audio (*.wav)</source>
+        <translation>WAV 音频 (*.wav)</translation>
+    </message>
+</context>
+<context>
+    <name>SubtitleDialog</name>
+    <message>
+        <source>Export subtitles</source>
+        <translation>导出字幕</translation>
+    </message>
+    <message>
+        <source>Subtitle timings come from the measured audio of this assembled take. Text follows the authored script.</source>
+        <translation>字幕时间来自此拼装录音的实际分段时长，字幕内容采用脚本原文。</translation>
+    </message>
+    <message>
+        <source>SubRip (.srt)</source>
+        <translation>SubRip (.srt)</translation>
+    </message>
+    <message>
+        <source>WebVTT (.vtt)</source>
+        <translation>WebVTT (.vtt)</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>Choose file…</source>
+        <translation>选择文件…</translation>
+    </message>
+    <message>
+        <source>WebVTT subtitles (*.vtt)</source>
+        <translation>WebVTT 字幕 (*.vtt)</translation>
+    </message>
+    <message>
+        <source>SubRip subtitles (*.srt)</source>
+        <translation>SubRip 字幕 (*.srt)</translation>
     </message>
 </context>
 </TS>

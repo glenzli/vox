@@ -18,7 +18,7 @@ ReferenceRecorder::ReferenceRecorder(QObject *parent) : QObject(parent) {
     drain();
     m_milliseconds = int(m_elapsed.elapsed());
     emit changed();
-    if (m_milliseconds >= 60000 || m_pcm.size() > 24 * 1024 * 1024)
+    if (m_milliseconds >= 60000 || m_pcm.size() >= 24 * 1024 * 1024)
       stop();
   });
 }
@@ -34,6 +34,13 @@ void ReferenceRecorder::start(int index) {
     return;
   cancel();
   const auto generation = ++m_generation;
+  const auto devices = QMediaDevices::audioInputs();
+  if (index < 0 || index >= devices.size()) {
+    m_error = tr("No microphone is available.");
+    emit changed();
+    return;
+  }
+  const auto deviceID = devices[index].id();
   QMicrophonePermission permission;
   const auto status = qApp->checkPermission(permission);
   if (status == Qt::PermissionStatus::Denied) {
@@ -46,7 +53,8 @@ void ReferenceRecorder::start(int index) {
     m_requesting = true;
     emit changed();
     qApp->requestPermission(
-        permission, this, [this, index, generation](const QPermission &result) {
+        permission, this,
+        [this, deviceID, generation](const QPermission &result) {
           if (generation != m_generation)
             return;
           m_requesting = false;
@@ -55,21 +63,25 @@ void ReferenceRecorder::start(int index) {
             emit changed();
             return;
           }
-          begin(index, generation);
+          begin(deviceID, generation);
         });
   } else
-    begin(index, generation);
+    begin(deviceID, generation);
 }
-void ReferenceRecorder::begin(int index, quint64 generation) {
+void ReferenceRecorder::begin(const QByteArray &deviceID, quint64 generation) {
   if (generation != m_generation)
     return;
   const auto devices = QMediaDevices::audioInputs();
-  if (index < 0 || index >= devices.size() || !m_directory.isValid()) {
+  const auto selected = std::find_if(devices.cbegin(), devices.cend(),
+                                     [&deviceID](const QAudioDevice &device) {
+                                       return device.id() == deviceID;
+                                     });
+  if (selected == devices.cend() || !m_directory.isValid()) {
     m_error = tr("No microphone is available.");
     emit changed();
     return;
   }
-  const auto device = devices[index];
+  const auto device = *selected;
   m_format = device.preferredFormat();
   QAudioFormat desired;
   desired.setSampleRate(24000);
@@ -110,7 +122,13 @@ void ReferenceRecorder::drain() {
     return;
   m_partial += m_input->readAll();
   const int width = m_format.bytesPerSample();
-  const int count = m_partial.size() / width;
+  if (width <= 0 || m_format.channelCount() <= 0 || m_format.sampleRate() <= 0)
+    return;
+  const int available = m_partial.size() / width;
+  const qint64 maxSamples =
+      std::min(qint64(m_format.sampleRate()) * m_format.channelCount() * 60,
+               qint64(24 * 1024 * 1024 / 2));
+  const auto count = std::min(qint64(available), maxSamples - m_pcm.size() / 2);
   double peak = 0;
   for (int i = 0; i < count; ++i) {
     const auto *p = m_partial.constData() + i * width;
@@ -142,10 +160,10 @@ void ReferenceRecorder::drain() {
     }
     peak = std::max(peak, std::abs(value));
     const auto sample = qToLittleEndian<qint16>(
-        qint16(std::clamp(std::round(value * 32767.0), -32768.0, 32767.0)));
+        qint16(std::clamp(std::round(value * 32768.0), -32768.0, 32767.0)));
     m_pcm.append(reinterpret_cast<const char *>(&sample), 2);
   }
-  m_partial.remove(0, count * width);
+  m_partial.remove(0, available * width);
   m_level = std::clamp(peak, 0.0, 1.0);
 }
 void ReferenceRecorder::stop() {

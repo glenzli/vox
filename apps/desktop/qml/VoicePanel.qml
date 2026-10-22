@@ -54,8 +54,8 @@ Rectangle {
                 Layout.fillWidth: true
                 spacing: 4
                 Label { text: qsTr("VOICES & DIRECTION"); font.pixelSize: 10; font.letterSpacing: 1; color: Theme.secondary; Layout.fillWidth: true }
-                IconButton { objectName: "voiceLibraryButton"; symbol: "users"; hint: qsTr("Voice library"); enabled: !backend.rendering; onClicked: panel.openLibrary(0) }
-                IconButton { objectName: "soundLibraryButton"; symbol: "headphones"; hint: qsTr("Sounds"); enabled: !backend.rendering; onClicked: panel.openLibrary(1) }
+                IconButton { objectName: "voiceLibraryButton"; symbol: "users"; hint: qsTr("Voice library"); enabled: !backend.busy; onClicked: panel.openLibrary(0) }
+                IconButton { objectName: "soundLibraryButton"; symbol: "headphones"; hint: qsTr("Sounds"); enabled: !backend.busy; onClicked: panel.openLibrary(1) }
             }
             ColumnLayout {
                 Layout.fillWidth: true
@@ -70,10 +70,10 @@ Rectangle {
                         Layout.fillWidth: true
                         model: { const localeDependency = preferences.language; return panel.voiceNames() }
                         selectionIndex: panel.voiceIndex(panel.selected(""))
-                        enabled: !backend.rendering
+                        enabled: !backend.busy
                         onActivated: panel.choose("", currentIndex)
                     }
-                    IconButton { symbol: "play"; hint: qsTr("Audition this voice"); enabled: !backend.rendering && defaultVoice.currentIndex >= 0; onClicked: panel.audition(defaultVoice.currentIndex) }
+                    IconButton { symbol: "play"; hint: qsTr("Audition this voice"); enabled: !backend.busy && defaultVoice.currentIndex >= 0; onClicked: panel.audition(defaultVoice.currentIndex) }
                 }
             }
             RowLayout {
@@ -84,7 +84,7 @@ Rectangle {
                     Layout.fillWidth: true
                     model: backend.languages.map(v => v.label)
                     selectionIndex: panel.languages.indexOf(backend.document.language || "auto")
-                    enabled: !backend.rendering
+                    enabled: !backend.busy
                     onActivated: backend.setLanguage(panel.languages[currentIndex])
                 }
             }
@@ -100,7 +100,7 @@ Rectangle {
                     Layout.fillWidth: true
                     from: 500; to: 2000; stepSize: 50
                     value: backend.document.speed_milli || 1000
-                    enabled: !backend.rendering && !panel.usesReference
+                    enabled: !backend.busy && !panel.usesReference
                     onMoved: backend.setSpeed(Math.round(value))
                     Accessible.name: qsTr("Speech pace")
                 }
@@ -137,10 +137,10 @@ Rectangle {
                             model: { const localeDependency = preferences.language; return panel.voiceNames() }
                             selectionIndex: panel.voiceIndex(panel.selected(roleRow.modelData))
                             displayText: currentIndex < 0 ? qsTr("Choose a voice") : currentText
-                            enabled: !backend.rendering
+                            enabled: !backend.busy
                             onActivated: panel.choose(roleRow.modelData, currentIndex)
                         }
-                        IconButton { symbol: "play"; hint: qsTr("Audition role voice"); enabled: !backend.rendering && roleChoice.currentIndex >= 0; onClicked: panel.audition(roleChoice.currentIndex) }
+                        IconButton { symbol: "play"; hint: qsTr("Audition role voice"); enabled: !backend.busy && roleChoice.currentIndex >= 0; onClicked: panel.audition(roleChoice.currentIndex) }
                     }
                 }
             }
@@ -167,10 +167,10 @@ Rectangle {
                             Layout.fillWidth: true
                             model: {const locale = preferences.language; return panel.cueNames()}
                             selectionIndex: panel.cueIndex(cueRow.modelData)
-                            enabled: !backend.rendering
+                            enabled: !backend.busy
                             onActivated: { if (currentIndex === 3) panel.openLibrary(1); else if (currentIndex >= 4) backend.bindSound(cueRow.modelData, panel.sounds()[currentIndex - 4].id); else backend.bindCue(cueRow.modelData, ["unresolved", "chime", "skip"][currentIndex]) }
                         }
-                        IconButton { symbol: "import"; hint: qsTr("Open sound library"); enabled: !backend.rendering; onClicked: panel.openLibrary(1) }
+                        IconButton { symbol: "import"; hint: qsTr("Open sound library"); enabled: !backend.busy; onClicked: panel.openLibrary(1) }
                     }
                 }
             }

@@ -55,6 +55,12 @@ public:
     connect(&backend_, &DesktopBackend::requestFinished, this,
             [this](const QString &action, bool ok) {
               if (action == "create") {
+                if (historyStage_ == 1 && ok) {
+                  backend_.setFormat("production_script");
+                  editor_->setProperty("text", script_);
+                  backend_.save();
+                  return;
+                }
                 if (reopening_ && ok) {
                   backend_.openProject(QUrl::fromLocalFile(path_));
                   return;
@@ -69,8 +75,8 @@ public:
                 preferences_.setLanguage("zh_CN");
                 preferences_.setLineNumbers(true);
                 QTimer::singleShot(350, this, [this] { firstStage(); });
-              } else if (saving_ && action == "save" && ok &&
-                         !backend_.dirty()) {
+              } else if ((saving_ || historyStage_ == 1) && action == "save" &&
+                         ok && !backend_.dirty()) {
                 finish();
               } else if (reopening_ && action == "open" && ok) {
                 QTimer::singleShot(1200, this, [this] { finish(); });
@@ -103,9 +109,39 @@ private:
       fail("Loading an existing script fed back an edit");
       return;
     }
+    if (historyStage_ == 0) {
+      historyStage_ = 1;
+      backend_.createProject(QUrl::fromLocalFile(path_ + ".same-text.vox"));
+      return;
+    }
+    if (historyStage_ == 1) {
+      historyStage_ = 2;
+      backend_.openProject(QUrl::fromLocalFile(path_));
+      return;
+    }
+    if (historyStage_ == 2) {
+      document_->clearUndoRedoStacks();
+      QTextCursor cursor(document_);
+      cursor.select(QTextCursor::Document);
+      cursor.insertText("Earlier text from a different project.");
+      cursor.select(QTextCursor::Document);
+      cursor.insertText(script_);
+      if (!document_->isUndoAvailable() ||
+          document_->toPlainText() != script_) {
+        fail("Same-text project fixture did not retain editable history");
+        return;
+      }
+      historyStage_ = 3;
+      backend_.openProject(QUrl::fromLocalFile(path_ + ".same-text.vox"));
+      return;
+    }
+    if (document_->isUndoAvailable() || document_->isRedoAvailable()) {
+      fail("Undo history crossed between projects with identical source");
+      return;
+    }
     qInfo() << "Script highlighting, wrapped/scrolling line numbers, theme "
-               "changes, plain mode, selection, undo, exact persistence and "
-               "reopen passed";
+               "changes, plain mode, selection, source navigation, per-project "
+               "undo, exact persistence and reopen passed";
     app_.quit();
   }
   void fail(const char *message) {
@@ -245,11 +281,41 @@ private:
           fail("Line numbers drifted after scrolling");
           return;
         }
-        saving_ = true;
-        if (backend_.dirty())
-          backend_.save();
-        else
-          finish();
+        auto *surface = window_->findChild<QQuickItem *>("scriptEditorSurface");
+        if (!surface || !QMetaObject::invokeMethod(surface, "focusLine",
+                                                   Q_ARG(QVariant, 1))) {
+          fail("Source line navigation is missing");
+          return;
+        }
+        QTimer::singleShot(100, this, [this, surface] {
+          auto *scroll = window_->findChild<QObject *>("scriptScrollView");
+          auto *viewport =
+              scroll->property("contentItem").value<QQuickItem *>();
+          if (editor_->property("cursorPosition").toInt() != 0 ||
+              viewport->property("contentY").toReal() >
+                  editor_->property("topPadding").toReal()) {
+            fail("Navigation to an unchanged cursor left its line off-screen");
+            return;
+          }
+          QMetaObject::invokeMethod(surface, "focusLine", Q_ARG(QVariant, 120));
+          QTimer::singleShot(100, this, [this, viewport] {
+            const auto caret = editor_->property("cursorRectangle").toRectF();
+            const auto top = viewport->property("contentY").toReal();
+            if (editor_->property("cursorPosition").toInt() !=
+                    document_->findBlockByNumber(119).position() ||
+                caret.top() < top - 1 ||
+                caret.bottom() > top + viewport->height() + 1 ||
+                !sourceAndFormats()) {
+              fail("Navigation to a distant line missed the visible source");
+              return;
+            }
+            saving_ = true;
+            if (backend_.dirty())
+              backend_.save();
+            else
+              finish();
+          });
+        });
       });
     });
   }
@@ -265,6 +331,7 @@ private:
   QTextDocument *document_ = nullptr;
   bool saving_ = false;
   bool reopening_ = false;
+  int historyStage_ = 0;
 };
 } // namespace
 

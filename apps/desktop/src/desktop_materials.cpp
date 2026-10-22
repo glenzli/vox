@@ -37,45 +37,75 @@ void DesktopBackend::bindReference(const QString &role, const QString &id) {
   messageCode("reference_missing");
 }
 void DesktopBackend::auditionReference(const QString &id, const QString &text) {
-  if (m_rendering || m_path.isEmpty())
+  if (busy() || m_path.isEmpty())
     return;
-  m_rendering = true;
-  emit renderingChanged();
-  saveThen([this, id, text] {
-    command("reference_preview", {{"id", id}, {"text", text}},
-            [this](const QJsonObject &r) { finishRender(r, true); });
-  });
+  setRendering(true);
+  saveThen(
+      [this, id, text] {
+        if (m_cancelRequested) {
+          setRendering(false);
+          messageCode("speech_cancelled");
+          return;
+        }
+        command("reference_preview", {{"id", id}, {"text", text}},
+                [this](const QJsonObject &r) { finishRender(r, true); });
+      },
+      [this] { setRendering(false); });
 }
 void DesktopBackend::materialCommand(const QString &action,
                                      const QJsonObject &fields, bool generate) {
-  if (m_rendering || m_path.isEmpty()) {
+  if (busy() || m_path.isEmpty()) {
     messageCode("render_busy");
     return;
   }
-  m_rendering = true;
-  emit renderingChanged();
-  saveThen([this, action, fields, generate] {
-    command(action, fields, [this, generate](const QJsonObject &r) {
-      m_rendering = false;
-      emit renderingChanged();
-      if (r["ok"].toBool()) {
-        apply(r["result"].toObject(), m_editSequence);
-        messageCode(generate ? "sound_generated" : "material_saved");
-      }
-    });
-  });
+  if (generate)
+    setRendering(true);
+  saveThen(
+      [this, action, fields, generate] {
+        if (generate && m_cancelRequested) {
+          setRendering(false);
+          messageCode("generation_cancelled");
+          emit requestFinished(action, false);
+          return;
+        }
+        const auto edit = m_editSequence;
+        command(action, fields, [this, generate, edit](const QJsonObject &r) {
+          if (generate)
+            setRendering(false);
+          if (r["ok"].toBool()) {
+            const auto result = r["result"].toObject();
+            apply(result, edit);
+            const auto batch = result["sound_batch"].toObject();
+            if (!batch.isEmpty()) {
+              const auto state = batch["state"].toString();
+              messageCode(state == "cancelled" ? "sound_batch_cancelled"
+                          : state == "partial_failed"
+                              ? "sound_batch_partial_failed"
+                              : "sound_batch_completed");
+            } else {
+              messageCode(generate ? "sound_generated" : "material_saved");
+            }
+          }
+        });
+      },
+      [this, action, generate] {
+        if (generate)
+          setRendering(false);
+        emit requestFinished(action, false);
+      });
 }
 void DesktopBackend::addBuiltin(const QString &key) {
   materialCommand("add_builtin", {{"key", key}});
 }
 void DesktopBackend::previewBuiltin(const QString &key) {
-  if (m_rendering)
+  if (busy())
     return;
+  const auto playback = ++m_playbackSequence;
   command(
       "builtin_preview", {{"key", key}},
-      [this](const QJsonObject &r) {
-        if (r["ok"].toBool())
-          emit playFile(
+      [this, playback](const QJsonObject &r) {
+        if (r["ok"].toBool() && playback == m_playbackSequence)
+          playPreview(
               QUrl::fromLocalFile(r["result"].toObject()["file"].toString()));
       },
       false);
@@ -93,6 +123,20 @@ void DesktopBackend::generateSound(const QString &name, const QString &prompt,
                                         {"seconds", seconds},
                                         {"seed", seed},
                                         {"music", music}}}},
+                  true);
+}
+void DesktopBackend::generateSoundBatch(const QString &name,
+                                        const QString &prompt, int seconds,
+                                        int seed, const QString &category,
+                                        int variations) {
+  materialCommand("generate_sound_batch",
+                  {{"name", name},
+                   {"category", category},
+                   {"variations", variations},
+                   {"spec", QJsonObject{{"prompt", prompt},
+                                        {"seconds", seconds},
+                                        {"seed", seed},
+                                        {"music", category == "short_music"}}}},
                   true);
 }
 void DesktopBackend::acceptSound(const QString &id) {
@@ -119,22 +163,24 @@ void DesktopBackend::bindSound(const QString &label, const QString &id) {
   messageCode("material_not_accepted");
 }
 void DesktopBackend::previewFile(const QUrl &file) {
-  if (!m_rendering && file.isLocalFile() &&
-      QFileInfo(file.toLocalFile()).isFile())
-    emit playFile(file);
+  if (!busy() && file.isLocalFile() && QFileInfo(file.toLocalFile()).isFile())
+    playPreview(file);
 }
 void DesktopBackend::playMaterial(const QString &kind, const QString &id) {
-  if (m_rendering)
+  if (busy() || m_path.isEmpty())
     return;
+  const auto playback = ++m_playbackSequence;
   command("material_file", {{"kind", kind}, {"id", id}},
-          [this](const QJsonObject &r) {
-            if (r["ok"].toBool())
-              emit playFile(QUrl::fromLocalFile(
+          [this, playback](const QJsonObject &r) {
+            if (r["ok"].toBool() && playback == m_playbackSequence)
+              playPreview(QUrl::fromLocalFile(
                   r["result"].toObject()["file"].toString()));
           });
 }
 void DesktopBackend::exportMaterial(const QString &kind, const QString &id,
                                     const QUrl &destination) {
+  if (m_path.isEmpty() || m_projectChanging)
+    return;
   command(
       "export_material",
       {{"kind", kind}, {"id", id}, {"destination", destination.toLocalFile()}},
@@ -145,7 +191,7 @@ void DesktopBackend::exportMaterial(const QString &kind, const QString &id,
 }
 void DesktopBackend::editMaterialInEcho(const QString &kind,
                                         const QString &id) {
-  if (m_rendering || m_echoOpening || m_echoLauncher.busy())
+  if (busy() || m_path.isEmpty() || m_echoOpening || m_echoLauncher.busy())
     return;
   m_echoOpening = true;
   command("material_echo", {{"kind", kind}, {"id", id}},

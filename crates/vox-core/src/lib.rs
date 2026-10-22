@@ -8,6 +8,7 @@ mod failure;
 pub mod handoff;
 pub mod infer_runtime;
 pub mod project;
+mod pronunciation;
 mod provenance;
 pub use executor::*;
 pub use failure::*;
@@ -15,6 +16,7 @@ pub use infer_runtime::{
     INFER_SPEECH_VOICE_CATALOG_REVISION, InferRuntimeSpeechExecutor, SPEECH_PRESETS,
     SpeechSynthesisControl, supported_speech_operation,
 };
+pub use pronunciation::PronunciationRule;
 pub use provenance::*;
 
 pub mod materials;

@@ -8,6 +8,32 @@
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
+// Undo and redo belong to one project's editor session, even when another
+// project happens to load identical source text.
+class ScriptDocumentState : public QObject {
+  Q_OBJECT
+  QML_ELEMENT
+  Q_PROPERTY(QQuickTextDocument *sourceDocument READ sourceDocument WRITE
+                 setSourceDocument NOTIFY sourceDocumentChanged)
+  Q_PROPERTY(QString sourceIdentity READ sourceIdentity WRITE setSourceIdentity
+                 NOTIFY sourceIdentityChanged)
+public:
+  explicit ScriptDocumentState(QObject *parent = nullptr) : QObject(parent) {}
+  QQuickTextDocument *sourceDocument() const { return m_quickDocument; }
+  void setSourceDocument(QQuickTextDocument *document);
+  QString sourceIdentity() const { return m_sourceIdentity; }
+  void setSourceIdentity(const QString &identity);
+
+signals:
+  void sourceDocumentChanged();
+  void sourceIdentityChanged();
+
+private:
+  void resetHistory();
+  QPointer<QQuickTextDocument> m_quickDocument;
+  QString m_sourceIdentity;
+};
+
 // Formatting is a view of the plain-text document. Rust remains the grammar
 // owner.
 class ScriptHighlighter : public QSyntaxHighlighter {

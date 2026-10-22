@@ -44,6 +44,7 @@ impl Fixture {
             parent_audio: None,
             source_project: None,
             edit: None,
+            segment_assembly: None,
         };
         let m = self
             .project
@@ -269,6 +270,31 @@ fn interrupted_render_is_observed_without_replaying_it() {
     let m = f.project.recover().unwrap();
     assert_eq!(m.runs[0].status, "interrupted_unknown");
     assert!(m.candidates.is_empty());
+}
+#[test]
+fn executor_initialization_failure_finishes_render_run() {
+    let f = Fixture::new();
+    let before = f.source();
+    let error = f
+        .project
+        .render(
+            before.version,
+            "invalid endpoint",
+            crate::SpeechSynthesisControl::default(),
+            Arc::new(|_, _| {}),
+        )
+        .unwrap_err();
+    assert_eq!(error.code, "credential_unavailable");
+    let failed = f.project.read().unwrap();
+    assert_eq!(failed.runs.len(), 1);
+    assert_eq!(failed.runs[0].status, "failed");
+    assert_eq!(failed.runs[0].error.as_deref(), Some(error.code.as_str()));
+    assert_eq!(failed.draft, before.draft);
+    assert_eq!(failed.source_head, before.source_head);
+    assert!(failed.candidates.is_empty());
+    assert!(failed.audio.is_empty());
+    // Recovery must retain the observed failure rather than relabel it as process loss.
+    assert_eq!(f.project.recover().unwrap().version, failed.version);
 }
 #[test]
 fn export_never_overwrites_an_existing_file() {

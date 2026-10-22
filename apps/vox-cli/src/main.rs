@@ -32,7 +32,11 @@ fn project(v: &Value) -> Result<Project> {
 }
 fn snapshot(p: &Project, m: Manifest) -> Value {
     let analysis = m.analysis();
-    json!({"project":m,"path":p.path,"analysis":analysis})
+    let segment_plan = p.segment_plan_for(&m).map_or_else(
+        |error| json!({"ready":false,"can_assemble":false,"segments":[],"error":error.code}),
+        |plan| json!(plan),
+    );
+    json!({"project":m,"path":p.path,"analysis":analysis,"segment_plan":segment_plan})
 }
 fn voices() -> Value {
     json!(
@@ -47,7 +51,7 @@ fn execute(v: &Value) -> Result<Value> {
     let action = field(v, "action")?;
     if action == "capabilities" {
         return Ok(
-            json!({"schema":"vox.capabilities/1","project_schema":"vox.project/1","voices":voices(),"languages":["auto","Chinese","English","Japanese","Korean","German","French","Russian","Portuguese","Spanish","Italian"],"operations":["import_shape_transfer","shape_transfer_receipt","restore_shape_draft","create","open","save","adopt","validate","render","cancel","accept","discard","playback","export","import_script","import_cue","import_reference","bind_reference","add_builtin","import_sound","generate_sound","accept_sound","discard_sound","bind_sound","material_file","export_material","restore_source","begin_echo","review_echo"],"forms":["narration","dialogue","listening"],"voice_reference":true,"sound_generation":true,"builtin_sounds":vox_core::materials::BUILTIN_SOUNDS,"acceptance":"explicit","runtime_app":"vox"}),
+            json!({"schema":"vox.capabilities/1","project_schema":"vox.project/1","voices":voices(),"languages":["auto","Chinese","English","Japanese","Korean","German","French","Russian","Portuguese","Spanish","Italian"],"operations":["segment_plan","render_segment","accept_segment","assemble_segments","segment_playback","export_subtitles","generate_sound_batch","import_shape_transfer","shape_transfer_receipt","restore_shape_draft","create","open","save","adopt","validate","render","cancel","accept","discard","playback","export","import_script","import_cue","import_reference","bind_reference","add_builtin","import_sound","generate_sound","accept_sound","discard_sound","bind_sound","material_file","export_material","restore_source","begin_echo","review_echo"],"forms":["narration","dialogue","listening"],"workspaces":["speech","sfx","ambience","short_music"],"pronunciation_dictionary":true,"segment_candidates":true,"voice_reference":true,"sound_generation":true,"builtin_sounds":vox_core::materials::BUILTIN_SOUNDS,"acceptance":"explicit","runtime_app":"vox"}),
         );
     }
     if action == "probe" {
@@ -76,6 +80,22 @@ fn execute(v: &Value) -> Result<Value> {
         "open" => p.recover()?,
         "status" => p.read()?,
         "validate" => return Ok(p.read()?.analysis()),
+        "segment_plan" => return Ok(json!(p.segment_plan()?)),
+        "accept_segment" => p.accept_segment(version(v)?, field(v, "segment_id")?)?,
+        "assemble_segments" => p.assemble_segments(version(v)?)?,
+        "segment_playback" => {
+            let file = p.segment_playback(field(v, "segment_id")?)?;
+            let bytes = std::fs::read(&file)?;
+            return Ok(json!({"file":file,"peaks":vox_core::audio::waveform_peaks(&bytes,160)?}));
+        }
+        "export_subtitles" => {
+            p.export_subtitles(
+                field(v, "audio_id")?,
+                Path::new(field(v, "destination")?),
+                field(v, "format")?,
+            )?;
+            return Ok(json!({"exported":true,"destination":v["destination"]}));
+        }
         "save" => {
             let draft: Document = serde_json::from_value(v["document"].clone())?;
             p.save(version(v)?, draft, v["title"].as_str().map(str::to_owned))?
@@ -221,9 +241,11 @@ fn main() {
         if matches!(
             action,
             "render"
+                | "render_segment"
                 | "voice_preview"
                 | "reference_preview"
                 | "generate_sound"
+                | "generate_sound_batch"
                 | "import_shape_transfer"
         ) {
             if busy
@@ -249,6 +271,30 @@ fn main() {
                             &control,
                         )?;
                         Ok(snapshot(&p, p.read()?))
+                    })()
+                } else if v["action"] == "generate_sound_batch" {
+                    (|| {
+                        let p = project(&v)?;
+                        let spec = serde_json::from_value(v["spec"].clone())?;
+                        let category = serde_json::from_value(v["category"].clone())?;
+                        let variations = v["variations"]
+                            .as_u64()
+                            .and_then(|n| u8::try_from(n).ok())
+                            .ok_or_else(|| Error::new("invalid_sound_request"))?;
+                        let batch = p.generate_sound_batch(
+                            version(&v)?,
+                            v["endpoint"].as_str().unwrap_or(""),
+                            field(&v, "name")?,
+                            spec,
+                            category,
+                            variations,
+                            &control,
+                        )?;
+                        let summary = json!({"batch_id":batch.batch_id,"requested":batch.requested,
+                            "completed":batch.completed,"state":batch.state,"error":batch.error});
+                        let mut result = snapshot(&p, batch.manifest);
+                        result["sound_batch"] = summary;
+                        Ok(result)
                     })()
                 } else if v["action"] == "generate_sound" {
                     (|| {
@@ -276,12 +322,22 @@ fn main() {
                                 json!({"event":"progress","request_id":id,"completed":completed,"total":total}),
                             )
                         });
-                        let m = p.render(
-                            version(&v)?,
-                            v["endpoint"].as_str().unwrap_or(""),
-                            control,
-                            progress,
-                        )?;
+                        let m = if v["action"] == "render_segment" {
+                            p.render_segment(
+                                version(&v)?,
+                                field(&v, "segment_key")?,
+                                v["endpoint"].as_str().unwrap_or(""),
+                                control,
+                                progress,
+                            )?
+                        } else {
+                            p.render(
+                                version(&v)?,
+                                v["endpoint"].as_str().unwrap_or(""),
+                                control,
+                                progress,
+                            )?
+                        };
                         Ok(snapshot(&p, m))
                     })()
                 };

@@ -4,6 +4,10 @@ CLI and native desktop call the same `vox-core` use cases. QML owns interaction 
 never project commit authority. `WorkerClient` owns correlated process requests and cancellation;
 `DesktopBackend` fences responses by project and draft identity. A separate probe worker keeps
 an unavailable Runtime from blocking local project work.
+Draft replies retain their dispatch-time edit identity; take operations pin the selected ID.
+Project transitions fence editing until completion, while short material operations keep typing
+available. Pending requests include save continuations so closing cannot destroy a temporary
+reference before import. Cancellation covers queued generation and its save/adopt preparation.
 
 Desktop buttons own their text and symbolic-icon colors in both window activation states.
 `mac_titlebar` keeps native macOS controls aligned with the single QML toolbar across window
@@ -18,6 +22,9 @@ The gutter paints logical source lines from a viewport snapshot prepared on the 
 keeping wrapped lines and scrolling aligned without adding text or undo entries to the document.
 Guarded source loading and an observed-text comparison keep format-only TextEdit notifications
 out of the draft mutation path, including when an existing production script is first opened.
+`ScriptDocumentState` clears undo/redo on project identity changes even when both projects contain
+identical text. Line navigation scrolls the requested block into view even if the cursor is already
+there. Reading metadata wraps within the card without displacing its source-line action.
 
 `domain::speech_script::reading` projects the authoritative parser plan and authored-note markers
 into display-only speech cards and repeat groups. Rejected source lines remain visible with their
@@ -29,6 +36,9 @@ The shared combo restores document/preference selections after translated models
 `domain::speech_script` migrates Shape's grammar and readiness tests. `assembly` owns complete
 control-to-action compilation, local cues, silence, exact replay and PCM validation. The pinned
 official Infer SDK owns Discovery, contracts, transport and owner-only credential loading.
+The desktop uses parser readiness to name missing role/cue choices before enabling generation;
+dirty text waits for fresh analysis. The backend independently rechecks readiness before adopting
+a source revision, so keyboard or direct calls cannot journal an unready script.
 Vox checks its own App identity, exact local deployment, no-fallback/zero-cost policy and successful
 Job/Attempt receipts. There is no fixed-port fallback in the product.
 
@@ -43,6 +53,8 @@ bytes, contract and provenance. Older accepted audio stays readable after rewrit
 render lock prevents overlapping producers. Cancel stops between segments; it does not claim
 provider-side interruption. An unlocked journaled run becomes `interrupted_unknown` after process
 loss; reopening never redispatches it. Retry cache requires exact text/settings and is in-process.
+Executor initialization errors finalize the run as failed through the same journal path as synthesis
+errors; they do not leave a running record behind.
 
 Echo gets a revision-pinned WAV working copy with its public generated-source declaration. Neither
 app opens the other's database. Tickets bind project, script and accepted audio. Manual file return
@@ -76,8 +88,9 @@ Sound choices use the Runtime’s model selector; named request routes are prohi
 `materials` provides procedural sounds and explicit low-pass/downmix/resampling for script copies.
 Original 44.1 kHz stereo generated audio is retained. Material Echo edits use isolated copies with
 synthetic disclosure when appropriate; manual WAV reimport creates a new candidate/reference, without
-claiming a native completion receipt or mutating an accepted source. Cancellation stops after the
-current model request and suppresses late candidates.
+claiming a native completion receipt or mutating an accepted source. Sound-generation cancellation
+stops after the current model request, retains validated completed candidates and prevents the
+next variation from starting.
 
 
 `project::shape_transfer` owns admission of the narrow `vox.shape-transfer/1` package and atomic
@@ -86,3 +99,39 @@ Shape audio with its historical source pin, and separate unaccepted writing/spee
 never overwrites later edits. Unsupported imported settings remain visible and non-executable;
 CLI and desktop share the same use case, with visible draft restoration in the sidebar. See
 [Shape transfer](SHAPE_TRANSFER.md) for the file and selection-hash boundary.
+
+## Persistent segment production
+
+`project::segments` owns compilation, candidates, explicit selection, assembly and measured-caption
+export. Definitions bind authored text, effective spoken text, voice, language, delivery and reference
+content identities. Matching selections survive unrelated source edits; changed inputs need a new
+segment take. Source revisions and accepted whole audio remain immutable. Re-selecting an older
+accepted segment changes only the selection for the next assembly.
+
+Assembly reuses the existing compiler for cues, sample-accurate pauses and repeat replay. It validates
+each selected segment and builds a new whole-take candidate with selection and frame-timing receipts.
+Normal audio acceptance revalidates that receipt and exact PCM. SRT/VTT export follows these measured
+speech ranges and original source text; it makes no word-alignment or target-video-duration claim.
+
+`pronunciation` owns bounded, case-sensitive literal substitutions. Replacements are not recursively
+matched. Longer text wins; more specific language/role rules override global rules. Document and
+operation defaults omit empty rule arrays to preserve legacy digests. Synthesis receipts distinguish
+authored input identity from effective spoken input.
+
+The CLI snapshots the segment plan from the same Manifest it returns. `desktop_production` keeps
+prepare/adopt/render/accept lifecycles together, including cancellation before dispatch, captured
+project and edit identities, and pinned subtitle export targets. Main selects voice or sound
+workspaces; AudioPanel remains the single playback owner.
+
+## Sound workspaces
+
+`project::materials` owns bounded batches with category, batch, variation and seed metadata. Each
+validated result is saved as an independent candidate before the next variation starts. Cancellation
+or later failure retains completed candidates and returns an explicit batch outcome. SFX and ambience
+use the local sound model; short music requests instrumental output from the local music model. The
+original prompt and submitted prompt remain inspectable. Loop audition repeats playback, with no
+claim of seamless synthesis. Original-quality audio and script-compatible accepted PCM stay distinct.
+
+Complete songs are outside Vox's product scope. Voice design, performance-driven conversion and
+timecoded/video-led dubbing require separately proved input, application-grant and output contracts.
+The current local configuration includes a voice-design model but does not grant that intent to Vox.

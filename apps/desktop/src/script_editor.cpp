@@ -29,6 +29,32 @@ bool identityValue(const QString &key) {
 }
 } // namespace
 
+void ScriptDocumentState::setSourceDocument(QQuickTextDocument *document) {
+  if (m_quickDocument == document)
+    return;
+  if (m_quickDocument)
+    disconnect(m_quickDocument, nullptr, this, nullptr);
+  m_quickDocument = document;
+  if (document)
+    connect(document, &QQuickTextDocument::textDocumentChanged, this,
+            &ScriptDocumentState::resetHistory);
+  resetHistory();
+  emit sourceDocumentChanged();
+}
+
+void ScriptDocumentState::setSourceIdentity(const QString &identity) {
+  if (m_sourceIdentity == identity)
+    return;
+  m_sourceIdentity = identity;
+  resetHistory();
+  emit sourceIdentityChanged();
+}
+
+void ScriptDocumentState::resetHistory() {
+  if (m_quickDocument && m_quickDocument->textDocument())
+    m_quickDocument->textDocument()->clearUndoRedoStacks();
+}
+
 ScriptHighlighter::ScriptHighlighter(QObject *parent)
     : QSyntaxHighlighter(parent) {}
 

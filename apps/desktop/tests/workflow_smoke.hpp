@@ -21,3 +21,8 @@ void startReadingSmoke(QGuiApplication &, QQmlApplicationEngine &,
 
 void startShapeTransferSmoke(QGuiApplication &, QQmlApplicationEngine &,
                              DesktopBackend &, const QString &output);
+void startProductionSmoke(QGuiApplication &, QQmlApplicationEngine &,
+                          UiPreferences &, DesktopBackend &, const QString &);
+void startSoundWorkspaceSmoke(QGuiApplication &, QQmlApplicationEngine &,
+                              UiPreferences &, DesktopBackend &,
+                              const QString &);

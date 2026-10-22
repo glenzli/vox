@@ -6,7 +6,7 @@
 
 **脚本驱动的配音制作。**
 
-Vox 是独立的 Qt 桌面应用，用于旁白、多角色对话和听力材料制作。从脚本编写、音色选择、
+Vox 是独立的 Qt 桌面应用，用于旁白、多角色对话、听力材料和声音素材制作。从脚本编写、音色选择、
 本地合成到试听、采用与导出，保留每一版脚本和已采用的录音。当前为开发预览，尚未发布正式版本；
 最初验证的平台为 macOS Apple Silicon。
 
@@ -30,9 +30,12 @@ Vox 是独立的 Qt 桌面应用，用于旁白、多角色对话和听力材料
 | --- | --- |
 | 脚本编辑 | 语法高亮、逻辑行号、自动换行；阅读页按角色台词和重复段分组，可定位原文；脚本区字体和字号可独立设置、预览与重置 |
 | 多角色配音 | 复用 Shape 的脚本语法，支持角色、演绎、场景、停顿、音效与重复；重复片段重放同一份 PCM，不重复调用模型 |
+| 分段制作 | 单段生成与重生成、候选比较、逐段采用；复用文字与设置完全相同的段落，拼装成新的整段候选；按实际音频时长导出 SRT/VTT |
+| 读音词典 | 项目内保存原词与读法，可限定语言或角色；只改变送入合成的文字，脚本原文保持不变 |
 | 预设音色 | 九种预设音色，可自动识别或明确指定配音语言 |
 | 音色模仿 | 现场录音或导入单声道/立体声 PCM16 WAV，填写逐字参考文本并确认使用权限；可分配给旁白或任意角色 |
-| 音效库 | 八种程序生成的内置音效、WAV 导入，以及本地 Stable Audio 3 的音效和短音乐生成 |
+| 声音工作区 | 音效、环境声、短配乐三个入口；本地生成、批量候选、循环试听、原始 WAV 导出与 Echo 编辑 |
+| 音效库 | 八种程序生成的内置音效、WAV 导入；采用后可绑定脚本音效提示 |
 | 版本与素材 | 独立项目、自动保存的工作草稿、不可变素材、明确采用的脚本与录音版本 |
 | Echo 联动 | 对录音、参考音色和音效建立独立编辑副本，保留原始素材，手动导入编辑后的 WAV |
 | 界面 | 紧凑的图标工具栏，黑白灰主色，中英文界面，亮色、暗色和跟随系统主题 |
@@ -41,7 +44,8 @@ Vox 是独立的 Qt 桌面应用，用于旁白、多角色对话和听力材料
 当前 Base 音色模仿使用 1× 语速和中性演绎。自动化检查使用合成参考和注入的音频样本，
 真实麦克风采集仍需设备和首次系统授权。
 
-生成音效支持 1–30 秒、显式随机种子和中英文描述。中文描述经过本地提示词准备，
+声音生成支持 1–30 秒、显式随机种子、最多四个变体和中英文描述。短配乐限定为器乐素材，完整歌曲不在 Vox 范围内。
+环境声使用音效模型；循环试听用于检查首尾衔接，不保证模型输出无缝循环。中文描述经过本地提示词准备，
 原文、实际提示词和 Runtime 回执一并保留。试听并采用后，Vox 准备用于脚本的音频副本，
 同时保留原始 WAV 供导出或 Echo 编辑。
 
@@ -98,7 +102,8 @@ Vox 复用了 Shape 的语音制作代码，保留其来源和许可。Shape 的
 旧工程保留读取与精确交接：选中文稿、写作与配音草稿、角色选声、音效和可选已采用音频，
 导入独立 `.vox` 工程。已采用历史与未完成工作稿分别保留，可在侧栏恢复迁移的写作或配音草稿。
 原 `.shape` 工程不改动，也不自动转换其中其他作品。迁移合同见 [Shape 交接](docs/SHAPE_TRANSFER.md)。
-分段重录、通过描述设计音色和视频配音列入后续规划。
+描述音色设计、表演驱动的换声和带时码的视频配音列入后续规划。当前字幕导出使用已组装音频的实际段落时长；
+它不执行词级强制对齐，也不承诺生成音频恰好匹配外部视频时长。
 
 ### 许可证
 
@@ -112,8 +117,8 @@ Vox 采用 [MIT License](LICENSE)。迁移代码和依赖的来源及许可见
 
 **Script-led voice production.**
 
-Vox is an independent Qt desktop application for narration, multi-speaker dialogue and listening
-materials. Write scripts, direct voices, synthesize locally, then audition, accept and export takes
+Vox is an independent Qt desktop application for narration, multi-speaker dialogue, listening
+materials and sound assets. Write scripts, direct voices, synthesize locally, then audition, accept and export takes
 while keeping exact script versions and accepted audio. This is a development preview, not a published
 release. macOS Apple Silicon is the initial verified platform.
 
@@ -138,9 +143,12 @@ Script editing, voice direction and takes share one workspace. These screenshots
 | --- | --- |
 | Script editor | Syntax highlighting, logical line numbers, wrapping, grouped speech/repeat reading with source navigation, and independent script font/size settings with preview and reset |
 | Multi-speaker production | Shape-compatible roles, delivery, scenes, pauses, cues and repeats; repeats replay identical PCM without another model call |
+| Segment production | Generate or regenerate one segment, compare and explicitly select candidates, reuse exact matching text/settings, assemble a new whole-take candidate, and export measured SRT/VTT captions |
+| Pronunciation dictionary | Project-owned text-to-reading rules, optionally scoped by language or role; synthesis input changes while authored source remains intact |
 | Voice presets | Nine presets, with automatic or explicit speech language |
 | Reference voices | Record a microphone sample or import mono/stereo PCM16 WAV, enter its exact transcript and confirm permitted use; assign to narration or any role |
-| Sound library | Eight procedural built-in effects, WAV import, and local Stable Audio 3 sound-effect and short-music generation |
+| Sound workspaces | Separate effects, ambience and short instrumental music entries; local generation, batch candidates, loop audition, original WAV export and Echo editing |
+| Sound library | Eight procedural effects and WAV import; accepted materials can be bound to script cues |
 | Versions and materials | Independent projects, autosaved drafts, immutable materials, and explicit script/audio acceptance |
 | Echo handoff | Independent editing copies for takes, voice references and sounds, preserving originals with manual WAV return |
 | Interface | Compact icon-led tools, a neutral black/white/gray palette, English/Chinese, and light/dark/system themes |
@@ -150,7 +158,9 @@ Microphone access is requested only when Record is pressed. The current Base clo
 1× pace and neutral delivery. Automated checks use synthetic references and injected audio samples;
 real microphone capture requires a suitable device and first-use system permission.
 
-Sound generation supports 1–30 seconds, an explicit seed and English or Chinese descriptions.
+Sound generation supports 1–30 seconds, an explicit seed, up to four variations, and English or Chinese descriptions.
+Short music is instrumental; complete songs are outside Vox’s scope. Ambience uses the sound-effects model.
+Loop audition helps inspect the join; it does not guarantee seamless model output.
 Chinese descriptions use local prompt preparation; original and effective prompts and Runtime receipts
 are retained. After audition and explicit acceptance, Vox prepares a script-compatible audio copy while
 keeping the original WAV for export or Echo editing.
@@ -213,7 +223,9 @@ script, writing and speech drafts, role choices, cues and optional accepted audi
 `.vox` project. Accepted history and unfinished work remain distinct, with sidebar actions to restore
 the preserved writing or speech draft. The original `.shape` project stays intact; other works in that
 project are not automatically converted. See the [Shape transfer contract](docs/SHAPE_TRANSFER.md).
-Persistent per-segment re-recording, voice design from descriptions and video dubbing remain future work.
+Voice design from descriptions, performance-driven voice conversion and timecoded video dubbing remain future work.
+Caption export uses measured durations of assembled segments; it does not perform word-level forced alignment
+or guarantee a fit to external video timings.
 
 ### License
 

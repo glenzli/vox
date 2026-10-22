@@ -6,6 +6,12 @@ import QtMultimedia
 Rectangle {
     id: panel
     color: Theme.panel
+    property bool showTakes: true
+    property bool loopPreview: false
+    property string playbackContext: "speech"
+    signal exportSubtitlesRequested(string audioId)
+    onShowTakesChanged: { player.stop(); player.source = "" }
+    onPlaybackContextChanged: { player.stop(); player.source = ""; backend.selectAudio("") }
     property var takes: {
         let items = []
         for (let r of (backend.project.candidates || []).slice().reverse()) items.push({record:r, accepted:false})
@@ -20,7 +26,7 @@ Rectangle {
         let s = Math.floor(ms / 1000)
         return Math.floor(s / 60) + ":" + (s % 60).toString().padStart(2, "0")
     }
-    MediaPlayer { id: player; objectName: "audioPlayer"; audioOutput: AudioOutput { id: output; volume: 0.8 } }
+    MediaPlayer { id: player; objectName: "audioPlayer"; loops: panel.loopPreview ? MediaPlayer.Infinite : 1; audioOutput: AudioOutput { id: output; volume: 0.8 } }
     Connections {
         target: backend
         function onPlayFile(file) { player.stop(); player.source = file; player.play() }
@@ -34,18 +40,21 @@ Rectangle {
         spacing: 8
         RowLayout {
             Layout.fillWidth: true
+            visible: panel.showTakes
             Label { text: qsTr("Takes"); font.weight: Font.DemiBold; font.pixelSize: 12 }
             Label { text: panel.takes.length; color: Theme.secondary; font.pixelSize: 11 }
             Item { Layout.fillWidth: true }
-            ActionButton { text: qsTr("Accept"); symbol: "check"; primary: true; enabled: panel.selected && !panel.selected.accepted && !backend.rendering; onClicked: backend.acceptSelected() }
-            IconButton { symbol: "x"; hint: qsTr("Discard take"); enabled: panel.selected && !panel.selected.accepted && !backend.rendering; onClicked: backend.discardSelected() }
+            ActionButton { text: qsTr("Accept"); symbol: "check"; primary: true; enabled: panel.selected && !panel.selected.accepted && !backend.busy; onClicked: backend.acceptSelected() }
+            IconButton { symbol: "x"; hint: qsTr("Discard take"); enabled: panel.selected && !panel.selected.accepted && !backend.busy; onClicked: backend.discardSelected() }
             Rectangle { width: 1; height: 20; color: Theme.border }
-            IconButton { objectName: "echoEditButton"; symbol: "echo"; hint: qsTr("Edit in Echo"); enabled: panel.selected && panel.selected.accepted && !backend.rendering; onClicked: backend.editInEcho() }
-            IconButton { symbol: "import"; hint: qsTr("Return edited WAV from Echo"); enabled: backend.hasEchoHandoff && !backend.rendering; onClicked: echoReturnDialog.open() }
+            IconButton { objectName: "echoEditButton"; symbol: "echo"; hint: qsTr("Edit in Echo"); enabled: panel.selected && panel.selected.accepted && !backend.busy; onClicked: backend.editInEcho() }
+            IconButton { symbol: "import"; hint: qsTr("Return edited WAV from Echo"); enabled: backend.hasEchoHandoff && !backend.busy; onClicked: echoReturnDialog.open() }
             IconButton { objectName: "exportButton"; symbol: "export"; hint: qsTr("Export WAV"); enabled: panel.selected !== null; onClicked: exportFile.open() }
+            IconButton { objectName: "takeSubtitlesButton"; symbol: "file"; hint: qsTr("Export subtitles"); visible: !!panel.selected && !!panel.selected.record.segment_assembly; enabled: !backend.busy; onClicked: panel.exportSubtitlesRequested(panel.selected.record.id) }
         }
         ListView {
             id: takeList
+            visible: panel.showTakes
             Layout.fillWidth: true
             Layout.preferredHeight: 64
             orientation: ListView.Horizontal
@@ -62,6 +71,7 @@ Rectangle {
                 border.color: backend.selectedAudio === modelData.record.id ? Theme.secondary : Theme.border
                 Accessible.role: Accessible.Button
                 Accessible.name: (modelData.accepted ? qsTr("Accepted version") : qsTr("Candidate take")) + " " + (index+1)
+                Accessible.onPressAction: backend.selectAudio(modelData.record.id)
                 MouseArea { anchors.fill: parent; onClicked: backend.selectAudio(take.modelData.record.id) }
                 RowLayout {
                     anchors.fill: parent; anchors.margins: 8; spacing: 8

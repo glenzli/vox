@@ -6,6 +6,7 @@ Item {
     readonly property alias text: textArea.text
     property bool loadingSource: false
     property string observedText: ""
+    property string sourceIdentity: ""
     signal textEdited(string value)
     function loadText(value) {
         observedText = value
@@ -23,6 +24,17 @@ Item {
         }
         textArea.cursorPosition = position
         textArea.forceActiveFocus()
+        // Assigning an unchanged cursor position emits no geometry change, so
+        // TextArea's automatic scrolling cannot reveal a manually hidden line.
+        const viewport = scroll.contentItem
+        if (!viewport) return
+        const caret = textArea.positionToRectangle(position)
+        const bottom = caret.y + caret.height
+        const limit = Math.max(0, viewport.contentHeight - viewport.height)
+        if (caret.y < viewport.contentY)
+            viewport.contentY = Math.max(0, Math.min(limit, caret.y))
+        else if (bottom > viewport.contentY + viewport.height)
+            viewport.contentY = Math.max(0, Math.min(limit, bottom - viewport.height))
     }
     property bool productionScript: false
     property bool readOnly: false
@@ -68,6 +80,11 @@ Item {
                 if (!root.loadingSource) root.textEdited(textArea.text)
             }
         }
+    }
+
+    ScriptDocumentState {
+        sourceDocument: textArea.textDocument
+        sourceIdentity: root.sourceIdentity
     }
 
     ScriptHighlighter {
