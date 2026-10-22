@@ -29,6 +29,13 @@ DesktopBackend::DesktopBackend(QObject *parent)
             m_total = total;
             emit progressChanged();
           });
+  connect(&m_worker, &WorkerClient::progressDetail, this,
+          [this](const QJsonObject &detail) {
+            if (m_batchingChapters && detail.contains("chapter_id")) {
+              m_chapterProgress = detail;
+              emit progressChanged();
+            }
+          });
   command(
       "capabilities", {},
       [this](const QJsonObject &r) {
@@ -45,6 +52,15 @@ DesktopBackend::DesktopBackend(QObject *parent)
       probeRuntime();
   });
   m_probeTimer.start();
+  connect(this, &DesktopBackend::requestFinished, this,
+          [this](const QString &action, bool ok) {
+            if (ok && !m_chapterID.isEmpty() && !busy() &&
+                QStringList{"save", "adopt", "render", "render_segment",
+                            "assemble_segments", "accept", "discard",
+                            "echo_return", "accept_segment"}
+                    .contains(action))
+              refreshChapters();
+          });
 }
 void DesktopBackend::command(const QString &action, const QJsonObject &fields,
                              WorkerClient::Callback done, bool includeProject) {
@@ -52,10 +68,15 @@ void DesktopBackend::command(const QString &action, const QJsonObject &fields,
   const auto projectID = m_project["id"].toString();
   const auto epoch = m_projectEpoch;
   const auto edit = m_editSequence;
-  const bool cancellable =
-      QStringList{"render", "render_segment", "voice_preview", "reference_preview",
-                  "generate_sound", "generate_sound_batch", "import_shape_transfer"}
-          .contains(action);
+  const bool cancellable = QStringList{"render",
+                                       "render_segment",
+                                       "voice_preview",
+                                       "reference_preview",
+                                       "generate_sound",
+                                       "generate_sound_batch",
+                                       "generate_voice_design_batch",
+                                       "import_shape_transfer"}
+                               .contains(action);
   ++m_pendingRequests;
   emit pendingChanged();
   m_worker.request(
@@ -106,8 +127,24 @@ void DesktopBackend::apply(const QJsonObject &result, quint64 capturedEdit,
   const auto project = result["project"].toObject();
   if (project.isEmpty())
     return;
+  const bool sameCollection = m_collectionPath == result["path"].toString();
   m_project = project;
   m_path = result["path"].toString();
+  if (!result["parent_project"].toObject().isEmpty()) {
+    applyCollection(result);
+  } else if (m_chapterID.isEmpty() || reset) {
+    if (reset) {
+      ++m_collectionEpoch;
+      m_chapterID.clear();
+    }
+    m_collectionProject = project;
+    m_collectionPath = m_path;
+    m_chaptersError = result["chapters_error"].toString();
+    if (m_chaptersError.isEmpty())
+      m_chapters = result["chapters"].toArray();
+    else if (!sameCollection || m_chapters.isEmpty())
+      m_chapters = project["chapters"].toArray();
+  }
   m_analysis = result["analysis"].toObject();
   m_segmentPlan = result["segment_plan"].toObject();
   if (reset || capturedEdit == m_editSequence) {
@@ -127,8 +164,8 @@ void DesktopBackend::apply(const QJsonObject &result, quint64 capturedEdit,
     selectAudio(project["audio_head"].toString());
   }
   QStringList recent = m_settings.value("recentProjects").toStringList();
-  recent.removeAll(m_path);
-  recent.prepend(m_path);
+  recent.removeAll(m_collectionPath);
+  recent.prepend(m_collectionPath);
   while (recent.size() > 12)
     recent.removeLast();
   m_settings.setValue("recentProjects", recent);
@@ -368,8 +405,10 @@ void DesktopBackend::render() {
             messageCode("speech_cancelled");
             return;
           }
-          command("render", {},
-                  [this](const QJsonObject &r) { finishRender(r, false); });
+          const auto selection = m_selectionSequence;
+          command("render", {}, [this, selection](const QJsonObject &r) {
+            finishRender(r, false, selection);
+          });
         });
       },
       [this] { setRendering(false); });
@@ -381,7 +420,8 @@ void DesktopBackend::cancel() {
     messageCode("stop_requested");
   }
 }
-void DesktopBackend::finishRender(const QJsonObject &r, bool sample) {
+void DesktopBackend::finishRender(const QJsonObject &r, bool sample,
+                                  quint64 selection) {
   setRendering(false);
   if (r["ok"].toBool()) {
     if (sample) {
@@ -392,7 +432,8 @@ void DesktopBackend::finishRender(const QJsonObject &r, bool sample) {
     } else {
       apply(r["result"].toObject(), m_editSequence);
       auto candidates = m_project["candidates"].toArray();
-      if (!candidates.isEmpty())
+      if (!candidates.isEmpty() &&
+          (!selection || selection == m_selectionSequence))
         selectAudio(candidates.last().toObject()["id"].toString());
       messageCode("rendered");
     }
@@ -407,9 +448,16 @@ void DesktopBackend::auditionVoice(const QString &alias) {
   m_completed = 0;
   m_total = 1;
   emit progressChanged();
+  const auto playback = ++m_playbackSequence;
   command(
       "voice_preview", {{"voice", alias}},
-      [this](const QJsonObject &r) { finishRender(r, true); }, false);
+      [this, playback](const QJsonObject &r) {
+        if (playback == m_playbackSequence)
+          finishRender(r, true);
+        else
+          setRendering(false);
+      },
+      false);
 }
 void DesktopBackend::setRendering(bool rendering) {
   if (m_rendering == rendering)
@@ -481,6 +529,10 @@ void DesktopBackend::playSelected() {
 void DesktopBackend::acceptSelected() {
   if (busy() || m_selected.isEmpty())
     return;
+  if (!m_chapterID.isEmpty()) {
+    acceptChapterSelected();
+    return;
+  }
   const auto id = m_selected;
   saveThen([this, id] {
     const auto edit = m_editSequence;
@@ -508,10 +560,12 @@ void DesktopBackend::discardSelected() {
           });
 }
 void DesktopBackend::exportSelected(const QUrl &url) {
-  if (m_selected.isEmpty() || m_projectChanging)
+  exportAudio(m_selected, url);
+}
+void DesktopBackend::exportAudio(const QString &id, const QUrl &url) {
+  if (id.isEmpty() || m_projectChanging)
     return;
-  command("export",
-          {{"audio_id", m_selected}, {"destination", url.toLocalFile()}},
+  command("export", {{"audio_id", id}, {"destination", url.toLocalFile()}},
           [this](const QJsonObject &r) {
             if (r["ok"].toBool())
               messageCode("exported");
@@ -645,6 +699,10 @@ void DesktopBackend::editInEcho() {
   QDir().mkpath(parent);
   const auto directory =
       parent + "/" + QUuid::createUuid().toString(QUuid::WithoutBraces);
+  if (!m_chapterID.isEmpty()) {
+    beginChapterEcho(directory);
+    return;
+  }
   const auto edit = m_editSequence;
   command("begin_echo", {{"audio_id", m_selected}, {"destination", directory}},
           [this, edit](const QJsonObject &r) {
@@ -663,6 +721,10 @@ void DesktopBackend::editInEcho() {
 void DesktopBackend::returnFromEcho(const QUrl &url, bool allowPCM24) {
   if (busy() || m_path.isEmpty())
     return;
+  if (!m_chapterID.isEmpty()) {
+    reviewChapterEcho(url, allowPCM24);
+    return;
+  }
   const auto ticket =
       m_settings.value("echo/ticket/" + m_project["id"].toString()).toString();
   const auto edit = m_editSequence;
@@ -692,6 +754,32 @@ void DesktopBackend::messageCode(const QString &code) {
   emit messageChanged();
 }
 QString DesktopBackend::message() const {
+  if (m_messageCode == "chapter_settings_shared")
+    return tr("Shared voices, pronunciation and cue bindings updated. Changed "
+              "chapters need generation.");
+  if (m_messageCode == "chapters_completed")
+    return tr("Chapter candidates are ready. Review and accept each chapter "
+              "before export.");
+  if (m_messageCode == "chapters_reused")
+    return tr("All chapters were reused. No new candidates were generated.");
+  if (m_messageCode == "chapters_cancelled")
+    return tr("Chapter generation stopped. Completed candidates are kept.");
+  if (m_messageCode == "chapters_partial_failed")
+    return tr("Some chapters need attention. Completed candidates are kept.");
+  if (m_messageCode == "chapters_exported")
+    return tr("Accepted chapters exported with WAV, source metadata and "
+              "available subtitles.");
+  if (m_messageCode == "voice_design_completed")
+    return tr("Voice candidates are ready. Listen, then save a named voice to "
+              "reuse it.");
+  if (m_messageCode == "voice_design_cancelled")
+    return tr("Voice design stopped. Completed candidates are kept.");
+  if (m_messageCode == "voice_design_partial_failed")
+    return tr(
+        "Some voices could not be generated. Completed candidates are kept.");
+  if (m_messageCode == "voice_design_saved")
+    return tr("Synthetic voice saved. Choose it for narration or a role in "
+              "Voices & direction.");
   if (m_messageCode == "segment_rendered")
     return tr("Segment candidate ready. Listen and choose the take to use.");
   if (m_messageCode == "segment_accepted")
@@ -701,11 +789,13 @@ QString DesktopBackend::message() const {
   if (m_messageCode == "subtitles_exported")
     return tr("Subtitles exported");
   if (m_messageCode == "sound_batch_completed")
-    return tr("Sound variations are ready. Listen and keep your preferred candidates.");
+    return tr("Sound variations are ready. Listen and keep your preferred "
+              "candidates.");
   if (m_messageCode == "sound_batch_cancelled")
     return tr("Generation stopped. Completed sound candidates are kept.");
   if (m_messageCode == "sound_batch_partial_failed")
-    return tr("Some variations could not be generated. Completed candidates are kept.");
+    return tr("Some variations could not be generated. Completed candidates "
+              "are kept.");
   if (m_messageCode == "material_saved")
     return tr("Material saved in this project");
   if (m_messageCode == "sound_generated")
@@ -729,6 +819,8 @@ QString DesktopBackend::message() const {
     return tr("Take discarded");
   if (m_messageCode == "exported")
     return tr("WAV exported");
+  if (m_messageCode == "stop_requested" && m_designingVoice)
+    return tr("Stopping after the current voice candidate…");
   if (m_messageCode == "stop_requested")
     return tr("Stopping after the current segment…");
   if (m_messageCode == "voice_sample")
@@ -744,15 +836,40 @@ QString DesktopBackend::message() const {
   return errorText(m_messageCode);
 }
 QString DesktopBackend::errorText(const QString &code) const {
+  if (code == "chapter_settings_changed")
+    return tr(
+        "This chapter uses different shared settings. Generate it with the "
+        "current cast, or share this chapter’s voices before accepting it.");
+  if (code == "chapter_missing" || code == "invalid_chapter")
+    return tr("This chapter is unavailable. Refresh the chapter list.");
+  if (code == "chapter_interrupted" || code == "chapter_retry_required")
+    return tr("An earlier chapter run was interrupted. Review its state, then "
+              "choose Resume interrupted.");
+  if (code == "chapter_not_accepted" || code == "chapters_not_accepted" ||
+      code == "chapter_audio_unaccepted")
+    return tr(
+        "Accept every selected chapter before exporting the chapter set.");
+  if (code == "invalid_chapter_title" || code == "invalid_chapter_order")
+    return tr("Give each chapter a title and keep every active chapter in the "
+              "order.");
+  if (code == "invalid_voice_design" || code == "invalid_voice_design_request")
+    return tr("Describe a voice, enter sample words and choose one to four "
+              "candidates.");
+  if (code == "voice_design_missing")
+    return tr(
+        "This voice candidate is no longer available. Refresh the project.");
   if (code == "segments_not_accepted" || code == "segment_selection_missing")
     return tr("Choose an accepted take for every segment before assembly.");
   if (code == "segment_missing" || code == "segment_candidate_missing" ||
       code == "stale_segment")
-    return tr("This segment changed. Review the current script and generate a new alternative.");
+    return tr("This segment changed. Review the current script and generate a "
+              "new alternative.");
   if (code == "invalid_pronunciation")
-    return tr("Check pronunciation rules for empty text, duplicate matches or unsupported filters.");
+    return tr("Check pronunciation rules for empty text, duplicate matches or "
+              "unsupported filters.");
   if (code == "subtitles_unavailable")
-    return tr("Assemble a take from segments before exporting measured subtitles.");
+    return tr(
+        "Assemble a take from segments before exporting measured subtitles.");
   if (code == "shape_settings_incomplete")
     return tr("Some imported voice settings need review. Select supported "
               "voices or reimport missing references before rendering.");

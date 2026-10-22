@@ -11,7 +11,7 @@ ApplicationWindow {
     minimumWidth: 1080
     minimumHeight: 740
     visible: true
-    title: backend.path.length ? (backend.project.title || "Vox") + " — Vox" : "Vox"
+    title: backend.path.length ? (backend.collection.title || backend.project.title || "Vox") + " — Vox" : "Vox"
     flags: Qt.platform.os === "osx" ? Qt.Window | Qt.ExpandedClientAreaHint | Qt.NoTitleBarBackgroundHint : Qt.Window
     topPadding: 0
     color: Theme.window
@@ -30,6 +30,14 @@ ApplicationWindow {
     property bool reading: false
     property bool segments: false
     property string productionMode: "speech"
+    readonly property bool scriptWorkspace: productionMode === "speech" || productionMode === "chapters"
+    function chooseMode(mode) {
+        backend.selectAudio("")
+        productionMode = mode
+        if (mode === "chapters") backend.refreshChapters()
+        else backend.showMainScript()
+    }
+    onProductionModeChanged: backend.selectAudio("")
     property bool applyingText: false
     property bool exitWhenStopped: false
     readonly property bool renderReady: !backend.busy && !backend.dirty && !!backend.analysis.ready && (backend.document.text || "").trim().length > 0
@@ -75,7 +83,7 @@ ApplicationWindow {
     Shortcut { sequences: [StandardKey.New]; onActivated: if (!backend.busy) newFile.open() }
     Shortcut { sequences: [StandardKey.Open]; onActivated: if (!backend.busy) openFile.open() }
     Shortcut { sequences: [StandardKey.Save]; onActivated: backend.save() }
-    Shortcut { sequence: "Ctrl+Return"; onActivated: if (window.productionMode === "speech" && window.renderReady && !window.segments) backend.render() }
+    Shortcut { sequence: "Ctrl+Return"; onActivated: if (window.scriptWorkspace && window.renderReady && !window.segments && (window.productionMode !== "chapters" || backend.selectedChapter.length > 0)) backend.render() }
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -109,7 +117,7 @@ ApplicationWindow {
                 Image { source: "qrc:/vox/branding/app-icon.png"; sourceSize.width: 48; sourceSize.height: 48; Layout.preferredWidth: 24; Layout.preferredHeight: 24 }
                 Label { text: "Vox"; font.pixelSize: 16; font.weight: Font.DemiBold; font.letterSpacing: -0.6 }
                 Rectangle { Layout.leftMargin: 4; Layout.rightMargin: 4; width: 1; height: 18; color: Theme.border }
-                Label { text: backend.project.title || qsTr("Script-led voice production"); color: Theme.secondary; elide: Text.ElideRight; Layout.fillWidth: true }
+                Label { text: backend.collection.title || backend.project.title || qsTr("Script-led voice production"); color: Theme.secondary; elide: Text.ElideRight; Layout.fillWidth: true }
                 Label { text: backend.dirty ? qsTr("Saving…") : backend.path.length ? qsTr("Saved") : ""; font.pixelSize: 10; color: Theme.muted }
                 IconButton { symbol: "add"; hint: qsTr("New project"); enabled: !backend.busy; onClicked: newFile.open() }
                 IconButton { symbol: "folder"; hint: qsTr("Open project"); enabled: !backend.busy; onClicked: openFile.open() }
@@ -128,23 +136,26 @@ ApplicationWindow {
                 ProjectSidebar {
                     Layout.preferredWidth: 176; Layout.fillHeight: true
                     productionMode: window.productionMode
-                    onModeRequested: mode => window.productionMode = mode
+                    onModeRequested: mode => window.chooseMode(mode)
                 }
                 Rectangle { width: 1; Layout.fillHeight: true; color: Theme.border }
                 ColumnLayout {
                     Layout.fillWidth: true; Layout.fillHeight: true; spacing: 0
                     RowLayout {
                         Layout.fillWidth: true; Layout.fillHeight: true; spacing: 0
-                        visible: window.productionMode === "speech"
+                        visible: window.scriptWorkspace
+                        ChaptersPanel { visible: window.productionMode === "chapters"; Layout.preferredWidth: 212; Layout.fillHeight: true }
+                        Rectangle { visible: window.productionMode === "chapters"; Layout.preferredWidth: 1; Layout.fillHeight: true; color: Theme.border }
                         Rectangle {
                             color: Theme.panel
                             Layout.fillHeight: true; Layout.fillWidth: true
                             ColumnLayout {
-                                anchors.fill: parent; anchors.margins: 18; spacing: 12
+                                anchors.fill: parent; anchors.margins: window.productionMode === "chapters" ? 12 : 18; spacing: 12
+                                enabled: window.productionMode !== "chapters" || backend.selectedChapter.length > 0
                                 RowLayout {
                                     Layout.fillWidth: true
                                     spacing: 6
-                                    Label { text: window.segments ? qsTr("Segments") : qsTr("The script"); font.pixelSize: 17; font.weight: Font.DemiBold; Layout.rightMargin: 6 }
+                                    Label { text: window.segments ? qsTr("Segments") : window.productionMode === "chapters" ? qsTr("Chapter script") : qsTr("The script"); font.pixelSize: window.productionMode === "chapters" ? 14 : 17; font.weight: Font.DemiBold; Layout.rightMargin: 6; visible: window.productionMode !== "chapters" }
                                     CompactComboBox {
                                         id: formatChoice
                                         objectName: "formatChoice"
@@ -153,14 +164,14 @@ ApplicationWindow {
                                         selectionIndex: backend.document.format === "production_script" ? 1 : 0
                                         enabled: !backend.busy
                                         onActivated: backend.setFormat(currentIndex === 0 ? "plain" : "production_script")
-                                        implicitWidth: 154
+                                        implicitWidth: window.productionMode === "chapters" ? 136 : 154
                                     }
                                     Item { Layout.fillWidth: true }
                                     IconButton {
                                         objectName: "lineNumbersButton"
                                         symbol: "line-numbers"
                                         hint: qsTr("Line numbers")
-                                        visible: !window.reading && !window.segments
+                                        visible: !window.reading && !window.segments && window.productionMode !== "chapters"
                                         checkable: true
                                         checked: preferences.lineNumbers
                                         onToggled: preferences.lineNumbers = checked
@@ -173,10 +184,11 @@ ApplicationWindow {
                                     }
                                     IconButton { objectName: "pronunciationButton"; symbol: "language"; hint: qsTr("Pronunciation dictionary"); enabled: !backend.busy; onClicked: pronunciationDialog.open() }
                                     IconButton { objectName: "importScriptButton"; symbol: "import"; hint: qsTr("Import text or script"); enabled: !backend.busy; onClicked: scriptFile.open() }
-                                    IconButton { symbol: "help"; hint: qsTr("Script guide"); onClicked: guide.open() }
+                                    IconButton { visible: window.productionMode !== "chapters"; symbol: "help"; hint: qsTr("Script guide"); onClicked: guide.open() }
                                 }
                                 StackLayout {
                                     Layout.fillWidth: true; Layout.fillHeight: true
+                                    visible: window.productionMode !== "chapters" || backend.selectedChapter.length > 0
                                     currentIndex: window.segments ? 2 : window.reading ? 1 : 0
                                     ScriptEditor {
                                         id: editor
@@ -206,6 +218,7 @@ ApplicationWindow {
                                         onSubtitleRequested: subtitleDialog.openForAudio()
                                     }
                                 }
+                                Label { visible: window.productionMode === "chapters" && !backend.selectedChapter.length; text: qsTr("Select a chapter to write, direct voices and review its takes."); Layout.fillWidth: true; Layout.fillHeight: true; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; wrapMode: Text.WordWrap; color: Theme.muted }
                                 ColumnLayout {
                                     Layout.fillWidth: true; spacing: 5
                                     visible: !window.segments && (backend.analysis.issues || []).length > 0
@@ -235,24 +248,29 @@ ApplicationWindow {
                             }
                         }
                         Rectangle { width: 1; Layout.fillHeight: true; color: Theme.border }
-                        VoicePanel { Layout.preferredWidth: 276; Layout.fillHeight: true }
+                        VoicePanel { Layout.preferredWidth: window.productionMode === "chapters" ? 250 : 276; Layout.fillHeight: true; enabled: window.productionMode !== "chapters" || backend.selectedChapter.length > 0 }
+                    }
+                    VoiceDesignWorkspace {
+                        objectName: "voiceDesignWorkspace"
+                        Layout.fillWidth: true; Layout.fillHeight: true; Layout.margins: 18
+                        visible: window.productionMode === "voice_design"
                     }
                     SoundWorkspace {
                         id: soundWorkspace
                         objectName: "soundWorkspace"
                         Layout.fillWidth: true; Layout.fillHeight: true
                         Layout.margins: 18
-                        visible: window.productionMode !== "speech"
-                        category: window.productionMode === "speech" ? "sfx" : window.productionMode
+                        visible: !window.scriptWorkspace && window.productionMode !== "voice_design"
+                        category: window.productionMode === "sfx" || window.productionMode === "ambience" || window.productionMode === "short_music" ? window.productionMode : "sfx"
                         onCategoryRequested: category => window.productionMode = category
                     }
                     Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
                     AudioPanel {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: window.productionMode === "speech" ? 172 : 64
-                        showTakes: window.productionMode === "speech"
-                        playbackContext: window.productionMode
-                        loopPreview: window.productionMode !== "speech" && soundWorkspace.loopAudition
+                        Layout.preferredHeight: window.scriptWorkspace ? 172 : 64
+                        showTakes: window.scriptWorkspace
+                        playbackContext: window.productionMode + ":" + backend.path
+                        loopPreview: !window.scriptWorkspace && window.productionMode !== "voice_design" && soundWorkspace.loopAudition
                         onExportSubtitlesRequested: audioId => subtitleDialog.openForAudio(audioId)
                     }
                 }

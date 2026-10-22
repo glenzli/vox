@@ -171,6 +171,16 @@ pub struct Manifest {
     pub voice_library: Vec<super::materials::ReferenceVoice>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub sound_library: Vec<super::materials::SoundMaterial>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub voice_design_candidates: Vec<super::VoiceDesignCandidate>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub voice_design_runs: Vec<super::VoiceDesignRun>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub chapters: Vec<super::Chapter>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub chapter_batches: Vec<super::ChapterBatchRun>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chapter_owner: Option<super::ChapterOwner>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shape_import: Option<super::shape_transfer::ImportReceipt>,
 }

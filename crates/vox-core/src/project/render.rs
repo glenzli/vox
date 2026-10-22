@@ -206,6 +206,8 @@ impl Project {
                 changed = true;
             }
         }
+        changed |= super::voice_design::recover_records(&mut m);
+        changed |= super::chapters::recover_records(&mut m);
         if changed {
             m.version += 1;
             self.write(&m)?;

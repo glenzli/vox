@@ -46,6 +46,11 @@ impl Project {
             handoffs: vec![],
             voice_library: vec![],
             sound_library: vec![],
+            voice_design_candidates: vec![],
+            voice_design_runs: vec![],
+            chapters: vec![],
+            chapter_batches: vec![],
+            chapter_owner: None,
             shape_import: None,
         };
         project.write(&m)?;
@@ -90,6 +95,8 @@ impl Project {
         }
         super::materials::validate_libraries(&m)?;
         super::segments::validate_records(&m)?;
+        super::voice_design::validate_records(&m)?;
+        super::chapters::validate_records(&m)?;
         if !super::shape_transfer::unsupported(&m, &m.draft) {
             m.draft.operation()?;
         }

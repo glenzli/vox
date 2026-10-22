@@ -132,6 +132,35 @@ use the local sound model; short music requests instrumental output from the loc
 original prompt and submitted prompt remain inspectable. Loop audition repeats playback, with no
 claim of seamless synthesis. Original-quality audio and script-compatible accepted PCM stay distinct.
 
-Complete songs are outside Vox's product scope. Voice design, performance-driven conversion and
-timecoded/video-led dubbing require separately proved input, application-grant and output contracts.
-The current local configuration includes a voice-design model but does not grant that intent to Vox.
+Complete songs are outside Vox's product scope. Performance-driven conversion and timecoded/video-led
+dubbing require their own input, application-grant and output contracts.
+
+## Voice design and chapter production
+
+`infer_runtime::voice_design` uses the pinned SDK's existing speech request with the independent
+`speech.design_voice` intent and Vox's own local-only grant. It validates the successful Job,
+physical deployment, synthetic PCM and output digest. `project::voice_design` journals each bounded
+sample batch and persists completed candidates before reporting progress. Explicit acceptance saves
+a named synthetic reference, retaining the exact sample transcript and design provenance. Subsequent
+speech uses the existing reference-clone route. Generated references have synthetic acceptance
+records, distinct from permitted-use confirmations for recorded or imported human references.
+
+`project::chapters` owns ordered chapter identities and batch journals. A chapter is a derived,
+project-owned child bundle under `chapters/<id>.vox`; both parent and child identifiers are checked
+before access. It reuses the existing Project, segment, acceptance and Echo use cases. Archiving a
+chapter retains its immutable source and audio history. Shared settings retain each chapter's text
+and format, and copy required immutable voice/cue materials. Publishing one chapter's settings to
+the collection is explicit.
+
+Batch work pins collection settings, adopts current chapter drafts and reuses exact matching segment
+candidates. Assembly validates selected candidate bytes without advancing segment or whole-audio
+acceptance. Stop and failure keep completed work. Lost producer journals become
+`interrupted_unknown`; retry is explicit, and completed outputs are considered before new dispatch.
+Export includes only current accepted chapter audio and source metadata, in collection order.
+Measured captions are included when the accepted audio has valid assembly timings; arbitrary Echo
+edits do not inherit obsolete timings. Existing source-pinned Echo tickets bind the child project.
+
+The desktop keeps collection identity separately from the currently edited child. Existing script,
+voice, segment and audio controls operate on that child; collection actions retain their captured
+parent and selected-chapter identities. Dedicated voice-design and long-form adapters share the
+worker's single foreground task and cancellation boundary.

@@ -27,6 +27,11 @@
 - SRT/VTT export uses actual assembled audio durations, including pauses and repeated passages.
 - Independent sound-effect, ambience and short instrumental music workspaces using existing local
   Runtime routes; bounded batches, retained partial results, loop audition and original-quality export.
+- Description-based voice design through the existing Runtime speech contract: bounded samples,
+  durable receipts, explicit named synthetic-reference acceptance and reuse through voice cloning.
+- Project-owned chapters, shared cast/pronunciation, bounded text imports, resumable batch candidates,
+  unchanged-segment reuse, explicit chapter acceptance and ordered WAV/caption/source export.
+- Chapter-specific Echo handoff and returned candidates; edited audio exports without stale captions.
 - Complete songs and singing production are outside the product scope.
 
 Implementation, focused checks, packaged checks and real Runtime/Echo evidence are recorded
@@ -39,9 +44,7 @@ dialogue and listening templates reuse the same pipeline. Larger forms need real
 
 1. Broader Shape project migration beyond the implemented selected speech transfer, with explicit
    material selection and independently accepted compatibility.
-2. Runtime-supported voice design from descriptions, extending the executable reference workflow
-   only when its independent input, authorization and output contracts are proved. Performance-driven
-   voice conversion requires its own audio-to-audio contract; it is distinct from reference cloning.
+2. Performance-driven voice conversion with its own audio-to-audio contract, distinct from reference cloning.
 3. Time-aligned or video-led dubbing with its own media and synchronization boundary.
 4. Native Echo completion receipts/live return after proving the bounded file workflow.
    Advanced adjustment and mixing remain Echo responsibilities.

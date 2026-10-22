@@ -17,6 +17,7 @@ def main():
     parser.add_argument("--credential", type=Path, default=Path.home()/".config/vox/infer-credential")
     parser.add_argument("--backup", type=Path, required=True)
     parser.add_argument("--studio", action="store_true", help="Explicitly add local reference-voice, sound and faithful Chinese prompt grants to Vox")
+    parser.add_argument("--voice-design", action="store_true", help="Explicitly add local description-based voice design to Vox")
     args = parser.parse_args()
     if not re.fullmatch(r"http://127\.0\.0\.1:\d+", args.console):
         raise SystemExit("Use an explicit numeric-loopback Console URL")
@@ -76,12 +77,19 @@ def main():
     if updated != current:
         if call("/api/config")["source"] != current: raise RuntimeError("Configuration changed; retry after review")
         call("/api/config",{"source":updated},"PUT")
-    if args.studio:
+    if args.studio or args.voice_design:
         current_apps = {a["app_id"]:a for a in call("/api/access/apps")["apps"]}
         app = current_apps["vox"]
-        allowed = ["speech.synthesize", "speech.clone_voice", "audio.generate_sound", "text.edit"]
+        # Add only requested authority; rerunning studio setup never removes later grants.
+        requested = ["speech.synthesize"]
+        if args.studio:
+            requested += ["speech.clone_voice", "audio.generate_sound", "text.edit"]
+        if args.voice_design:
+            requested += ["speech.design_voice", "speech.clone_voice"]
+        allowed = list(dict.fromkeys(app["allowed_intents"] + requested))
         overrides = dict(app["request_overrides"])
-        overrides.update({"priority":["interactive","background"], "capability_floor":["capable","foundational"], "latency":["interactive","balanced"]})
+        for key, values in {"priority":["interactive","background"], "capability_floor":["capable","foundational"], "latency":["interactive","balanced"]}.items():
+            overrides[key] = list(dict.fromkeys(overrides.get(key, []) + values))
         if app["allowed_intents"] != allowed or app["request_overrides"] != overrides:
             fields = ["allowed_builtin_tools", "allowed_provider_access_classes", "allowed_cloud_input_modalities", "max_pending_jobs", "default_policy", "allowed_policies"]
             body = {key:app[key] for key in fields}
@@ -90,7 +98,11 @@ def main():
         current = call("/api/config")["source"]
         config = tomllib.loads(current)
         updated = current
-        routes = {"speech.clone_voice":["mlx_qwen3_tts_base_1_7b"], "audio.generate_sound":["stable_audio_3_sm_sfx_mlx","stable_audio_3_sm_music_mlx"], "text.edit":["ollama_qwen3_5_4b"]}
+        routes = {}
+        if args.studio:
+            routes.update({"speech.clone_voice":["mlx_qwen3_tts_base_1_7b"], "audio.generate_sound":["stable_audio_3_sm_sfx_mlx","stable_audio_3_sm_music_mlx"], "text.edit":["ollama_qwen3_5_4b"]})
+        if args.voice_design:
+            routes.update({"speech.design_voice":["mlx_qwen3_tts_voice_design_1_7b"], "speech.clone_voice":["mlx_qwen3_tts_base_1_7b"]})
         for intent, ids in routes.items():
             route = config["apps"]["vox"].get("routing",{}).get("intents",{}).get(intent)
             if route is None:
@@ -107,6 +119,7 @@ def main():
     if previous!=final: raise RuntimeError("An unrelated configuration changed; review before enabling")
     print(json.dumps({"app_id":"vox","credential_installed":args.credential.is_file(),
         "speech_aliases":len(aliases),"local_only":True,"other_apps_unchanged":True,
+        "allowed_intents":after["apps"]["vox"]["allowed_intents"],
         "restart_required":call("/api/access/apps")["restart_required"],
         "previous_config_sha256":hashlib.sha256(before.encode()).hexdigest()}))
 

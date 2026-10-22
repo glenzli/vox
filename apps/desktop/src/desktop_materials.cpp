@@ -40,15 +40,21 @@ void DesktopBackend::auditionReference(const QString &id, const QString &text) {
   if (busy() || m_path.isEmpty())
     return;
   setRendering(true);
+  const auto playback = ++m_playbackSequence;
   saveThen(
-      [this, id, text] {
+      [this, id, text, playback] {
         if (m_cancelRequested) {
           setRendering(false);
           messageCode("speech_cancelled");
           return;
         }
         command("reference_preview", {{"id", id}, {"text", text}},
-                [this](const QJsonObject &r) { finishRender(r, true); });
+                [this, playback](const QJsonObject &r) {
+                  if (playback == m_playbackSequence)
+                    finishRender(r, true);
+                  else
+                    setRendering(false);
+                });
       },
       [this] { setRendering(false); });
 }

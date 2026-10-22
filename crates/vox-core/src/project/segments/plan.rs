@@ -7,7 +7,7 @@ use crate::{
 };
 use std::collections::BTreeMap;
 
-pub(super) struct SegmentDefinition {
+pub(in crate::project) struct SegmentDefinition {
     pub key: String,
     pub index: usize,
     pub line: u32,
@@ -16,7 +16,7 @@ pub(super) struct SegmentDefinition {
     pub spoken_text: String,
     pub operation: SpeechSynthesisOperation,
 }
-pub(super) struct CompiledSegments {
+pub(in crate::project) struct CompiledSegments {
     pub actions: Vec<ScriptAction>,
     pub segments: Vec<SegmentDefinition>,
 }
@@ -113,7 +113,10 @@ impl Project {
         Ok(plan)
     }
 
-    pub(super) fn compile_segments(&self, document: &Document) -> Result<CompiledSegments> {
+    pub(in crate::project) fn compile_segments(
+        &self,
+        document: &Document,
+    ) -> Result<CompiledSegments> {
         let operation = document.operation()?;
         let events = parse_speech_script(&document.text).events;
         let actions = if document.format == ScriptFormat::ProductionScript {

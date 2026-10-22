@@ -97,3 +97,66 @@ The response includes `sound_batch: {batch_id, requested, completed, state, erro
 latest project snapshot. Check `state`: `completed`, `cancelled`, or `partial_failed`. Completed
 candidates survive cancellation or a later variation failure. Inspect each result before acceptance.
 Loop audition is a playback convenience; it does not claim seamless loop generation.
+
+## Voice design
+
+`generate_voice_design_batch` takes `path`, current `version`, `variations: 1..4` and
+`spec: {description, text, language}`. It uses Vox's independent `speech.design_voice` grant through
+the existing official speech SDK. Progress counts persisted samples, not tokens. Its final snapshot
+includes `voice_design_batch: {run_id, requested, completed, state, error?}`; inspect `state` even
+when the enclosing request succeeds. Partial failure and cancellation retain completed candidates.
+
+Candidates live in `project.voice_design_candidates`, with exact input, immutable original audio,
+synthetic disclosure and validated Job/physical-model provenance. `material_file`, `export_material`
+and `material_echo` accept `kind: "voice_design"`. `accept_voice_design` takes `id` and a `name` and
+saves a synthetic reference in `voice_library`. The ordinary `bind_reference` and clone preview
+operations then apply. `discard_voice_design` removes only an unaccepted candidate. Reopening marks
+lost running jobs as `interrupted_unknown` and never regenerates them automatically.
+
+## Long-form chapters
+
+Collection operations use the parent `path` and its current `version`. Chapter paths are derived
+and checked by core against both project identities; arbitrary paths cannot be added to a collection.
+Responses include `parent_path`, `parent_project` and `chapters`. `chapter_open` also returns the
+selected child's normal `path`, `project`, `analysis` and `segment_plan` so existing editor operations
+can be reused. Refresh the collection after modifying a child. `chapters_error` reports unavailable
+chapter summaries instead of presenting an empty list as successful recovery.
+
+| Action | Additional input |
+| --- | --- |
+| `chapter_list` | Read current chapter summaries |
+| `chapter_open` | `chapter_id`; recover and open that owned child |
+| `chapter_add` | `title`, optional `text` and `format` (defaults to empty plain text) |
+| `chapter_save` | `chapter_id`, complete `document`; retains authored text/format with shared settings |
+| `chapter_rename` | `chapter_id`, `title` |
+| `chapter_reorder` | Complete ordered `chapter_ids` list |
+| `chapter_archive` | `chapter_id`, optional `archived` (defaults to true); preserves files/history |
+| `chapter_import` | `files`: selected UTF-8 TXT/Markdown paths, imported in order; originals and byte ranges retained |
+| `chapter_shared_settings` | `chapter_id`; explicitly publish this child's cast/defaults/pronunciation/cues to the collection |
+| `chapter_batch` | Optional `chapter_ids` (all active by default), optional explicit `retry_interrupted: true` |
+| `chapter_accept` | `chapter_id`, exact reviewed `audio_id` |
+| `chapter_export` | Optional `chapter_ids`, new `destination` directory |
+| `chapter_begin_echo` | `chapter_id`, accepted `audio_id`, new handoff `destination` |
+| `chapter_review_echo` | `chapter_id`, original `handoff`, returned `file`, explicit `allow_pcm24` |
+
+Imports are bounded to 8 MiB per file and 64 KiB per chapter, with at most 256 chapter records.
+Markdown uses repeated level-one headings, or repeated level-two headings when there are not
+multiple level-one headings. Headings inside fenced code do not split chapters. Preamble and exact
+source bytes are retained; oversized sections and plain text split at paragraph boundaries where
+possible before the chapter limit is reached.
+Batch generation pins shared settings, adopts the current chapter drafts and reuses matching segment
+candidates. It never accepts segments or chapter audio. Progress adds `chapter_id`, `chapter_index`,
+`total_chapters`, `completed_segments`, `total_segments` and `status`; ordinary `completed`/`total`
+reflect the current chapter. The final `chapter_batch` journal has a `status` and per-chapter entries,
+including reused-segment counts and errors. Stop retains the current completed model output and
+prevents further dispatch; later batches reuse it. Unexpected interruption requires explicit retry.
+
+Chapter export rejects stale or unaccepted audio. It writes ordered WAVs plus `manifest.json` with
+authored scripts, source/audio identities and provenance. `srt`/`vtt` are relative paths when the
+accepted audio has measured assembly timing, otherwise null with `subtitles_unavailable_reason`.
+Echo returns require review and explicit chapter acceptance; arbitrary edits do not retain old
+caption timing. Exports do not overwrite an existing destination.
+
+`scripts/test_longform_live.py` exercises real design, reference reuse, two-chapter cancellation and
+resume, unchanged-result reuse, changed-segment generation, accepted exports and the independent
+Echo editor in a new external project. It never records a human voice or modifies a user project.

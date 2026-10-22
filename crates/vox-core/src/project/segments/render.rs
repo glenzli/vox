@@ -29,7 +29,7 @@ impl Project {
         })
     }
 
-    pub(super) fn render_segment_using(
+    pub(in crate::project) fn render_segment_using(
         &self,
         expected: u64,
         key: &str,
@@ -253,7 +253,7 @@ impl Project {
         Ok(path)
     }
 
-    pub(super) fn validate_segment(
+    pub(in crate::project) fn validate_segment(
         &self,
         definition: &SegmentDefinition,
         r: &SegmentRevision,

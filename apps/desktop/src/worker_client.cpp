@@ -88,6 +88,7 @@ void WorkerClient::receive() {
         value["request_id"].toString() != m_queue.head().id)
       continue;
     if (value["event"].toString() == "progress") {
+      emit progressDetail(value);
       emit progress(value["completed"].toInt(), value["total"].toInt());
       continue;
     }

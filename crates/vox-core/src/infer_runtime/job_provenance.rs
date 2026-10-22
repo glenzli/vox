@@ -25,6 +25,7 @@ pub(super) const SPEECH_DEPLOYMENT: &str = "mlx_qwen3_tts_custom_voice_1_7b";
 pub(super) enum JobPolicyProfile {
     Speech,
     VoiceClone,
+    VoiceDesign,
     Sound(&'static str),
 }
 
@@ -161,7 +162,7 @@ fn external_named_route(
 impl JobPolicyProfile {
     const fn capability_contract(self) -> &'static str {
         match self {
-            Self::Speech => INFER_RUNTIME_SPEECH_CAPABILITY,
+            Self::Speech | Self::VoiceDesign => INFER_RUNTIME_SPEECH_CAPABILITY,
             Self::VoiceClone => "infer.audio.voice-clone@20260811.1",
             Self::Sound(_) => "infer.audio.sound-generation@20260926.2",
         }
@@ -170,6 +171,7 @@ impl JobPolicyProfile {
         match self {
             Self::Speech => Some(SPEECH_DEPLOYMENT),
             Self::VoiceClone => Some("mlx_qwen3_tts_base_1_7b"),
+            Self::VoiceDesign => Some("mlx_qwen3_tts_voice_design_1_7b"),
             Self::Sound(_) => None,
         }
     }

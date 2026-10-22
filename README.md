@@ -34,6 +34,8 @@ Vox 是独立的 Qt 桌面应用，用于旁白、多角色对话、听力材料
 | 读音词典 | 项目内保存原词与读法，可限定语言或角色；只改变送入合成的文字，脚本原文保持不变 |
 | 预设音色 | 九种预设音色，可自动识别或明确指定配音语言 |
 | 音色模仿 | 现场录音或导入单声道/立体声 PCM16 WAV，填写逐字参考文本并确认使用权限；可分配给旁白或任意角色 |
+| 音色设计 | 用文字描述声音，生成最多四份样音；试听后命名保存为合成参考音色，复用于默认旁白或角色 |
+| 长内容制作 | 按章节导入和编写，复用音色与发音设置；批量生成、停止与续作，只重做变化的分段，逐章审阅和采用，再导出章节包 |
 | 声音工作区 | 音效、环境声、短配乐三个入口；本地生成、批量候选、循环试听、原始 WAV 导出与 Echo 编辑 |
 | 音效库 | 八种程序生成的内置音效、WAV 导入；采用后可绑定脚本音效提示 |
 | 版本与素材 | 独立项目、自动保存的工作草稿、不可变素材、明确采用的脚本与录音版本 |
@@ -43,6 +45,15 @@ Vox 是独立的 Qt 桌面应用，用于旁白、多角色对话、听力材料
 参考音色的原始音频、逐字文本和授权确认保存在当前项目中；只有点击录音才申请麦克风权限。
 当前 Base 音色模仿使用 1× 语速和中性演绎。自动化检查使用合成参考和注入的音频样本，
 真实麦克风采集仍需设备和首次系统授权。
+
+音色设计保留描述、样本文本、原始音频和本地模型回执。保存音色后，后续配音通过参考音色合成保持声音身份，
+不会每句重新设计。设计样音明确标记为合成声音，与录制或导入的真人参考分别记录。
+
+长内容的每章保存在当前 `.vox` 工程内，可继续使用脚本编辑、角色配置、分段试听和 Echo 编辑。
+Markdown 按一级标题分章；一级标题不足时使用二级标题，长段落和纯文本按大小继续拆分，并保留导入原文。
+批量生成产出待审阅的录音，不自动采用；取消和失败保留已完成的分段，重试复用匹配的结果。
+意外中断的任务需明确重试。章节包只导出当前已采用版本；附带 WAV、脚本与来源清单，
+有准确分段时间时同时导出 SRT/VTT。Echo 编辑后的音频若没有新时间依据，不沿用编辑前字幕。
 
 声音生成支持 1–30 秒、显式随机种子、最多四个变体和中英文描述。短配乐限定为器乐素材，完整歌曲不在 Vox 范围内。
 环境声使用音效模型；循环试听用于检查首尾衔接，不保证模型输出无缝循环。中文描述经过本地提示词准备，
@@ -79,7 +90,8 @@ python3 scripts/provision_infer.py --help
 ```
 
 默认凭据位置为 `~/.config/vox/infer-credential`；`--studio` 额外申请 Vox 的本地参考音色、
-音效生成和中文提示词准备权限。授权变更需在 Console 队列空闲时进行。Vox 不使用 Shape 凭据；
+音效生成和中文提示词准备权限；`--voice-design` 增加本地音色设计与参考音色复用权限。
+授权变更需在 Console 队列空闲时进行并重启生效。Vox 不使用 Shape 凭据；
 Runtime 离线时，脚本编辑和已保存音频仍可使用。
 
 ### 开发与文档
@@ -102,7 +114,7 @@ Vox 复用了 Shape 的语音制作代码，保留其来源和许可。Shape 的
 旧工程保留读取与精确交接：选中文稿、写作与配音草稿、角色选声、音效和可选已采用音频，
 导入独立 `.vox` 工程。已采用历史与未完成工作稿分别保留，可在侧栏恢复迁移的写作或配音草稿。
 原 `.shape` 工程不改动，也不自动转换其中其他作品。迁移合同见 [Shape 交接](docs/SHAPE_TRANSFER.md)。
-描述音色设计、表演驱动的换声和带时码的视频配音列入后续规划。当前字幕导出使用已组装音频的实际段落时长；
+表演驱动的换声和带时码的视频配音列入后续规划。当前字幕导出使用已组装音频的实际段落时长；
 它不执行词级强制对齐，也不承诺生成音频恰好匹配外部视频时长。
 
 ### 许可证
@@ -147,6 +159,8 @@ Script editing, voice direction and takes share one workspace. These screenshots
 | Pronunciation dictionary | Project-owned text-to-reading rules, optionally scoped by language or role; synthesis input changes while authored source remains intact |
 | Voice presets | Nine presets, with automatic or explicit speech language |
 | Reference voices | Record a microphone sample or import mono/stereo PCM16 WAV, enter its exact transcript and confirm permitted use; assign to narration or any role |
+| Voice design | Describe a voice, generate up to four samples, then audition and explicitly save a named synthetic reference for narration or roles |
+| Long-form production | Import and edit chapters, share voices and pronunciation, generate in batches, stop and resume, regenerate changed segments, review and accept chapters, then export a chapter package |
 | Sound workspaces | Separate effects, ambience and short instrumental music entries; local generation, batch candidates, loop audition, original WAV export and Echo editing |
 | Sound library | Eight procedural effects and WAV import; accepted materials can be bound to script cues |
 | Versions and materials | Independent projects, autosaved drafts, immutable materials, and explicit script/audio acceptance |
@@ -157,6 +171,20 @@ Original reference audio, exact transcripts and permitted-use confirmations stay
 Microphone access is requested only when Record is pressed. The current Base clone route supports
 1× pace and neutral delivery. Automated checks use synthetic references and injected audio samples;
 real microphone capture requires a suitable device and first-use system permission.
+
+Voice design retains the description, exact sample text, original audio and local model receipt.
+Saved designs use the reference-voice synthesis route for subsequent speech, preserving the voice
+instead of redesigning it for each line. Designed samples are labelled synthetic and retain a distinct
+origin from recorded or imported human references.
+
+Each chapter lives inside the current `.vox` project and reuses script editing, cast settings,
+segment audition and Echo handoff. Markdown splits at repeated level-one headings, or repeated
+level-two headings when needed; oversized sections and plain text split further by size, retaining
+the original imported source. Batch output remains a candidate until reviewed and accepted.
+Cancellation and failure retain completed segments; a later batch reuses matching results.
+Unexpected interruption requires an explicit retry. Chapter packages contain only current accepted
+versions, with WAV, authored scripts and provenance metadata. Measured SRT/VTT is included when
+timing evidence exists; edited Echo audio never inherits captions whose timing is no longer verified.
 
 Sound generation supports 1–30 seconds, an explicit seed, up to four variations, and English or Chinese descriptions.
 Short music is instrumental; complete songs are outside Vox’s scope. Ambience uses the sound-effects model.
@@ -199,7 +227,8 @@ python3 scripts/provision_infer.py --help
 
 The default credential path is `~/.config/vox/infer-credential`. `--studio` additionally requests
 Vox-only local reference voices, sound generation and Chinese prompt preparation. Apply grants while
-Console queues are idle. Vox does not use Shape's credential. Offline editing and saved audio remain usable.
+Console queues are idle; `--voice-design` adds local voice design and reference reuse. Restart through
+Console to activate changes. Vox does not use Shape's credential. Offline editing and saved audio remain usable.
 
 ### Development and documentation
 
@@ -223,7 +252,7 @@ script, writing and speech drafts, role choices, cues and optional accepted audi
 `.vox` project. Accepted history and unfinished work remain distinct, with sidebar actions to restore
 the preserved writing or speech draft. The original `.shape` project stays intact; other works in that
 project are not automatically converted. See the [Shape transfer contract](docs/SHAPE_TRANSFER.md).
-Voice design from descriptions, performance-driven voice conversion and timecoded video dubbing remain future work.
+Performance-driven voice conversion and timecoded video dubbing remain future work.
 Caption export uses measured durations of assembled segments; it does not perform word-level forced alignment
 or guarantee a fit to external video timings.
 

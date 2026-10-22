@@ -14,6 +14,8 @@ Rectangle {
         Repeater {
             model: [
                 {key: "speech", title: qsTr("Voice"), icon: "waveform"},
+                {key: "chapters", title: qsTr("Chapters"), icon: "file"},
+                {key: "voice_design", title: qsTr("Voice design"), icon: "users"},
                 {key: "sfx", title: qsTr("Sound effects"), icon: "headphones"},
                 {key: "ambience", title: qsTr("Ambience"), icon: "volume"},
                 {key: "short_music", title: qsTr("Short music"), icon: "play"}
@@ -24,10 +26,11 @@ Rectangle {
                 Layout.fillWidth: true
                 text: modelData.title; symbol: modelData.icon
                 primary: sidebar.productionMode === modelData.key
+                enabled: !backend.busy
                 onClicked: sidebar.modeRequested(modelData.key)
             }
         }
-        Label { text: qsTr("Start with a form"); color: Theme.secondary; visible: backend.path.length > 0 && !(backend.document.text || "").length; font.pixelSize: 12 }
+        Label { text: qsTr("Start with a form"); color: Theme.secondary; visible: sidebar.productionMode === "speech" && backend.path.length > 0 && !(backend.document.text || "").length; font.pixelSize: 12 }
         ActionButton { Layout.fillWidth: true; visible: sidebar.productionMode === "speech" && !(backend.document.text || "").length; text: qsTr("Narration"); symbol: "file"; enabled: !backend.busy && backend.path.length > 0; onClicked: backend.useTemplate("narration") }
         ActionButton { Layout.fillWidth: true; visible: sidebar.productionMode === "speech" && !(backend.document.text || "").length; text: qsTr("Dialogue"); symbol: "users"; enabled: !backend.busy && backend.path.length > 0; onClicked: backend.useTemplate("dialogue") }
         ActionButton { Layout.fillWidth: true; visible: sidebar.productionMode === "speech" && !(backend.document.text || "").length; text: qsTr("Listening"); symbol: "headphones"; enabled: !backend.busy && backend.path.length > 0; onClicked: backend.useTemplate("listening") }

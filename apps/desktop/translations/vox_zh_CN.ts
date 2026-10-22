@@ -672,6 +672,138 @@ Give your words a moment to breathe.</source>
         <source>Assemble a take from segments before exporting measured subtitles.</source>
         <translation>请先将分段拼装为录音，再导出带实际时长的字幕。</translation>
     </message>
+    <message>
+      <source>Shared voices, pronunciation and cue bindings updated. Changed chapters need generation.</source>
+      <translation>共享音色、发音和音效绑定已更新。有变化的章节需要重新生成。</translation>
+    </message>
+    <message>
+      <source>Chapter candidates are ready. Review and accept each chapter before export.</source>
+      <translation>章节候选已就绪。请逐章审核并采用后导出。</translation>
+    </message>
+    <message>
+      <source>Chapter generation stopped. Completed candidates are kept.</source>
+      <translation>章节生成已停止，已完成的候选予以保留。</translation>
+    </message>
+    <message>
+      <source>Some chapters need attention. Completed candidates are kept.</source>
+      <translation>部分章节需要处理，已完成的候选予以保留。</translation>
+    </message>
+    <message>
+      <source>Accepted chapters exported with WAV, subtitles and source metadata.</source>
+      <translation>已导出采用的章节，包括 WAV、字幕和来源元数据。</translation>
+    </message>
+    <message>
+      <source>Voice candidates are ready. Listen, then save a named voice to reuse it.</source>
+      <translation>音色候选已就绪。试听后命名保存，即可重复使用。</translation>
+    </message>
+    <message>
+      <source>Voice design stopped. Completed candidates are kept.</source>
+      <translation>音色设计已停止，已完成的候选予以保留。</translation>
+    </message>
+    <message>
+      <source>Some voices could not be generated. Completed candidates are kept.</source>
+      <translation>部分音色未能生成，已完成的候选予以保留。</translation>
+    </message>
+    <message>
+      <source>Synthetic voice saved. Choose it for narration or a role in Voices &amp; direction.</source>
+      <translation>合成音色已保存，可在“音色与演绎”中分配给旁白或角色。</translation>
+    </message>
+    <message>
+      <source>This chapter is unavailable. Refresh the chapter list.</source>
+      <translation>此章节不可用，请刷新章节列表。</translation>
+    </message>
+    <message>
+      <source>An earlier chapter run was interrupted. Review its state, then choose Resume interrupted.</source>
+      <translation>之前的章节生成曾中断，请检查状态后选择“继续中断的生成”。</translation>
+    </message>
+    <message>
+      <source>Accept every selected chapter before exporting the chapter set.</source>
+      <translation>请先采用所有选中章节，再导出章节集。</translation>
+    </message>
+    <message>
+      <source>Give each chapter a title and keep every active chapter in the order.</source>
+      <translation>请为各章填写标题，并在排序中保留所有有效章节。</translation>
+    </message>
+    <message>
+      <source>Describe a voice, enter sample words and choose one to four candidates.</source>
+      <translation>请描述音色、填写示例台词，并选择一到四个候选。</translation>
+    </message>
+    <message>
+      <source>This voice candidate is no longer available. Refresh the project.</source>
+      <translation>此音色候选已不可用，请刷新项目。</translation>
+    </message>
+    <message>
+      <source>Generating</source>
+      <translation>正在生成</translation>
+    </message>
+    <message>
+      <source>For review</source>
+      <translation>待审核</translation>
+    </message>
+    <message>
+      <source>Accepted</source>
+      <translation>已采用</translation>
+    </message>
+    <message>
+      <source>Stopped</source>
+      <translation>已停止</translation>
+    </message>
+    <message>
+      <source>Partly completed</source>
+      <translation>部分完成</translation>
+    </message>
+    <message>
+      <source>Failed</source>
+      <translation>失败</translation>
+    </message>
+    <message>
+      <source>Interrupted · review before retry</source>
+      <translation>已中断 · 检查后重试</translation>
+    </message>
+    <message>
+      <source>Changed</source>
+      <translation>有变化</translation>
+    </message>
+    <message>
+      <source>Needs script</source>
+      <translation>需要脚本</translation>
+    </message>
+    <message>
+      <source>Removed</source>
+      <translation>已移除</translation>
+    </message>
+    <message>
+      <source>Pending</source>
+      <translation>待处理</translation>
+    </message>
+    <message>
+      <source>Accepted chapters exported with WAV, source metadata and available subtitles.</source>
+      <translation>已导出采用的章节，包括 WAV、来源元数据和可用字幕。</translation>
+    </message>
+    <message>
+      <source>This chapter uses different shared settings. Generate it with the current cast, or share this chapter’s voices before accepting it.</source>
+      <translation>本章的共享设置不同。请使用当前角色配音重新生成，或在采用前共享本章配音设置。</translation>
+    </message>
+    <message>
+      <source>Unavailable</source>
+      <translation>不可用</translation>
+    </message>
+    <message>
+      <source>Chapter state is unavailable. The chapter list is kept. Check the project files, then refresh.</source>
+      <translation>章节状态暂不可用，章节列表已保留。请检查项目文件后刷新。</translation>
+    </message>
+    <message>
+      <source>Stopping after the current voice candidate…</source>
+      <translation>当前音色候选完成后停止…</translation>
+    </message>
+    <message>
+      <source>All chapters were reused. No new candidates were generated.</source>
+      <translation>所有章节均已复用，未生成新候选。</translation>
+    </message>
+    <message>
+      <source>Reused</source>
+      <translation>已复用</translation>
+    </message>
 </context>
 <context>
     <name>Main</name>
@@ -892,6 +1024,14 @@ Write the script. Direct the voices. Keep the take.</source>
         <source>Pronunciation dictionary</source>
         <translation>发音词典</translation>
     </message>
+    <message>
+      <source>Chapter script</source>
+      <translation>章节脚本</translation>
+    </message>
+    <message>
+      <source>Select a chapter to write, direct voices and review its takes.</source>
+      <translation>选择章节，编写脚本、配置音色并审核录音。</translation>
+    </message>
 </context>
 <context>
     <name>MaterialsDialog</name>
@@ -1110,6 +1250,14 @@ Write the script. Direct the voices. Keep the take.</source>
         <source>WAV audio (*.wav)</source>
         <translation>WAV 音频 (*.wav)</translation>
     </message>
+    <message>
+      <source>%1 s · synthetic voice</source>
+      <translation>%1 秒 · 合成音色</translation>
+    </message>
+    <message>
+      <source>Designed voice · Runtime job %1</source>
+      <translation>设计音色 · Runtime 作业 %1</translation>
+    </message>
 </context>
 <context>
     <name>ProjectSidebar</name>
@@ -1218,6 +1366,14 @@ Write the script. Direct the voices. Keep the take.</source>
     <message>
         <source>Short music</source>
         <translation>短配乐</translation>
+    </message>
+    <message>
+      <source>Chapters</source>
+      <translation>章节</translation>
+    </message>
+    <message>
+      <source>Voice design</source>
+      <translation>音色设计</translation>
     </message>
 </context>
 <context>
@@ -1783,6 +1939,10 @@ Write a narration, import an existing script, or choose a form on the left.</sou
         <source>WAV audio (*.wav)</source>
         <translation>WAV 音频 (*.wav)</translation>
     </message>
+    <message>
+      <source>Synthetic · %1</source>
+      <translation>合成 · %1</translation>
+    </message>
 </context>
 <context>
     <name>PronunciationDialog</name>
@@ -2208,4 +2368,266 @@ Write a narration, import an existing script, or choose a form on the left.</sou
         <translation>SubRip 字幕 (*.srt)</translation>
     </message>
 </context>
+  <context>
+    <name>ChaptersPanel</name>
+    <message>
+      <source>Chapter %1</source>
+      <translation>第 %1 章</translation>
+    </message>
+    <message>
+      <source>CHAPTERS</source>
+      <translation>章节</translation>
+    </message>
+    <message>
+      <source>Add chapter</source>
+      <translation>添加章节</translation>
+    </message>
+    <message>
+      <source>Import text as chapters</source>
+      <translation>导入文本为章节</translation>
+    </message>
+    <message>
+      <source>%1 chapters · %2 accepted</source>
+      <translation>%1 章 · 已采用 %2 章</translation>
+    </message>
+    <message>
+      <source>%1 / %2 segments</source>
+      <translation>%1 / %2 段</translation>
+    </message>
+    <message>
+      <source>Rename chapter</source>
+      <translation>重命名章节</translation>
+    </message>
+    <message>
+      <source>Move chapter up</source>
+      <translation>上移章节</translation>
+    </message>
+    <message>
+      <source>Move chapter down</source>
+      <translation>下移章节</translation>
+    </message>
+    <message>
+      <source>Remove chapter from this set</source>
+      <translation>从章节集中移除</translation>
+    </message>
+    <message>
+      <source>Add chapters or import text. Long files split at paragraph boundaries.</source>
+      <translation>添加章节或导入文本。长文件会按段落边界拆分。</translation>
+    </message>
+    <message>
+      <source>Share chapter voices…</source>
+      <translation>共享章节配音…</translation>
+    </message>
+    <message>
+      <source>Shared voices, pronunciation and cues apply to the next generation. Chapter text stays separate.</source>
+      <translation>共享音色、发音和音效提示用于下次生成，各章文本独立保存。</translation>
+    </message>
+    <message>
+      <source>Generate pending</source>
+      <translation>生成待处理章节</translation>
+    </message>
+    <message>
+      <source>Resume interrupted</source>
+      <translation>继续中断的生成</translation>
+    </message>
+    <message>
+      <source>Chapter %1 / %2</source>
+      <translation>第 %1 / %2 章</translation>
+    </message>
+    <message>
+      <source>Stop after current segment</source>
+      <translation>当前段完成后停止</translation>
+    </message>
+    <message>
+      <source>Export accepted set…</source>
+      <translation>导出已采用章节集…</translation>
+    </message>
+    <message>
+      <source>Matching segments are reused. Changed chapters receive new candidates for review.</source>
+      <translation>相同段落会复用；有变化的章节生成新候选，等待审核。</translation>
+    </message>
+    <message>
+      <source>Chapter title</source>
+      <translation>章节标题</translation>
+    </message>
+    <message>
+      <source>Cancel</source>
+      <translation>取消</translation>
+    </message>
+    <message>
+      <source>Rename</source>
+      <translation>重命名</translation>
+    </message>
+    <message>
+      <source>Share voices and pronunciation</source>
+      <translation>共享音色与发音</translation>
+    </message>
+    <message>
+      <source>Use this chapter’s default voice, role choices, pronunciation rules and cue bindings for all chapters on their next generation?</source>
+      <translation>将本章的默认音色、角色选声、发音规则和音效绑定用于所有章节的下次生成？</translation>
+    </message>
+    <message>
+      <source>Use for all chapters</source>
+      <translation>用于所有章节</translation>
+    </message>
+    <message>
+      <source>Text files (*.txt *.md)</source>
+      <translation>文本文件 (*.txt *.md)</translation>
+    </message>
+    <message>
+      <source>All files (*)</source>
+      <translation>所有文件 (*)</translation>
+    </message>
+    <message>
+      <source>Export accepted chapter set</source>
+      <translation>导出已采用章节集</translation>
+    </message>
+      <message>
+      <source>Refresh chapters</source>
+      <translation>刷新章节</translation>
+    </message>
+    <message>
+      <source>Import Markdown sections as chapters, or split long text at paragraph boundaries.</source>
+      <translation>可将 Markdown 小节导入为章节，长文本按段落边界拆分。</translation>
+    </message>
+    <message>
+      <source>Markdown uses repeated # headings, or repeated ## headings when needed. Code fences are ignored. Long text splits at paragraphs.</source>
+      <translation>Markdown 按多个一级标题拆分，必要时使用多个二级标题；忽略代码块中的标题。长文本按段落拆分。</translation>
+    </message>
+</context>
+  <context>
+    <name>VoiceDesignWorkspace</name>
+    <message>
+      <source>Voice design</source>
+      <translation>音色设计</translation>
+    </message>
+    <message>
+      <source>Voice library</source>
+      <translation>音色库</translation>
+    </message>
+    <message>
+      <source>Describe a synthetic voice. Compare the samples, then save a named voice for narration or any role.</source>
+      <translation>描述合成音色，比较示例后命名保存，即可用于旁白或任意角色。</translation>
+    </message>
+    <message>
+      <source>Voice description</source>
+      <translation>音色描述</translation>
+    </message>
+    <message>
+      <source>A warm, low voice with clear diction and an unhurried pace.</source>
+      <translation>温暖的低音，咬字清晰，语速从容。</translation>
+    </message>
+    <message>
+      <source>Sample words</source>
+      <translation>示例台词</translation>
+    </message>
+    <message>
+      <source>Enter the exact words each candidate should say.</source>
+      <translation>填写每个候选应朗读的完整台词。</translation>
+    </message>
+    <message>
+      <source>Language</source>
+      <translation>语言</translation>
+    </message>
+    <message>
+      <source>Candidates</source>
+      <translation>候选数量</translation>
+    </message>
+    <message>
+      <source>Generate %1 candidates</source>
+      <translation>生成 %1 个候选</translation>
+    </message>
+    <message>
+      <source>%1 / %2 candidates completed</source>
+      <translation>已完成 %1 / %2 个候选</translation>
+    </message>
+    <message>
+      <source>Stop after current candidate</source>
+      <translation>当前候选完成后停止</translation>
+    </message>
+    <message>
+      <source>Completed candidates remain available if generation stops. Each saved voice is labelled synthetic.</source>
+      <translation>停止生成后仍保留已完成的候选，保存的音色均标注为合成音色。</translation>
+    </message>
+    <message>
+      <source>Voice candidates</source>
+      <translation>音色候选</translation>
+    </message>
+    <message>
+      <source>Listen to candidate</source>
+      <translation>试听候选</translation>
+    </message>
+    <message>
+      <source>Candidate %1</source>
+      <translation>候选 %1</translation>
+    </message>
+    <message>
+      <source>Synthetic voice</source>
+      <translation>合成音色</translation>
+    </message>
+    <message>
+      <source>Voice provenance</source>
+      <translation>音色来源</translation>
+    </message>
+    <message>
+      <source>%1 · %2 s · Runtime job %3</source>
+      <translation>%1 · %2 秒 · Runtime 作业 %3</translation>
+    </message>
+    <message>
+      <source>Source digest: %1</source>
+      <translation>来源摘要：%1</translation>
+    </message>
+    <message>
+      <source>Saved in voice library</source>
+      <translation>已存入音色库</translation>
+    </message>
+    <message>
+      <source>Edit a copy in Echo</source>
+      <translation>在 Echo 中编辑副本</translation>
+    </message>
+    <message>
+      <source>Export original WAV</source>
+      <translation>导出原始 WAV</translation>
+    </message>
+    <message>
+      <source>Discard candidate</source>
+      <translation>丢弃候选</translation>
+    </message>
+    <message>
+      <source>Save voice…</source>
+      <translation>保存音色…</translation>
+    </message>
+    <message>
+      <source>Describe a voice and generate samples to compare here.</source>
+      <translation>描述音色并生成示例，即可在此比较。</translation>
+    </message>
+    <message>
+      <source>Save synthetic voice</source>
+      <translation>保存合成音色</translation>
+    </message>
+    <message>
+      <source>Give this voice a name. Its synthetic origin, sample words and Runtime receipt stay with the reference.</source>
+      <translation>为音色命名。合成来源、示例台词和 Runtime 回执将随参考音色一并保留。</translation>
+    </message>
+    <message>
+      <source>Voice name</source>
+      <translation>音色名称</translation>
+    </message>
+    <message>
+      <source>Cancel</source>
+      <translation>取消</translation>
+    </message>
+    <message>
+      <source>Save voice</source>
+      <translation>保存音色</translation>
+    </message>
+    <message>
+      <source>Export voice sample WAV</source>
+      <translation>导出音色示例 WAV</translation>
+    </message>
+    <message>
+      <source>WAV audio (*.wav)</source>
+      <translation>WAV 音频 (*.wav)</translation>
+    </message>
+  </context>
 </TS>

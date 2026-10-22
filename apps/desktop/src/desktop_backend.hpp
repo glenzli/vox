@@ -15,6 +15,15 @@ class DesktopBackend final : public QObject {
   Q_PROPERTY(QVariantMap document READ document NOTIFY documentChanged)
   Q_PROPERTY(QVariantMap analysis READ analysis NOTIFY stateChanged)
   Q_PROPERTY(QVariantMap segmentPlan READ segmentPlan NOTIFY stateChanged)
+  Q_PROPERTY(QVariantMap collection READ collection NOTIFY stateChanged)
+  Q_PROPERTY(QVariantList chapters READ chapters NOTIFY stateChanged)
+  Q_PROPERTY(QString collectionPath READ collectionPath NOTIFY stateChanged)
+  Q_PROPERTY(QString selectedChapter READ selectedChapter NOTIFY stateChanged)
+  Q_PROPERTY(QString chapterError READ chapterError NOTIFY stateChanged)
+  Q_PROPERTY(
+      bool batchingChapters READ batchingChapters NOTIFY renderingChanged)
+  Q_PROPERTY(
+      QVariantMap chapterProgress READ chapterProgress NOTIFY progressChanged)
   Q_PROPERTY(QVariantList voices READ voices NOTIFY capabilitiesChanged)
   Q_PROPERTY(
       QVariantList builtinSounds READ builtinSounds NOTIFY capabilitiesChanged)
@@ -28,6 +37,7 @@ class DesktopBackend final : public QObject {
   Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
   Q_PROPERTY(bool pending READ pending NOTIFY pendingChanged)
   Q_PROPERTY(bool rendering READ rendering NOTIFY renderingChanged)
+  Q_PROPERTY(bool designingVoice READ designingVoice NOTIFY renderingChanged)
   Q_PROPERTY(bool runtimeReady READ runtimeReady NOTIFY runtimeChanged)
   Q_PROPERTY(QString runtimeError READ runtimeError NOTIFY runtimeChanged)
   Q_PROPERTY(QString message READ message NOTIFY messageChanged)
@@ -43,11 +53,21 @@ public:
   QVariantMap document() const { return m_draft.toVariantMap(); }
   QVariantMap analysis() const { return m_analysis.toVariantMap(); }
   QVariantMap segmentPlan() const { return m_segmentPlan.toVariantMap(); }
+  QVariantMap collection() const { return m_collectionProject.toVariantMap(); }
+  QVariantList chapters() const { return m_chapters.toVariantList(); }
+  QString collectionPath() const { return m_collectionPath; }
+  QString selectedChapter() const { return m_chapterID; }
+  QString chapterError() const;
+  bool batchingChapters() const { return m_rendering && m_batchingChapters; }
+  QVariantMap chapterProgress() const {
+    return m_chapterProgress.toVariantMap();
+  }
   QVariantList voices() const;
   QVariantList builtinSounds() const;
   QVariantList languages() const;
   void retranslate() {
     emit capabilitiesChanged();
+    emit stateChanged();
     emit messageChanged();
   }
   QVariantList recentProjects() const;
@@ -57,6 +77,7 @@ public:
   bool busy() const { return m_rendering || m_projectChanging; }
   bool pending() const { return m_pendingRequests > 0; }
   bool rendering() const { return m_rendering; }
+  bool designingVoice() const { return m_rendering && m_designingVoice; }
   bool runtimeReady() const { return m_runtimeReady; }
   QString runtimeError() const { return m_runtimeError; }
   QString message() const;
@@ -91,6 +112,24 @@ public:
                                       const QString &prompt, int seconds,
                                       int seed, const QString &category,
                                       int variations);
+  Q_INVOKABLE void generateVoiceDesign(const QString &description,
+                                       const QString &text,
+                                       const QString &language, int variations);
+  Q_INVOKABLE void acceptVoiceDesign(const QString &id, const QString &name);
+  Q_INVOKABLE void discardVoiceDesign(const QString &id);
+  Q_INVOKABLE void selectChapter(const QString &id);
+  Q_INVOKABLE void showMainScript();
+  Q_INVOKABLE void refreshChapters();
+  Q_INVOKABLE void addChapter(const QString &title, const QString &text,
+                              const QString &format);
+  Q_INVOKABLE void importChapters(const QList<QUrl> &files);
+  Q_INVOKABLE void renameChapter(const QString &id, const QString &title);
+  Q_INVOKABLE void moveChapter(const QString &id, int offset);
+  Q_INVOKABLE void archiveChapter(const QString &id);
+  Q_INVOKABLE void publishChapterSettings();
+  Q_INVOKABLE void renderChapterBatch(bool retryInterrupted = false);
+  Q_INVOKABLE void exportChapters(const QUrl &destination);
+  Q_INVOKABLE QString productionStatus(const QString &status) const;
   Q_INVOKABLE void acceptSound(const QString &id);
   Q_INVOKABLE void discardSound(const QString &id);
   Q_INVOKABLE void bindSound(const QString &label, const QString &id);
@@ -118,6 +157,7 @@ public:
   Q_INVOKABLE void acceptSelected();
   Q_INVOKABLE void discardSelected();
   Q_INVOKABLE void exportSelected(const QUrl &url);
+  Q_INVOKABLE void exportAudio(const QString &id, const QUrl &url);
   Q_INVOKABLE void importScript(const QUrl &url);
   Q_INVOKABLE void useTemplate(const QString &kind);
   Q_INVOKABLE void restoreSource(const QString &id);
@@ -152,6 +192,11 @@ private:
   EchoLauncher m_echoLauncher;
   QSettings m_settings;
   QJsonObject m_project, m_draft, m_analysis, m_segmentPlan;
+  QJsonObject m_collectionProject;
+  QJsonObject m_chapterProgress;
+  QJsonArray m_chapters;
+  QString m_collectionPath, m_chapterID, m_chaptersError;
+  quint64 m_collectionEpoch = 0;
   QJsonArray m_voices;
   QVariantList m_waveform;
   QUrl m_preparedFile;
@@ -160,6 +205,8 @@ private:
   bool m_dirty = false, m_rendering = false, m_runtimeReady = false,
        m_savePending = false;
   bool m_probing = false;
+  bool m_designingVoice = false;
+  bool m_batchingChapters = false;
   bool m_echoOpening = false;
   bool m_projectChanging = false, m_cancelRequested = false;
   quint64 m_editSequence = 0, m_projectEpoch = 0, m_selectionSequence = 0,
@@ -177,6 +224,12 @@ private:
                        bool generate = false);
   void productionCommand(const QString &action, const QJsonObject &fields,
                          bool generate = false);
+  void collectionCommand(const QString &action, const QJsonObject &fields,
+                         WorkerClient::Callback done = {});
+  void applyCollection(const QJsonObject &result);
+  void acceptChapterSelected();
+  void beginChapterEcho(const QString &directory);
+  void reviewChapterEcho(const QUrl &url, bool allowPCM24);
   void mutate(const std::function<void(QJsonObject &)> &mutation);
   void saveThen(std::function<void()> continuation,
                 std::function<void()> failed = {});
@@ -188,5 +241,6 @@ private:
   void command(const QString &action, const QJsonObject &fields,
                WorkerClient::Callback done = {}, bool includeProject = true);
   void messageCode(const QString &code);
-  void finishRender(const QJsonObject &response, bool voiceSample);
+  void finishRender(const QJsonObject &response, bool voiceSample,
+                    quint64 selection = 0);
 };

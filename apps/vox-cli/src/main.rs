@@ -1,4 +1,5 @@
 //! Bounded JSON adapter shared by humans, AI and the native Qt application.
+mod chapters;
 use serde_json::{Value, json};
 use std::{
     io::{self, BufRead, Write},
@@ -36,7 +37,11 @@ fn snapshot(p: &Project, m: Manifest) -> Value {
         |error| json!({"ready":false,"can_assemble":false,"segments":[],"error":error.code}),
         |plan| json!(plan),
     );
-    json!({"project":m,"path":p.path,"analysis":analysis,"segment_plan":segment_plan})
+    let (chapters, chapters_error) = match p.chapter_summaries_for(&m) {
+        Ok(chapters) => (json!(chapters), Value::Null),
+        Err(error) => (json!([]), json!(error.code)),
+    };
+    json!({"project":m,"path":p.path,"analysis":analysis,"segment_plan":segment_plan,"chapters":chapters,"chapters_error":chapters_error})
 }
 fn voices() -> Value {
     json!(
@@ -49,9 +54,12 @@ fn voices() -> Value {
 
 fn execute(v: &Value) -> Result<Value> {
     let action = field(v, "action")?;
+    if action.starts_with("chapter_") {
+        return chapters::execute(v);
+    }
     if action == "capabilities" {
         return Ok(
-            json!({"schema":"vox.capabilities/1","project_schema":"vox.project/1","voices":voices(),"languages":["auto","Chinese","English","Japanese","Korean","German","French","Russian","Portuguese","Spanish","Italian"],"operations":["segment_plan","render_segment","accept_segment","assemble_segments","segment_playback","export_subtitles","generate_sound_batch","import_shape_transfer","shape_transfer_receipt","restore_shape_draft","create","open","save","adopt","validate","render","cancel","accept","discard","playback","export","import_script","import_cue","import_reference","bind_reference","add_builtin","import_sound","generate_sound","accept_sound","discard_sound","bind_sound","material_file","export_material","restore_source","begin_echo","review_echo"],"forms":["narration","dialogue","listening"],"workspaces":["speech","sfx","ambience","short_music"],"pronunciation_dictionary":true,"segment_candidates":true,"voice_reference":true,"sound_generation":true,"builtin_sounds":vox_core::materials::BUILTIN_SOUNDS,"acceptance":"explicit","runtime_app":"vox"}),
+            json!({"schema":"vox.capabilities/1","project_schema":"vox.project/1","voices":voices(),"languages":["auto","Chinese","English","Japanese","Korean","German","French","Russian","Portuguese","Spanish","Italian"],"operations":["segment_plan","render_segment","accept_segment","assemble_segments","segment_playback","export_subtitles","generate_sound_batch","generate_voice_design_batch","accept_voice_design","discard_voice_design","chapter_list","chapter_open","chapter_add","chapter_save","chapter_rename","chapter_reorder","chapter_archive","chapter_import","chapter_shared_settings","chapter_batch","chapter_accept","chapter_export","chapter_begin_echo","chapter_review_echo","import_shape_transfer","shape_transfer_receipt","restore_shape_draft","create","open","save","adopt","validate","render","cancel","accept","discard","playback","export","import_script","import_cue","import_reference","bind_reference","add_builtin","import_sound","generate_sound","accept_sound","discard_sound","bind_sound","material_file","export_material","restore_source","begin_echo","review_echo"],"forms":["narration","dialogue","listening"],"workspaces":["speech","voice_design","chapters","sfx","ambience","short_music"],"voice_design":true,"chapter_batches":true,"pronunciation_dictionary":true,"segment_candidates":true,"voice_reference":true,"sound_generation":true,"builtin_sounds":vox_core::materials::BUILTIN_SOUNDS,"acceptance":"explicit","runtime_app":"vox"}),
         );
     }
     if action == "probe" {
@@ -141,6 +149,10 @@ fn execute(v: &Value) -> Result<Value> {
             v["role"].as_str().unwrap_or(""),
             field(v, "id")?,
         )?,
+        "accept_voice_design" => {
+            p.accept_voice_design(version(v)?, field(v, "id")?, field(v, "name")?)?
+        }
+        "discard_voice_design" => p.discard_voice_design(version(v)?, field(v, "id")?)?,
         "add_builtin" => {
             let key = field(v, "key")?;
             p.add_sound(
@@ -246,6 +258,8 @@ fn main() {
                 | "reference_preview"
                 | "generate_sound"
                 | "generate_sound_batch"
+                | "generate_voice_design_batch"
+                | "chapter_batch"
                 | "import_shape_transfer"
         ) {
             if busy
@@ -259,7 +273,37 @@ fn main() {
             let control = control.clone();
             let busy = busy.clone();
             let worker = std::thread::spawn(move || {
-                let result = if v["action"] == "import_shape_transfer" {
+                let result = if v["action"] == "chapter_batch" {
+                    chapters::batch(&v, control)
+                } else if v["action"] == "generate_voice_design_batch" {
+                    (|| {
+                        let p = project(&v)?;
+                        let spec = serde_json::from_value(v["spec"].clone())?;
+                        let variations = v["variations"]
+                            .as_u64()
+                            .and_then(|n| u8::try_from(n).ok())
+                            .ok_or_else(|| Error::new("invalid_voice_design"))?;
+                        let id = v["request_id"].clone();
+                        let progress = Arc::new(move |completed, total| {
+                            emit(
+                                json!({"event":"progress","request_id":id,"completed":completed,"total":total}),
+                            );
+                        });
+                        let batch = p.generate_voice_design_batch(
+                            version(&v)?,
+                            v["endpoint"].as_str().unwrap_or(""),
+                            spec,
+                            variations,
+                            &control,
+                            progress,
+                        )?;
+                        let summary = json!({"run_id":batch.run_id,"requested":batch.requested,
+                            "completed":batch.completed,"state":batch.state,"error":batch.error});
+                        let mut result = snapshot(&p, batch.manifest);
+                        result["voice_design_batch"] = summary;
+                        Ok(result)
+                    })()
+                } else if v["action"] == "import_shape_transfer" {
                     (|| {
                         if !v["expected_blake3"].is_null() && !v["expected_blake3"].is_string() {
                             return Err(Error::new("invalid_request"));

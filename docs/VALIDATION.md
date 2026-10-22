@@ -309,3 +309,54 @@ and timecoded/video dubbing remain roadmap items, not implemented capabilities.
 Evidence is under `/private/tmp/vox-expand-20261022/`: `gate.log`, `context-final.log`,
 `controls-final.log`, `native-production-final/`, `native-sound-final/`, `live-2/report.json` and
 the consolidated `report.json`. Media, fixtures and build products remain outside the checkout.
+
+## Voice design and long-form chapter production — 2026-10-23
+
+Three parallel GPT-6.1 Sol/max tasks implemented synthetic voice design, durable chapter production
+and the desktop workflow. The integration reuses the pinned Infer Runtime SDK and the existing
+segment renderer, voice library and independent Echo protocol. Full songs remain outside scope.
+
+- The required `scripts/build_and_promote_debug.sh` workflow passed formatting, strict Clippy and
+  **139 Rust tests**. Desktop integration subsequently corrected QML syntax, a chapter-reorder
+  `QJsonValueRef` aliasing bug and translated status refresh; unchanged Rust evidence was reused.
+  The final integrated desktop suite passed **nine packaged checks**, including chapter CRUD,
+  save-before-switch, missing-child recovery, design cancellation and project callback fences.
+  English/dark, Chinese/light and 1080 × 740 minimum-window layouts were inspected.
+  The final status-only correction passed the focused chapter/design check again, including
+  all-reused, mixed, cancelled and failed outcomes. All **550 Chinese messages** are complete.
+- Real generation through Vox's own local Runtime authorization produced two designed voice
+  samples, saved a named synthetic reference and reused it for two chapters through
+  `speech.clone_voice`. The design Jobs are `audio_0307ca270b94403eb51d102c21fd2fc7` and
+  `audio_1933026006c646edbeedc3c664aa5a47`. The original model receipts, exact sample text and
+  designed-voice provenance remain in the project and its owned chapter packages.
+- Stopping the real batch after its first completed segment preserved that segment. Continuing
+  reused it and completed both chapters without automatically accepting their audio. Explicit
+  acceptance followed by a repeated batch skipped both chapters. Changing one sentence generated
+  **one new segment**, reused the unchanged segment and left the other chapter manifest
+  byte-identical. Accepted chapter exports included measured SRT/VTT and a relative-path manifest.
+- A real independent Echo process applied gain and exported PCM24 WAV with an idempotent replay.
+  Explicit conversion returned the edited audio as a candidate; it became current only after
+  chapter acceptance. The edited chapter exports its WAV and a reason that subtitles are
+  unavailable, while the other chapter retains its measured captions. No stale timing was reused.
+- Native Cocoa interaction generated another **5.28 s Chinese design sample**, played it to the
+  end and saved a named synthetic voice. Its Job is `audio_9aec5ec1936a4fd3ad22696ff8d80920`.
+  The chapter reader played the accepted Echo result to the end. Running the desktop batch reused
+  both chapters without changing either child manifest; the native export dialog produced both
+  WAVs with the correct caption availability. This exposed an inaccurate all-reused completion
+  message, which was corrected independently of the unchanged generation/export owners.
+- Runtime configuration changed only Vox's existing grants, adding the local design route and
+  retaining its credential. The Console restarted the idle daemon; other applications were
+  unchanged. Startup took about five minutes during an existing audio-worker dependency probe.
+  No Infer Runtime source, SDK pin or Echo daily application update was required.
+
+The real workflow report is `/private/tmp/vox-longform-live-20261023/report.json`, with cancellation,
+changed-segment, export and Echo evidence beside it. Its worker SHA-256 is
+`ef40c5feb7cd6d530435e584b3c2995cef916abee48ed5751b24cd40d5bc8a61`, identical to the packaged worker
+before promotion signing. Signing changes the signature trailer and its Mach-O size fields;
+comparison of all remaining executable bytes confirms that the promoted app and worker retain the
+validated payload. Those identities are in the native report's `signature-comparison.json`.
+These runs validate execution and persistence; they do not rate perceptual voice similarity or
+record a human microphone. Generated media and fixtures remain outside the checkout.
+Native interaction and export evidence is in `/private/tmp/vox-native-longform-20261023/report.json`;
+the original user project remains byte-identical. This phase does not commit or push source changes.
+The final signed preview is `/Users/g4i/lab/.vox-local-build/current-debug/Vox.app`.

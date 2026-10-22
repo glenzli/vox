@@ -14,15 +14,6 @@ impl Project {
     /// Assemble only explicitly selected immutable segments. No model is called
     /// and the result remains a whole-take candidate until normal acceptance.
     pub fn assemble_segments(&self, expected: u64) -> Result<Manifest> {
-        let render_lock = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .truncate(false)
-            .open(self.path.join("render.lock"))?;
-        render_lock
-            .try_lock()
-            .map_err(|_| Error::new("render_busy"))?;
         let m = self.read()?;
         if m.version != expected {
             return Err(Error::new("stale_project"));
@@ -42,8 +33,32 @@ impl Project {
                     .ok_or_else(|| Error::new("segment_selection_missing"))
             })
             .collect::<Result<Vec<_>>>()?;
+        self.assemble_segment_selection(expected, &selections)
+    }
+
+    /// A chapter batch explicitly pins validated alternatives for review. It
+    /// does not promote segment candidates or change accepted selections.
+    pub(in crate::project) fn assemble_segment_selection(
+        &self,
+        expected: u64,
+        selections: &[SegmentSelection],
+    ) -> Result<Manifest> {
+        let render_lock = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(self.path.join("render.lock"))?;
+        render_lock
+            .try_lock()
+            .map_err(|_| Error::new("render_busy"))?;
+        let m = self.read()?;
+        if m.version != expected {
+            return Err(Error::new("stale_project"));
+        }
+        let source = adopted_source(&m)?;
         let (bytes, provenance, assembly) =
-            self.assemble_selected(&m, &source.document, &selections)?;
+            self.assemble_selected(&m, &source.document, selections)?;
         let record = AudioRevision {
             id: uuid::Uuid::now_v7().to_string(),
             source_revision: source.id.clone(),
@@ -113,6 +128,7 @@ impl Project {
             let record = m
                 .accepted_segments
                 .iter()
+                .chain(&m.segment_candidates)
                 .find(|r| r.id == selection.segment_id && r.key == selection.key)
                 .ok_or_else(|| Error::new("segment_selection_missing"))?;
             self.validate_segment(definition, record)?;

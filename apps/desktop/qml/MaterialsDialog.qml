@@ -76,9 +76,10 @@ Dialog {
                             }
                             Label { text: voiceCard.modelData.reference.transcript; Layout.fillWidth: true; wrapMode: Text.WordWrap; maximumLineCount: 3; elide: Text.ElideRight; color: Theme.secondary }
                             RowLayout {
-                                Label { text: qsTr("%1 s · local reference").arg((voiceCard.modelData.contract.frame_count / voiceCard.modelData.contract.sample_rate_hz).toFixed(1)); font.pixelSize: 11; color: Theme.muted; Layout.fillWidth: true }
+                                Label { text: voiceCard.modelData.origin === "designed" ? qsTr("%1 s · synthetic voice").arg((voiceCard.modelData.contract.frame_count / voiceCard.modelData.contract.sample_rate_hz).toFixed(1)) : qsTr("%1 s · local reference").arg((voiceCard.modelData.contract.frame_count / voiceCard.modelData.contract.sample_rate_hz).toFixed(1)); font.pixelSize: 11; color: Theme.muted; Layout.fillWidth: true }
                                 ActionButton { text: qsTr("Synthesize a preview"); symbol: "waveform"; enabled: !backend.busy && backend.runtimeReady; onClicked: backend.auditionReference(voiceCard.modelData.id, previewWords.text) }
                             }
+                            Label { visible: !!voiceCard.modelData.design; text: voiceCard.modelData.design ? qsTr("Designed voice · Runtime job %1").arg(voiceCard.modelData.design.generation.job_id) : ""; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; font.pixelSize: 10; color: Theme.muted }
                         }
                     }
                 }

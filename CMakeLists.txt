@@ -26,13 +26,16 @@ qt_add_executable(vox-desktop
     apps/desktop/src/worker_client.cpp apps/desktop/src/worker_client.hpp
     apps/desktop/src/echo_launcher.cpp apps/desktop/src/echo_launcher.hpp
     apps/desktop/src/desktop_materials.cpp apps/desktop/src/desktop_production.cpp
+    apps/desktop/src/desktop_voice_design.cpp
+    apps/desktop/src/desktop_longform.cpp
     apps/desktop/src/reference_recorder.cpp apps/desktop/src/reference_recorder.hpp
     apps/desktop/src/ui_preferences.hpp
     apps/desktop/src/script_editor.cpp apps/desktop/src/script_editor.hpp
     apps/desktop/tests/workflow_smoke.cpp apps/desktop/tests/workflow_smoke.hpp
     apps/desktop/tests/appearance_smoke.cpp apps/desktop/tests/editor_smoke.cpp apps/desktop/tests/studio_smoke.cpp
     apps/desktop/tests/reading_smoke.cpp apps/desktop/tests/shape_transfer_smoke.cpp
-    apps/desktop/tests/production_smoke.cpp apps/desktop/tests/sound_workspace_smoke.cpp)
+    apps/desktop/tests/production_smoke.cpp apps/desktop/tests/sound_workspace_smoke.cpp
+    apps/desktop/tests/longform_smoke.cpp)
 target_include_directories(vox-desktop PRIVATE apps/desktop/src apps/desktop/tests)
 set_source_files_properties(apps/desktop/qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_add_qml_module(vox-desktop URI Vox.Desktop VERSION 1.0
@@ -42,6 +45,8 @@ qt_add_qml_module(vox-desktop URI Vox.Desktop VERSION 1.0
     apps/desktop/qml/CompactSpinBox.qml apps/desktop/qml/CompactTextField.qml
     apps/desktop/qml/MaterialsDialog.qml apps/desktop/qml/ReferenceDialog.qml
     apps/desktop/qml/SoundWorkspace.qml apps/desktop/qml/SegmentsPanel.qml
+    apps/desktop/qml/VoiceDesignWorkspace.qml
+    apps/desktop/qml/ChaptersPanel.qml
     apps/desktop/qml/PronunciationDialog.qml apps/desktop/qml/SubtitleDialog.qml
     apps/desktop/qml/ScriptEditor.qml
     apps/desktop/qml/ScriptReader.qml apps/desktop/qml/ReadingEntry.qml
@@ -80,7 +85,8 @@ if(BUILD_TESTING)
     add_test(NAME vox-packaged-reading COMMAND $<TARGET_FILE:vox-desktop> --smoke-reading "${CMAKE_BINARY_DIR}/reading-smoke")
     add_test(NAME vox-packaged-production COMMAND $<TARGET_FILE:vox-desktop> --smoke-production "${CMAKE_BINARY_DIR}/production-smoke")
     add_test(NAME vox-packaged-sound-workspace COMMAND $<TARGET_FILE:vox-desktop> --smoke-sound-workspace "${CMAKE_BINARY_DIR}/sound-workspace-smoke")
-    set_tests_properties(vox-packaged-production vox-packaged-sound-workspace vox-packaged-reading vox-packaged-studio vox-packaged-startup vox-packaged-project vox-packaged-appearance vox-packaged-editor PROPERTIES TIMEOUT 30
+    add_test(NAME vox-packaged-longform COMMAND $<TARGET_FILE:vox-desktop> --smoke-longform "${CMAKE_BINARY_DIR}/longform-smoke")
+    set_tests_properties(vox-packaged-longform vox-packaged-production vox-packaged-sound-workspace vox-packaged-reading vox-packaged-studio vox-packaged-startup vox-packaged-project vox-packaged-appearance vox-packaged-editor PROPERTIES TIMEOUT 30
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;XDG_CONFIG_HOME=${CMAKE_BINARY_DIR}/test-config"
         FAIL_REGULAR_EXPRESSION "QQml;ReferenceError;TypeError;Binding loop;failed to load;Unable to assign")
 endif()

@@ -9,9 +9,11 @@ Rectangle {
     property bool showTakes: true
     property bool loopPreview: false
     property string playbackContext: "speech"
+    property string dialogIdentity: ""
+    property string exportId: ""
     signal exportSubtitlesRequested(string audioId)
     onShowTakesChanged: { player.stop(); player.source = "" }
-    onPlaybackContextChanged: { player.stop(); player.source = ""; backend.selectAudio("") }
+    onPlaybackContextChanged: { player.stop(); player.source = "" }
     property var takes: {
         let items = []
         for (let r of (backend.project.candidates || []).slice().reverse()) items.push({record:r, accepted:false})
@@ -48,8 +50,8 @@ Rectangle {
             IconButton { symbol: "x"; hint: qsTr("Discard take"); enabled: panel.selected && !panel.selected.accepted && !backend.busy; onClicked: backend.discardSelected() }
             Rectangle { width: 1; height: 20; color: Theme.border }
             IconButton { objectName: "echoEditButton"; symbol: "echo"; hint: qsTr("Edit in Echo"); enabled: panel.selected && panel.selected.accepted && !backend.busy; onClicked: backend.editInEcho() }
-            IconButton { symbol: "import"; hint: qsTr("Return edited WAV from Echo"); enabled: backend.hasEchoHandoff && !backend.busy; onClicked: echoReturnDialog.open() }
-            IconButton { objectName: "exportButton"; symbol: "export"; hint: qsTr("Export WAV"); enabled: panel.selected !== null; onClicked: exportFile.open() }
+            IconButton { symbol: "import"; hint: qsTr("Return edited WAV from Echo"); enabled: backend.hasEchoHandoff && !backend.busy; onClicked: { panel.dialogIdentity = backend.path + ":" + (backend.project.id || ""); echoReturnDialog.open() } }
+            IconButton { objectName: "exportButton"; symbol: "export"; hint: qsTr("Export WAV"); enabled: panel.selected !== null; onClicked: { panel.dialogIdentity = backend.path + ":" + (backend.project.id || ""); panel.exportId = backend.selectedAudio; exportFile.open() } }
             IconButton { objectName: "takeSubtitlesButton"; symbol: "file"; hint: qsTr("Export subtitles"); visible: !!panel.selected && !!panel.selected.record.segment_assembly; enabled: !backend.busy; onClicked: panel.exportSubtitlesRequested(panel.selected.record.id) }
         }
         ListView {
@@ -122,7 +124,7 @@ Rectangle {
             IconButton { symbol: "volume"; hint: output.muted ? qsTr("Unmute") : qsTr("Mute"); onClicked: output.muted = !output.muted; opacity: output.muted ? 0.4 : 1 }
         }
     }
-    Native.FileDialog { id: exportFile; title: qsTr("Export WAV"); fileMode: Native.FileDialog.SaveFile; defaultSuffix: "wav"; nameFilters: [qsTr("WAV audio (*.wav)")]; onAccepted: backend.exportSelected(selectedFile) }
+    Native.FileDialog { id: exportFile; title: qsTr("Export WAV"); fileMode: Native.FileDialog.SaveFile; defaultSuffix: "wav"; nameFilters: [qsTr("WAV audio (*.wav)")]; onAccepted: if (panel.dialogIdentity === backend.path + ":" + (backend.project.id || "")) backend.exportAudio(panel.exportId, selectedFile) }
     Dialog {
         id: echoReturnDialog
         title: qsTr("Return from Echo")
@@ -138,5 +140,5 @@ Rectangle {
         }
         onAccepted: returnFile.open()
     }
-    Native.FileDialog { id: returnFile; title: qsTr("Choose Echo WAV export"); nameFilters: [qsTr("WAV audio (*.wav)")]; onAccepted: backend.returnFromEcho(selectedFile, pcm24.checked) }
+    Native.FileDialog { id: returnFile; title: qsTr("Choose Echo WAV export"); nameFilters: [qsTr("WAV audio (*.wav)")]; onAccepted: if (panel.dialogIdentity === backend.path + ":" + (backend.project.id || "")) backend.returnFromEcho(selectedFile, pcm24.checked) }
 }

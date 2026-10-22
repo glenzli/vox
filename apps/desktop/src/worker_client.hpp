@@ -18,6 +18,7 @@ public:
   void cancel();
 signals:
   void progress(int completed, int total);
+  void progressDetail(const QJsonObject &detail);
   void diagnostic(const QString &code);
 
 private:

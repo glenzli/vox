@@ -1,9 +1,13 @@
 //! Independent .vox bundle, working drafts, immutable sources and explicit audio acceptance.
+pub mod chapters;
 pub mod materials;
+pub use chapters::*;
 mod model;
 mod render;
 mod segments;
+mod voice_design;
 pub use segments::*;
+pub use voice_design::*;
 pub mod shape_transfer;
 pub(crate) mod store;
 pub use model::*;

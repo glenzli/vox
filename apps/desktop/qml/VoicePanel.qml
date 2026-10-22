@@ -12,7 +12,7 @@ Rectangle {
     function choices() {
         let items = []
         for (let voice of backend.voices) items.push({id: voice.alias, name: voice.label, reference: false})
-        for (let voice of references) items.push({id: voice.id, name: qsTr("Reference · %1").arg(voice.name), reference: true})
+        for (let voice of references) items.push({id: voice.id, name: voice.origin === "designed" ? qsTr("Synthetic · %1").arg(voice.name) : qsTr("Reference · %1").arg(voice.name), reference: true})
         return items
     }
     function selected(role) {

@@ -36,6 +36,9 @@ pub struct ReferenceVoice {
     pub reference: AuthorizedVoiceReference,
     pub contract: AudioValueContract,
     pub origin: String,
+    /// Present only after explicit acceptance of a project-owned synthetic design sample.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub design: Option<super::AcceptedVoiceDesign>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SoundMaterial {
@@ -50,7 +53,7 @@ pub struct SoundMaterial {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metadata: Option<SoundMetadata>,
 }
-fn valid_name(name: &str) -> bool {
+pub(super) fn valid_name(name: &str) -> bool {
     !name.trim().is_empty() && name.len() <= 256 && !name.chars().any(char::is_control)
 }
 pub(super) fn validate_libraries(m: &Manifest) -> Result<()> {
@@ -66,6 +69,13 @@ pub(super) fn validate_libraries(m: &Manifest) -> Result<()> {
                 .is_some_and(|metadata| !metadata.valid())
     }) {
         return Err(Error::new("invalid_material"));
+    }
+    for voice in &m.voice_library {
+        match (&voice.design, voice.origin.as_str()) {
+            (Some(design), "designed") => design.validate(voice)?,
+            (None, "designed") | (Some(_), _) => return Err(Error::new("invalid_material")),
+            (None, _) => {}
+        }
     }
     // Bindings must match a complete immutable project-owned source, never an arbitrary path/claim.
     for document in std::iter::once(&m.draft).chain(m.sources.iter().map(|s| &s.document)) {
@@ -137,6 +147,7 @@ impl Project {
                 reference,
                 contract,
                 origin: if recorded { "recorded" } else { "imported" }.into(),
+                design: None,
             });
             Ok(())
         })
@@ -290,19 +301,30 @@ impl Project {
     }
     pub fn material_file(&self, kind: &str, id: &str) -> Result<std::path::PathBuf> {
         let m = self.read()?;
-        let content = if kind == "voice" {
-            m.voice_library
+        let (content, design) = match kind {
+            "voice" => m.voice_library.iter().find(|s| s.id == id).and_then(|s| {
+                s.reference
+                    .audio
+                    .as_ref()
+                    .map(|audio| (audio, s.design.as_ref().map(|design| &design.generation)))
+            }),
+            "voice_design" => m
+                .voice_design_candidates
                 .iter()
                 .find(|s| s.id == id)
-                .and_then(|s| s.reference.audio.as_ref())
-        } else {
-            m.sound_library
+                .map(|s| (&s.original, Some(&s.generation))),
+            "sound" => m
+                .sound_library
                 .iter()
                 .find(|s| s.id == id)
-                .map(|s| &s.original)
+                .map(|s| (&s.original, None)),
+            _ => None,
         }
         .ok_or_else(|| Error::new("material_missing"))?;
         let bytes = self.object(content)?;
+        if let Some(design) = design {
+            design.validate(&bytes)?;
+        }
         let dir = std::env::temp_dir().join("vox-materials").join(&m.id);
         super::store::private_directory(&dir)?;
         let path = dir.join(format!("{}.wav", content.digest));
@@ -351,10 +373,25 @@ impl Project {
     pub fn material_echo(&self, kind: &str, id: &str) -> Result<std::path::PathBuf> {
         let source = std::fs::read(self.material_file(kind, id)?)?;
         let m = self.read()?;
-        let generated = kind == "sound"
-            && m.sound_library
+        let design = if kind == "voice_design" {
+            m.voice_design_candidates.iter().find(|s| s.id == id)
+                .map(|s| serde_json::json!({"candidate_id":s.id,"run_id":s.run_id,"generation":s.generation}))
+        } else if kind == "voice" {
+            m.voice_library
                 .iter()
-                .any(|s| s.id == id && s.generation.is_some());
+                .find(|s| s.id == id)
+                .and_then(|s| s.design.as_ref())
+                .map(serde_json::to_value)
+                .transpose()?
+        } else {
+            None
+        };
+        let generated = design.is_some()
+            || (kind == "sound"
+                && m.sound_library
+                    .iter()
+                    .any(|s| s.id == id && s.generation.is_some()));
+        let source_digest = crate::ContentDigest::from_bytes(&source);
         let bytes = if generated {
             crate::handoff::with_generated_disclosure(&source)?
         } else {
@@ -369,7 +406,7 @@ impl Project {
         std::fs::write(
             dir.join("source.json"),
             serde_json::to_vec_pretty(
-                &serde_json::json!({"schema":"vox.material-working-copy/1","project":m.id,"kind":kind,"material":id,"working_digest":crate::ContentDigest::from_bytes(&bytes),"return":"import a new reviewed material; original stays immutable"}),
+                &serde_json::json!({"schema":"vox.material-working-copy/1","project":m.id,"kind":kind,"material":id,"source_digest":source_digest,"working_digest":crate::ContentDigest::from_bytes(&bytes),"synthetic":generated,"voice_design":design,"return":"import a new reviewed material; original stays immutable"}),
             )?,
         )?;
         Ok(path)

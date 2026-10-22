@@ -5,6 +5,7 @@ mod job_provenance;
 mod sdk;
 pub mod sound;
 pub(crate) mod speech;
+pub mod voice_design;
 #[cfg(test)]
 use sdk::SdkAdapterError;
 #[cfg(test)]
