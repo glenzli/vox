@@ -2394,6 +2394,48 @@ Write a narration, import an existing script, or choose a form on the left.</sou
     <message><source>Stop alignment</source><translation>停止对齐</translation></message>
     <message><source>Close</source><translation>关闭</translation></message>
     <message><source>Export subtitles…</source><translation>导出字幕…</translation></message>
+    <message><source>Unsaved changes</source><translation>有未保存的修改</translation></message>
+    <message><source>Candidate · not accepted</source><translation>候选 · 尚未采用</translation></message>
+    <message><source>Current saved track</source><translation>当前已保存的字幕</translation></message>
+    <message><source>%1 cues · %2</source><translation>%1 条字幕 · %2</translation></message>
+    <message><source>Stop cue audition</source><translation>停止字幕片段试听</translation></message>
+    <message><source>Manually corrected words and times. Review against this audio before accepting.</source><translation>文字与时间由手动校正。请对照此录音审阅后再采用。</translation></message>
+    <message><source>Words and times from an imported file. Review against this audio before accepting.</source><translation>文字与时间来自导入的文件。请对照此录音审阅后再采用。</translation></message>
+    <message><source>Import…</source><translation>导入…</translation></message>
+    <message><source>Edit cues</source><translation>校正字幕</translation></message>
+    <message><source>Realign from transcript</source><translation>按台词重新对齐</translation></message>
+    <message><source>Empty cue</source><translation>空字幕</translation></message>
+    <message><source>Import subtitles or realign a confirmed transcript.</source><translation>请导入字幕，或按已确认的台词重新对齐。</translation></message>
+    <message><source>Cue %1 of %2</source><translation>第 %1 条，共 %2 条</translation></message>
+    <message><source>Cue inspector</source><translation>字幕检查器</translation></message>
+    <message><source>Listen to selected cue</source><translation>试听所选字幕片段</translation></message>
+    <message><source>Add a cue in the next gap</source><translation>在下一段空隙中添加字幕</translation></message>
+    <message><source>Remove selected cue</source><translation>删除所选字幕</translation></message>
+    <message><source>Start</source><translation>开始</translation></message>
+    <message><source>End</source><translation>结束</translation></message>
+    <message><source>Cue start time</source><translation>字幕开始时间</translation></message>
+    <message><source>Cue end time</source><translation>字幕结束时间</translation></message>
+    <message><source>Select a cue to edit its text</source><translation>选择一条字幕后编辑文字</translation></message>
+    <message><source>Selected cue text</source><translation>所选字幕文字</translation></message>
+    <message><source>Split time</source><translation>拆分时间</translation></message>
+    <message><source>Split boundary time</source><translation>拆分边界时间</translation></message>
+    <message><source>Split at cursor</source><translation>在光标处拆分</translation></message>
+    <message><source>Merge with next</source><translation>与下一条合并</translation></message>
+    <message><source>hh:mm:ss.mmm · millisecond precision</source><translation>hh:mm:ss.mmm · 毫秒精度</translation></message>
+    <message><source>Split uses the text cursor and the time above. Merge joins the next cue, including any gap.</source><translation>按文字光标和上方时间拆分；合并包含下一条字幕及中间空隙。</translation></message>
+    <message><source>Save as candidate</source><translation>保存为候选</translation></message>
+    <message><source>Reset changes</source><translation>重置修改</translation></message>
+    <message><source>Corrections and imports create a new candidate. Accept it separately to use it for export. Audio and script stay unchanged.</source><translation>校正与导入会创建新候选，需单独采用后才能导出。录音与脚本保持不变。</translation></message>
+    <message><source>Discard unsaved subtitle changes?</source><translation>丢弃未保存的字幕修改？</translation></message>
+    <message><source>Your cue edits have not been saved as a candidate. Discard them to continue?</source><translation>字幕修改尚未保存为候选。是否丢弃修改并继续？</translation></message>
+    <message><source>Keep editing</source><translation>继续编辑</translation></message>
+    <message><source>Discard changes</source><translation>丢弃修改</translation></message>
+    <message><source>Import subtitles as a candidate</source><translation>导入字幕为候选</translation></message>
+    <message><source>Subtitle files (*.srt *.vtt)</source><translation>字幕文件 (*.srt *.vtt)</translation></message>
+    <message><source>Accept subtitles</source><translation>采用字幕</translation></message>
+    <message><source>Discard candidate subtitles</source><translation>丢弃候选字幕</translation></message>
+    <message><source>Current subtitles</source><translation>当前字幕</translation></message>
+    <message><source>No saved subtitles</source><translation>暂无已保存字幕</translation></message>
 </context>
   <context>
     <name>ChaptersPanel</name>
@@ -2730,5 +2772,32 @@ Write a narration, import an existing script, or choose a form on the left.</sou
     <message><source>Subtitle timing evidence is invalid. Realign this audio and review a new candidate.</source><translation>字幕时间依据无效，请重新对齐此录音并审阅新候选。</translation></message>
     <message><source>Alignment supports audio up to 128 MiB and 30 minutes. Use a shorter accepted version.</source><translation>对齐支持最大 128 MiB、最长 30 分钟的录音，请使用较短的已采用版本。</translation></message>
     <message><source>The alignment could not match these words. Review the exact transcript against the audio, then try again.</source><translation>对齐未能匹配这些台词，请逐字核对录音中的实际台词后重试。</translation></message>
+    <message><source>Add at least one cue before saving.</source><translation>请先添加至少一条字幕，再保存。</translation></message>
+    <message><source>Use no more than 8192 subtitle cues.</source><translation>字幕数量不能超过 8192 条。</translation></message>
+    <message><source>Cue %1: enter times as hh:mm:ss.mmm.</source><translation>第 %1 条：请按 hh:mm:ss.mmm 格式填写时间。</translation></message>
+    <message><source>Cue %1: the end must follow the start.</source><translation>第 %1 条：结束时间必须晚于开始时间。</translation></message>
+    <message><source>Cue %1: keep the cue within this audio.</source><translation>第 %1 条：字幕时间不能超出此录音。</translation></message>
+    <message><source>Cue %1: cues must stay in order without overlap.</source><translation>第 %1 条：字幕必须按时间排列，且不能重叠。</translation></message>
+    <message><source>Cue %1: enter subtitle text.</source><translation>第 %1 条：请填写字幕文字。</translation></message>
+    <message><source>Cue %1: the text is too large or contains an invalid character.</source><translation>第 %1 条：文字过长或包含无效字符。</translation></message>
+    <message><source>Manual corrections</source><translation>手动校正</translation></message>
+    <message><source>Imported subtitles</source><translation>导入的字幕</translation></message>
+    <message><source>Saving a new subtitle candidate…</source><translation>正在保存新的字幕候选…</translation></message>
+    <message><source>Wait for the current subtitle request to finish.</source><translation>请等待当前字幕操作完成。</translation></message>
+    <message><source>Place the text cursor between the words to split.</source><translation>请将文字光标放在需要拆分的位置。</translation></message>
+    <message><source>Choose a split time strictly between this cue's start and end.</source><translation>拆分时间必须晚于此条字幕的开始时间，且早于结束时间。</translation></message>
+    <message><source>Correct these cues' times before merging them.</source><translation>请先修正这两条字幕的时间，再合并。</translation></message>
+    <message><source>There is no gap after this cue. Shorten or split it first.</source><translation>此条字幕之后没有空隙，请先缩短或拆分此条字幕。</translation></message>
+    <message><source>The reviewed track changed. Open the file chooser again.</source><translation>当前审阅的字幕已变化，请重新打开文件选择器。</translation></message>
+    <message><source>This audio has no current timings. Import subtitles or align a confirmed transcript.</source><translation>此录音暂无有效字幕时间，请导入字幕或将已确认的台词与录音对齐。</translation></message>
+    <message><source>Choose a plain UTF-8 SRT or WebVTT file with valid cue times.</source><translation>请选择时间有效的纯文本 UTF-8 SRT 或 WebVTT 字幕文件。</translation></message>
+    <message><source>This file uses styling or layout features. Import plain SRT or WebVTT captions.</source><translation>此文件使用了样式或布局功能，请导入纯文本 SRT 或 WebVTT 字幕。</translation></message>
+    <message><source>The subtitle file exceeds 1 MiB. Use a smaller file.</source><translation>字幕文件超过 1 MiB，请使用较小的文件。</translation></message>
+    <message><source>This subtitle snapshot is too large. Use fewer cues or shorter text.</source><translation>此字幕版本过大，请减少字幕数量或缩短文字。</translation></message>
+    <message><source>Choose a supported subtitle language.</source><translation>请选择支持的字幕语言。</translation></message>
+    <message><source>Check subtitle text, cue order and times against this audio, then save a new candidate.</source><translation>请对照此录音检查字幕文字、顺序和时间，再保存新的候选。</translation></message>
+    <message><source>Candidate subtitles are ready. Review them, then accept explicitly.</source><translation>候选字幕已就绪，请审阅后明确采用。</translation></message>
+    <message><source>Subtitles accepted for this audio version.</source><translation>已为此录音版本采用字幕。</translation></message>
+    <message><source>Candidate subtitles discarded.</source><translation>已丢弃候选字幕。</translation></message>
 </context>
 </TS>

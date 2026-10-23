@@ -146,6 +146,7 @@ impl Project {
                 subtitles_unavailable_reason: (!captions)
                     .then(|| "accepted_audio_has_no_measured_segment_timings".into()),
                 subtitle_source: track.as_ref().map(|track| track.source),
+                subtitle_revision: track.as_ref().and_then(|track| track.revision_id.clone()),
                 alignment_revision: track
                     .as_ref()
                     .and_then(|track| track.alignment_revision.clone()),

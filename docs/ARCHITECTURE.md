@@ -188,3 +188,18 @@ timeline editing remain Echo responsibilities.
 `DesktopDelivery` owns correlated preview, alignment and compilation requests. Audio/project changes
 invalidate open reviews and pending callbacks. User transcript edits remain separate from refreshed
 project snapshots; adopting timing and exporting a reviewed compilation are explicit actions.
+
+Manual subtitle corrections and imports share this candidate/selection boundary. Their provenance
+contains immutable parent track/revision snapshots or the exact imported file; they never carry a
+fabricated model receipt. The canonical track exposes a general `revision_id`, while
+`alignment_revision` identifies only genuine forced alignment. Chapter export and compilation retain
+the selected subtitle revision independently of its origin. Offline cue validation checks bounds,
+non-overlap and audio duration before publication; old model revisions remain selectable.
+
+The subtitle editor holds an unsaved correction buffer separately from the project snapshot. Closing,
+switching the reviewed version or opening another project requires resolving that buffer. Saved
+corrections are candidates; acceptance remains separate. Cue audition uses the existing single audio
+player with source/seek readiness and an end boundary, fenced by project, audio and request identity.
+Native decoder startup is silent until the initialized playback clock is positioned at the cue;
+cancellation restores output volume and preserves the user's mute choice. It does not produce new
+audio or introduce an editing timeline.

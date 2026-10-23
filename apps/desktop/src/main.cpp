@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
       app.arguments().contains("--smoke-sound-workspace") ||
       app.arguments().contains("--smoke-longform") ||
       app.arguments().contains("--smoke-delivery") ||
+      app.arguments().contains("--smoke-playback") ||
       app.arguments().contains("--smoke-audio") ||
       app.arguments().contains("--smoke-shape-transfer")) {
     QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -194,5 +195,9 @@ int main(int argc, char **argv) {
   if (deliveryIndex >= 0 && deliveryIndex + 1 < arguments.size())
     startDeliverySmoke(app, engine, preferences, backend,
                        arguments[deliveryIndex + 1]);
+  const int playbackIndex = arguments.indexOf("--smoke-playback");
+  if (playbackIndex >= 0 && playbackIndex + 1 < arguments.size())
+    startPlaybackSmoke(app, engine, preferences, backend,
+                       arguments[playbackIndex + 1]);
   return app.exec();
 }

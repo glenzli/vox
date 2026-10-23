@@ -22,6 +22,23 @@ class DesktopDelivery final : public QObject {
       QVariantMap subtitleTrack READ subtitleTrack NOTIFY subtitleChanged)
   Q_PROPERTY(QVariantList subtitleCandidates READ subtitleCandidates NOTIFY
                  subtitleChanged)
+  Q_PROPERTY(QVariantList subtitleDraftCues READ subtitleDraftCues NOTIFY
+                 subtitleChanged)
+  Q_PROPERTY(QVariantMap selectedSubtitleCue READ selectedSubtitleCue NOTIFY
+                 subtitleChanged)
+  Q_PROPERTY(int subtitleCueIndex READ subtitleCueIndex NOTIFY subtitleChanged)
+  Q_PROPERTY(
+      bool subtitleDraftDirty READ subtitleDraftDirty NOTIFY subtitleChanged)
+  Q_PROPERTY(
+      QString subtitleDraftIssue READ subtitleDraftIssue NOTIFY subtitleChanged)
+  Q_PROPERTY(bool canSaveSubtitleDraft READ canSaveSubtitleDraft NOTIFY
+                 subtitleChanged)
+  Q_PROPERTY(
+      qint64 subtitleDurationMs READ subtitleDurationMs NOTIFY subtitleChanged)
+  Q_PROPERTY(QString subtitleReviewToken READ subtitleReviewToken NOTIFY
+                 subtitleChanged)
+  Q_PROPERTY(bool subtitleDiscardPending READ subtitleDiscardPending NOTIFY
+                 subtitleChanged)
   Q_PROPERTY(
       QString transcript READ transcript WRITE setTranscript NOTIFY formChanged)
   Q_PROPERTY(
@@ -55,6 +72,19 @@ public:
   QVariantList subtitleCandidates() const {
     return m_candidates.toVariantList();
   }
+  QVariantList subtitleDraftCues() const { return m_draftCues.toVariantList(); }
+  QVariantMap selectedSubtitleCue() const;
+  int subtitleCueIndex() const { return m_cueIndex; }
+  bool subtitleDraftDirty() const { return m_draftCues != m_savedCues; }
+  QString subtitleDraftIssue() const;
+  bool canSaveSubtitleDraft() const;
+  qint64 subtitleDurationMs() const { return m_durationMs; }
+  QString subtitleReviewToken() const {
+    return QString::number(m_subtitleSequence);
+  }
+  bool subtitleDiscardPending() const {
+    return !m_pendingSubtitleAction.isEmpty();
+  }
   QString transcript() const { return m_transcript; }
   QString language() const { return m_language; }
   QString subtitleMessage() const;
@@ -73,7 +103,24 @@ public:
   void retranslate();
   Q_INVOKABLE void openSubtitles(const QString &audioID);
   Q_INVOKABLE void closeSubtitles();
+  Q_INVOKABLE void requestCloseSubtitles();
+  Q_INVOKABLE void resolveSubtitleDiscard(bool discard);
   Q_INVOKABLE void previewSubtitleCandidate(const QString &id);
+  Q_INVOKABLE void selectSubtitleCue(int index);
+  Q_INVOKABLE void updateSubtitleCue(const QString &startTime,
+                                     const QString &endTime,
+                                     const QString &text);
+  Q_INVOKABLE void splitSubtitleCue(int cursorPosition,
+                                    const QString &splitTime);
+  Q_INVOKABLE void mergeNextSubtitleCue();
+  Q_INVOKABLE void addSubtitleCue();
+  Q_INVOKABLE void removeSubtitleCue();
+  Q_INVOKABLE void resetSubtitleDraft();
+  Q_INVOKABLE void saveSubtitleDraft();
+  Q_INVOKABLE void requestSubtitleImport();
+  Q_INVOKABLE void importSubtitles(const QUrl &file, const QString &format,
+                                   const QString &reviewToken);
+  Q_INVOKABLE void auditionSubtitleCue();
   Q_INVOKABLE void alignSubtitles(bool exactTranscriptConfirmed);
   Q_INVOKABLE void acceptSubtitleCandidate();
   Q_INVOKABLE void discardSubtitleCandidate();
@@ -92,6 +139,9 @@ public:
   Q_INVOKABLE QString subtitleSourceLabel(const QString &source) const;
 signals:
   void subtitleChanged();
+  void subtitleDiscardRequested();
+  void subtitleImportRequested();
+  void subtitleCloseResolved(bool closed);
   void formChanged();
   void compilationChanged();
 
@@ -100,7 +150,10 @@ private:
   QString m_subtitlePath, m_subtitleProject, m_audioID, m_candidateID;
   QString m_transcript, m_language, m_subtitleCode;
   QJsonObject m_track;
-  QJsonArray m_candidates;
+  QJsonArray m_candidates, m_draftCues, m_savedCues;
+  int m_cueIndex = -1;
+  qint64 m_durationMs = 0;
+  QString m_pendingSubtitleAction, m_pendingSubtitleValue;
   quint64 m_subtitleEpoch = 0, m_subtitleSequence = 0;
   bool m_subtitleLoading = false, m_acceptedAudio = false, m_aligning = false;
   QString m_compilationPath, m_compilationProject, m_compilationCode;
@@ -113,6 +166,10 @@ private:
   bool compilationIdentity() const;
   void syncIdentity();
   void loadSubtitles(const QString &candidateID, bool initialize = false);
+  bool subtitleEditable() const;
+  bool confirmSubtitleDiscard(const QString &action, const QString &value = {});
+  void resetSubtitleCues();
+  void createSubtitleCandidate(const QString &action, QJsonObject fields);
   void changeSubtitleCandidate(bool accept);
   void invalidateCompilation();
 };

@@ -36,6 +36,9 @@
   candidate acceptance and SRT/VTT export after Echo edits.
 - Ordered chapter compilation with silent gaps, explicit format normalization, merged subtitles,
   chapter markers and revision-pinned provenance; reviewed preflight prevents stale exports.
+- Offline subtitle correction with bounded cue audition, text/time edits, split/merge and strict
+  plain SRT/WebVTT import. Saved corrections remain candidates with immutable parent/import evidence
+  until explicitly accepted for chapter and compiled delivery.
 - Complete songs and singing production are outside the product scope.
 
 Implementation, focused checks, packaged checks and real Runtime/Echo evidence are recorded

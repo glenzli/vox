@@ -78,6 +78,8 @@ pub struct ChapterCompilationPreview {
     pub start_frame: Option<u64>,
     pub end_frame: Option<u64>,
     pub subtitle_source: Option<SubtitleSource>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub subtitle_revision: Option<String>,
     pub alignment_revision: Option<String>,
 }
 
@@ -412,6 +414,7 @@ fn prepare(
             start_frame: None,
             end_frame: None,
             subtitle_source: None,
+            subtitle_revision: None,
             alignment_revision: None,
         };
         if let Err(error) = require_current_settings(parent, &manifest) {
@@ -472,6 +475,7 @@ fn prepare(
                 match project.subtitle_track(&audio.id) {
                     Ok(track) => {
                         preview.subtitle_source = Some(track.source);
+                        preview.subtitle_revision = track.revision_id.clone();
                         preview.alignment_revision = track.alignment_revision.clone();
                         subtitles = Some(track);
                     }

@@ -48,6 +48,8 @@ class DesktopBackend final : public QObject {
   Q_PROPERTY(QString selectedAudio READ selectedAudio WRITE selectAudio NOTIFY
                  selectionChanged)
   Q_PROPERTY(QVariantList waveform READ waveform NOTIFY waveformChanged)
+  Q_PROPERTY(bool rangePlaybackActive READ rangePlaybackActive NOTIFY
+                 rangePlaybackChanged)
   Q_PROPERTY(bool hasEchoHandoff READ hasEchoHandoff NOTIFY stateChanged)
   Q_PROPERTY(QObject *delivery READ delivery CONSTANT)
 public:
@@ -88,6 +90,7 @@ public:
   int total() const { return m_total; }
   QString selectedAudio() const { return m_selected; }
   QVariantList waveform() const { return m_waveform; }
+  bool rangePlaybackActive() const { return m_rangePlaybackActive; }
   bool hasEchoHandoff() const;
   QObject *delivery() const;
   Q_INVOKABLE void createProject(const QUrl &url);
@@ -158,6 +161,9 @@ public:
   Q_INVOKABLE void auditionVoice(const QString &alias);
   Q_INVOKABLE void selectAudio(const QString &id);
   Q_INVOKABLE void playSelected();
+  Q_INVOKABLE bool playAudioRange(const QString &audioID, qint64 startMs,
+                                  qint64 endMs);
+  Q_INVOKABLE void stopRangePlayback();
   Q_INVOKABLE void acceptSelected();
   Q_INVOKABLE void discardSelected();
   Q_INVOKABLE void exportSelected(const QUrl &url);
@@ -187,6 +193,9 @@ signals:
   void progressChanged();
   void selectionChanged();
   void playFile(const QUrl &file);
+  void playRangeFile(const QUrl &file, qint64 startMs, qint64 endMs);
+  void stopRangePlaybackRequested();
+  void rangePlaybackChanged();
   void requestFinished(const QString &action, bool ok);
   void waveformChanged();
 
@@ -214,9 +223,13 @@ private:
   bool m_designingVoice = false;
   bool m_batchingChapters = false;
   bool m_echoOpening = false;
+  bool m_rangePlaybackActive = false;
+  bool m_waitingSubtitleTransition = false;
+  QMetaObject::Connection m_subtitleTransitionConnection;
   bool m_projectChanging = false, m_cancelRequested = false;
   quint64 m_editSequence = 0, m_projectEpoch = 0, m_selectionSequence = 0,
           m_playbackSequence = 0;
+  quint64 m_rangePlaybackSequence = 0;
   int m_completed = 0, m_total = 0;
   int m_pendingRequests = 0;
   struct SaveContinuation {
@@ -242,6 +255,9 @@ private:
   void setRendering(bool rendering);
   void setProjectChanging(bool changing);
   void playPreview(const QUrl &file, const QVariantList &peaks = {});
+  bool audioRangeValid(const QString &audioID, qint64 startMs,
+                       qint64 endMs) const;
+  bool deferProjectTransition(std::function<void()> continuation);
   void apply(const QJsonObject &result, quint64 capturedEdit,
              bool reset = false);
   void command(const QString &action, const QJsonObject &fields,

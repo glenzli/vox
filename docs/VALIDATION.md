@@ -405,3 +405,61 @@ native interaction, subtitle and compiled package evidence is under
 are `/private/tmp/vox-delivery-validation-20261023.json`.
 Alignment times are model estimates for review, not an independent verification of spoken words.
 This phase leaves source changes uncommitted and does not push.
+
+## Offline subtitle refinement — 2026-10-23
+
+The preceding alignment/compilation work was committed locally as `c4cba86` before this phase;
+it was not pushed. Three GPT-6.1 Sol/max tasks then implemented cue correction, bounded audition
+and the compact editor. New changes remain local and uncommitted.
+
+- The required build workflow passed formatting, strict Clippy and **172 Rust tests**. Coverage
+  includes immutable parent snapshots after candidate discard, legacy alignment compatibility,
+  bounded plain SRT/WebVTT import, literal Unicode/escaping, rounded audio duration and accepted
+  manual/imported revisions in chapter and compilation exports. All **714 Chinese messages**
+  are complete.
+- Packaged subtitle interaction covers text/timing edits, explicit split boundaries, merging,
+  adding/removing cues, pointer-driven candidate save and acceptance, stale import callbacks,
+  and retaining drafts across close, audio/candidate changes and project transitions. It exposed
+  an empty-track lookup that incorrectly enabled export and a nested confirmation layout loop;
+  both were corrected. English/light and Chinese/dark inspectors fit a 1080 × 740 window.
+- `scripts/test_subtitle_refinement.py` passed against an isolated copy of the real Echo-edited,
+  aligned two-chapter fixture. Manual correction, nested candidate discard, exact SRT/VTT
+  round-trips, explicit language metadata, acceptance, chapter export and compilation succeeded.
+  Stale versions and invalid cue bounds were rejected without changing the manifest. The original
+  alignment remained selectable; reopening preserved the selected import. Source/audio records,
+  Runtime journals, the other chapter and the source fixture remained unchanged.
+- Native Cocoa use exercised text/time correction, split/merge, Keep editing, candidate save,
+  adoption, the actual file dialogs for SRT export/import, and reopening. The subtitle popup owns
+  its Save/Escape shortcuts through its visible content item; actual Cmd+S saved a correction
+  candidate and Escape closed the inspector. Selecting the second cue played from 2.080 seconds
+  and stopped automatically at its end. The native report and screenshots are under
+  `/private/tmp/vox-native-refinement-20261023`.
+- Real macOS WAV playback passed delayed initialization, seek, cue-end stop and return to ordinary
+  playback. Native startup can reset an optimistic seek to zero: the range controller now primes
+  silently, reseeks on the initialized clock, then restores the original volume. Cancellation,
+  errors, source changes and destruction restore volume; mute is preserved. The deterministic
+  checks additionally cover stale queued starts, short/rounded durations and request isolation.
+  Offscreen media checks do not substitute for the native result in
+  `/private/tmp/vox-refine-final-native-playback-20261023.log`.
+- All **11 packaged desktop checks** passed: ten passed in the complete run, and the final
+  subtitle interaction recheck closed the remaining failure. The same subtitle workflow passed
+  under Cocoa after the fixture used public key events and explicitly activated its window.
+  Unchanged core and desktop checks were reused; subsequent changes affected only the key-event
+  fixture. Logs are `/private/tmp/vox-refine-final-ctest-20261023.log`,
+  `/private/tmp/vox-refine-delivery-focus-final-20261023.log` and
+  `/private/tmp/vox-refine-delivery-cocoa-focus-20261023.log`.
+
+The offline workflow evidence is `/private/tmp/vox-refinement-flow-20261023/report.json`.
+This phase reuses the preceding real Runtime/Echo fixture and does not dispatch new inference,
+change Runtime authorization or modify the user's welcome project.
+
+The signed preview is `/Users/g4i/lab/.vox-local-build/releases/20261023-205752-52913/Vox.app`,
+also available through `current-debug/Vox.app`. The app SHA-256 is
+`cdd5c7487e037ee9324194424be7abf254f040fb1319f92c292fd79235fee53f` and worker SHA-256 is
+`180ca319e95755b988aa736caddd842f6b74be96119c713fa628dc2c1b0fc0f9`.
+Code-signing verification passed. Excluding the signature trailer and associated Mach-O size
+fields, both payloads match the validated build; the worker remains identical to the offline
+workflow input before signing. Identities are recorded in
+`/private/tmp/vox-native-refinement-20261023/signature-comparison.json`.
+The promoted app was opened on the isolated fixture with the saved imported subtitles visible.
+New source changes remain uncommitted and no push was performed.

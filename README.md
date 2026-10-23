@@ -36,7 +36,7 @@ Vox 是独立的 Qt 桌面应用，用于旁白、多角色对话、听力材料
 | 音色模仿 | 现场录音或导入单声道/立体声 PCM16 WAV，填写逐字参考文本并确认使用权限；可分配给旁白或任意角色 |
 | 音色设计 | 用文字描述声音，生成最多四份样音；试听后命名保存为合成参考音色，复用于默认旁白或角色 |
 | 长内容制作 | 按章节导入和编写，复用音色与发音设置；批量生成、停止与续作，只重做变化的分段；逐章采用后导出章节包，或合成带章节标记和字幕的完整音频 |
-| 字幕审阅 | 查看分段实测时间；对已采用的音频填写实际台词，通过本地模型重新对齐，预览并采用后导出 SRT/VTT；支持 Echo 编辑后的录音 |
+| 字幕审阅 | 查看实测或对齐时间，逐条试听；校订文字与时间、拆分合并、导入 SRT/VTT，作为候选审阅采用；支持 Echo 编辑后的录音重新对齐 |
 | 声音工作区 | 音效、环境声、短配乐三个入口；本地生成、批量候选、循环试听、原始 WAV 导出与 Echo 编辑 |
 | 音效库 | 八种程序生成的内置音效、WAV 导入；采用后可绑定脚本音效提示 |
 | 版本与素材 | 独立项目、自动保存的工作草稿、不可变素材、明确采用的脚本与录音版本 |
@@ -60,6 +60,10 @@ Markdown 按一级标题分章；一级标题不足时使用二级标题，长�
 对齐时间属于模型估计，不代表逐字识别校验。整书导出按所选章节顺序加入可配置的静音间隔，
 包含 WAV、章节标记、脚本与来源清单，可选择合并字幕。音频格式不一致时，需要明确选择统一为
 24 kHz 单声道 PCM16；保留格式模式不做隐式转换。导出到新目录，不覆盖已有结果。
+
+字幕精修可离线进行。选中一条字幕试听对应的录音范围，调整文字与起止时间，或拆分、合并字幕；
+保存后形成新的候选，不直接替换当前采用的字幕。纯文本 SRT/WebVTT 导入保留原文件，检查时间顺序、
+重叠和音频时长；不支持的样式与布局会明确拒绝。手工修订与导入来源分别记录，采用后可用于单章和整书导出。
 
 声音生成支持 1–30 秒、显式随机种子、最多四个变体和中英文描述。短配乐限定为器乐素材，完整歌曲不在 Vox 范围内。
 环境声使用音效模型；循环试听用于检查首尾衔接，不保证模型输出无缝循环。中文描述经过本地提示词准备，
@@ -168,7 +172,7 @@ Script editing, voice direction and takes share one workspace. These screenshots
 | Reference voices | Record a microphone sample or import mono/stereo PCM16 WAV, enter its exact transcript and confirm permitted use; assign to narration or any role |
 | Voice design | Describe a voice, generate up to four samples, then audition and explicitly save a named synthetic reference for narration or roles |
 | Long-form production | Import and edit chapters, share voices and pronunciation, batch and resume generation, regenerate changed segments, then export accepted chapter packages or one recording with chapter markers and subtitles |
-| Subtitle review | Inspect measured segment timing, supply the exact spoken transcript for accepted audio, align locally, review and explicitly accept estimated timing, then export SRT/VTT; supports Echo-edited takes |
+| Subtitle review | Inspect measured/aligned timing, audition individual cues, correct text and timing, split/merge, or import SRT/VTT; review and accept candidates, including realignment of Echo-edited takes |
 | Sound workspaces | Separate effects, ambience and short instrumental music entries; local generation, batch candidates, loop audition, original WAV export and Echo editing |
 | Sound library | Eight procedural effects and WAV import; accepted materials can be bound to script cues |
 | Versions and materials | Independent projects, autosaved drafts, immutable materials, and explicit script/audio acceptance |
@@ -200,6 +204,12 @@ the spoken words. Compilation joins selected chapters in order with a configurab
 WAV, chapter markers, scripts and provenance, with optional merged captions. Mixed audio formats require
 an explicit conversion to mono 24 kHz PCM16; preserve mode never converts implicitly. Export writes a
 new directory and does not overwrite earlier deliverables.
+
+Subtitle correction works offline. Select a cue to audition its audio range, edit its text and times,
+or split and merge cues. Saving creates a new candidate without replacing the accepted subtitles.
+Plain-text SRT/WebVTT import preserves the original file and checks time order, overlap and audio
+duration; unsupported styling or layout is rejected explicitly. Manual and imported provenance stay
+distinct, and accepted corrections flow into both chapter and compiled delivery.
 
 Sound generation supports 1–30 seconds, an explicit seed, up to four variations, and English or Chinese descriptions.
 Short music is instrumental; complete songs are outside Vox’s scope. Ambience uses the sound-effects model.

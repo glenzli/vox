@@ -164,7 +164,7 @@ Echo editor in a new external project. It never records a human voice or modifie
 ## Subtitle alignment and review
 
 `subtitle_preview` takes `path`, `audio_id` and an optional `candidate_id`. Its ordinary snapshot
-adds `track`, `track_error`, `transcript`, `language`, `accepted_audio`, pending `candidates` and
+adds `track`, `track_error`, `transcript`, `language`, `duration_ms`, `accepted_audio`, pending `candidates` and
 `runs`. Missing timing returns a null track with a reason. The transcript suggestion comes from
 the selected audio's immutable source, including effective spoken pronunciation and repeats;
 after editing, the caller must supply the words actually present in the recording.
@@ -181,11 +181,37 @@ completed candidate; it does not claim to abort provider inference. Lost running
 `interrupted_unknown` and are never automatically resubmitted.
 
 `accept_subtitles` and `discard_subtitles` take `path`, expected `version` and subtitle `id`.
-Only explicit acceptance selects alignment for that exact audio revision. Previewing a candidate
+Only explicit acceptance selects subtitles for that exact audio revision. Previewing a candidate
 never changes export selection. `SubtitleTrack` reports `source: "measured_segments"` or
-`"forced_alignment"`, exact audio/source pins, optional `alignment_revision`, and ordered
+`"forced_alignment"`, `"manual_revision"` or `"imported_subtitles"`, exact audio/source pins,
+optional `revision_id` and `alignment_revision`, and ordered
 `cues: [{start_ms, end_ms, text}]`. Alignment timing is an estimate to review, not an ASR accuracy
 claim. Measured timing keeps authored captions; alignment preserves the caller's confirmed wording.
+
+### Offline subtitle correction and import
+
+`subtitle_edit` takes `path`, expected `version`, accepted `audio_id`, full
+`cues: [{start_ms, end_ms, text}]` and optional `candidate_id`. Without a candidate ID, the base is
+the current selected or measured track; an ID selects that exact candidate or accepted revision.
+The operation creates a manual candidate with immutable parent evidence. The response is the normal
+project snapshot plus `subtitle_candidate_id`; it does not change the accepted subtitle selection.
+Splitting, merging and text/time correction use this same bounded cue contract.
+
+`subtitle_import` takes `path`, expected `version`, accepted `audio_id`, local `file`, exact lowercase
+`format: "srt" | "vtt"` and optional explicit `language`. Files are bounded to 1 MiB before parsing.
+The supported dialect is plain UTF-8 SRT/WebVTT, with optional BOM and CRLF. SRT uses bounded numeric
+cue labels and `HH:MM:SS,mmm` timestamps. WebVTT uses `WEBVTT`, optional plain cue identifiers
+and `HH:MM:SS.mmm` or `MM:SS.mmm` timestamps; time order, not labels, governs validation.
+Markup, layout settings and unsupported blocks
+or entities are rejected, not silently discarded. Literal characters are escaped on export and
+decoded on import. The imported bytes and format remain immutable provenance. The response likewise
+contains `subtitle_candidate_id`; use the existing preview and explicit accept/discard operations.
+
+Both operations reject invalid/overlapping times and cues outside the audio duration rounded to
+the nearest millisecond. The
+script, accepted audio and genuine alignment receipts remain unchanged. `revision_id` identifies
+any saved subtitle revision; `alignment_revision` is present only for model-aligned tracks. Accepted
+manual/imported revisions are consumed by ordinary SRT/VTT, chapter and compilation exports.
 
 ## Compiled chapter delivery
 

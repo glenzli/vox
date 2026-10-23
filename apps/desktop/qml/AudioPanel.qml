@@ -5,6 +5,7 @@ import QtQuick.Dialogs as Native
 import QtMultimedia
 Rectangle {
     id: panel
+    objectName: "audioPanel"
     color: Theme.panel
     property bool showTakes: true
     property bool loopPreview: false
@@ -12,8 +13,14 @@ Rectangle {
     property string dialogIdentity: ""
     property string exportId: ""
     signal exportSubtitlesRequested(string audioId)
-    onShowTakesChanged: { player.stop(); player.source = "" }
-    onPlaybackContextChanged: { player.stop(); player.source = "" }
+    onShowTakesChanged: resetPlayback()
+    onPlaybackContextChanged: resetPlayback()
+    function resetPlayback() {
+        backend.stopRangePlayback()
+        rangePlayback.stop()
+        player.stop()
+        player.source = ""
+    }
     property var takes: {
         let items = []
         for (let r of (backend.project.candidates || []).slice().reverse()) items.push({record:r, accepted:false})
@@ -28,11 +35,19 @@ Rectangle {
         let s = Math.floor(ms / 1000)
         return Math.floor(s / 60) + ":" + (s % 60).toString().padStart(2, "0")
     }
-    MediaPlayer { id: player; objectName: "audioPlayer"; loops: panel.loopPreview ? MediaPlayer.Infinite : 1; audioOutput: AudioOutput { id: output; volume: 0.8 } }
+    MediaPlayer { id: player; objectName: "audioPlayer"; loops: !rangePlayback.active && panel.loopPreview ? MediaPlayer.Infinite : 1; audioOutput: AudioOutput { id: output; volume: 0.8 } }
+    AudioRangePlayback {
+        id: rangePlayback
+        objectName: "audioRangePlayback"
+        mediaPlayer: player
+        onFinished: backend.stopRangePlayback()
+    }
     Connections {
         target: backend
-        function onPlayFile(file) { player.stop(); player.source = file; player.play() }
-        function onSelectionChanged() { player.stop(); player.source = "" }
+        function onPlayFile(file) { backend.stopRangePlayback(); rangePlayback.stop(); player.stop(); player.source = file; player.play() }
+        function onPlayRangeFile(file, startMs, endMs) { rangePlayback.request(file, startMs, endMs) }
+        function onStopRangePlaybackRequested() { rangePlayback.stop() }
+        function onSelectionChanged() { panel.resetPlayback() }
         function onWaveformChanged() { waveform.requestPaint() }
     }
     Connections { target: Theme; function onDarkChanged() { waveform.requestPaint() } }
@@ -95,9 +110,14 @@ Rectangle {
                 primary: true
                 hint: player.playbackState === MediaPlayer.PlayingState ? qsTr("Pause") : qsTr("Play selected take")
                 enabled: panel.selected !== null || player.source.toString().length > 0
-                onClicked: { if (player.playbackState === MediaPlayer.PlayingState) player.pause(); else if (player.source.toString().length > 0) player.play(); else backend.playSelected() }
+                onClicked: {
+                    if (player.playbackState === MediaPlayer.PlayingState) player.pause()
+                    else if (backend.rangePlaybackActive) { backend.stopRangePlayback(); backend.playSelected() }
+                    else if (player.source.toString().length > 0) player.play()
+                    else backend.playSelected()
+                }
             }
-            IconButton { symbol: "stop"; hint: qsTr("Stop playback"); onClicked: player.stop(); enabled: player.source.toString().length > 0 }
+            IconButton { symbol: "stop"; hint: qsTr("Stop playback"); enabled: backend.rangePlaybackActive || player.source.toString().length > 0; onClicked: { backend.stopRangePlayback(); player.stop() } }
             Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 28
@@ -118,7 +138,7 @@ Rectangle {
                     }
                 }
                 Rectangle { height: parent.height; width: 1; color: Theme.text; x: player.duration > 0 ? player.position / player.duration * parent.width : 0; visible: player.duration > 0 }
-                MouseArea { anchors.fill: parent; enabled: player.seekable; onClicked: mouse => player.setPosition(Math.round(mouse.x/width*player.duration)) }
+                MouseArea { anchors.fill: parent; enabled: player.seekable; onClicked: mouse => { backend.stopRangePlayback(); player.setPosition(Math.round(mouse.x/width*player.duration)) } }
             }
             Label { text: panel.time(player.position) + " / " + panel.time(player.duration > 0 ? player.duration : panel.selected ? panel.selected.record.contract.frame_count * 1000 / panel.selected.record.contract.sample_rate_hz : 0); font.pixelSize: 11; color: Theme.secondary; Layout.preferredWidth: 88 }
             IconButton { symbol: "volume"; hint: output.muted ? qsTr("Unmute") : qsTr("Mute"); onClicked: output.muted = !output.muted; opacity: output.muted ? 0.4 : 1 }

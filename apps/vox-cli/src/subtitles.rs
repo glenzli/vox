@@ -1,9 +1,37 @@
-//! Audio-pinned subtitle review and asynchronous alignment adapter.
+//! Audio-pinned subtitle review, local correction/import and alignment adapter.
 use super::*;
+use std::io::Read;
 
 pub(super) fn execute(v: &Value) -> Result<Value> {
     let p = project(v)?;
     match field(v, "action")? {
+        "subtitle_edit" => {
+            let candidate_id = optional_string(v, "candidate_id")?;
+            let cues = serde_json::from_value(v["cues"].clone())?;
+            let (manifest, id) = p.edit_subtitles(
+                version(v)?,
+                field(v, "audio_id")?,
+                candidate_id.filter(|id| !id.is_empty()),
+                cues,
+            )?;
+            let mut result = snapshot(&p, manifest);
+            result["subtitle_candidate_id"] = json!(id);
+            Ok(result)
+        }
+        "subtitle_import" => {
+            let language = optional_string(v, "language")?;
+            let bytes = read_import(Path::new(field(v, "file")?))?;
+            let (manifest, id) = p.import_subtitles(
+                version(v)?,
+                field(v, "audio_id")?,
+                &bytes,
+                field(v, "format")?,
+                language.filter(|language| !language.is_empty()),
+            )?;
+            let mut result = snapshot(&p, manifest);
+            result["subtitle_candidate_id"] = json!(id);
+            Ok(result)
+        }
         "accept_subtitles" => Ok(snapshot(
             &p,
             p.accept_subtitles(version(v)?, field(v, "id")?)?,
@@ -32,6 +60,11 @@ pub(super) fn execute(v: &Value) -> Result<Value> {
                 .subtitle_candidates
                 .iter()
                 .filter(|candidate| candidate.audio_revision == audio_id)
+                .map(|candidate| {
+                    let mut value = json!(candidate);
+                    value["source"] = json!(candidate.source());
+                    value
+                })
                 .collect::<Vec<_>>();
             let runs = m
                 .subtitle_runs
@@ -51,8 +84,18 @@ pub(super) fn execute(v: &Value) -> Result<Value> {
                 Ok(track) => (json!(track), Value::Null),
                 Err(error) => (Value::Null, json!(error.code)),
             };
+            let language = track["language"]
+                .as_str()
+                .filter(|language| !language.is_empty())
+                .map(str::to_owned)
+                .unwrap_or(language);
             let mut result = snapshot(&p, m.clone());
             result["audio_id"] = json!(audio_id);
+            let duration_ms = (u128::from(audio.contract.frame_count) * 1000
+                + u128::from(audio.contract.sample_rate_hz) / 2)
+                .checked_div(u128::from(audio.contract.sample_rate_hz))
+                .unwrap_or(0);
+            result["duration_ms"] = json!(u64::try_from(duration_ms).unwrap_or(u64::MAX));
             result["track"] = track;
             result["track_error"] = error;
             match p.subtitle_transcript(audio_id) {
@@ -76,6 +119,28 @@ pub(super) fn execute(v: &Value) -> Result<Value> {
         }
         _ => Err(Error::new("unknown_action")),
     }
+}
+
+fn optional_string<'a>(value: &'a Value, key: &str) -> Result<Option<&'a str>> {
+    match value.get(key) {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::String(text)) => Ok(Some(text)),
+        _ => Err(Error::new("invalid_request")),
+    }
+}
+
+fn read_import(path: &Path) -> Result<Vec<u8>> {
+    let file = std::fs::File::open(path)?;
+    if !file.metadata()?.is_file() {
+        return Err(Error::new("invalid_subtitle_import"));
+    }
+    let limit = vox_core::project::MAX_SUBTITLE_IMPORT_BYTES;
+    let mut bytes = Vec::new();
+    file.take(limit as u64 + 1).read_to_end(&mut bytes)?;
+    if bytes.len() > limit {
+        return Err(Error::new("subtitle_import_too_large"));
+    }
+    Ok(bytes)
 }
 
 pub(super) fn align(v: &Value, control: SpeechSynthesisControl) -> Result<Value> {

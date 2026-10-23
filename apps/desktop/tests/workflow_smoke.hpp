@@ -31,3 +31,5 @@ void startLongformSmoke(QGuiApplication &, QQmlApplicationEngine &,
 void startDeliverySmoke(QGuiApplication &, QQmlApplicationEngine &,
                         UiPreferences &, DesktopBackend &, const QString &);
 QString prepareDeliverySmoke(const QString &);
+void startPlaybackSmoke(QGuiApplication &, QQmlApplicationEngine &,
+                        UiPreferences &, DesktopBackend &, const QString &);

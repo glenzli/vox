@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QStandardPaths>
 #include <QUuid>
+#include <limits>
 #include <utility>
 
 DesktopBackend::DesktopBackend(QObject *parent)
@@ -158,6 +159,7 @@ void DesktopBackend::apply(const QJsonObject &result, quint64 capturedEdit,
     emit documentChanged();
   }
   if (reset) {
+    stopRangePlayback();
     ++m_projectEpoch;
     ++m_selectionSequence;
     ++m_playbackSequence;
@@ -196,6 +198,8 @@ QVariantList DesktopBackend::recentProjects() const {
 void DesktopBackend::createProject(const QUrl &url) {
   if (busy())
     return;
+  if (deferProjectTransition([this, url] { createProject(url); }))
+    return;
   setProjectChanging(true);
   saveThen(
       [this, url] {
@@ -218,6 +222,8 @@ void DesktopBackend::createProject(const QUrl &url) {
 void DesktopBackend::openProject(const QUrl &url) {
   if (busy())
     return;
+  if (deferProjectTransition([this, url] { openProject(url); }))
+    return;
   setProjectChanging(true);
   saveThen(
       [this, url] {
@@ -234,6 +240,37 @@ void DesktopBackend::openProject(const QUrl &url) {
             false);
       },
       [this] { setProjectChanging(false); });
+}
+bool DesktopBackend::deferProjectTransition(
+    std::function<void()> continuation) {
+  if (m_waitingSubtitleTransition)
+    return true;
+  if (!m_delivery->subtitleDraftDirty())
+    return false;
+  const auto path = m_path;
+  const auto project = m_project["id"].toString();
+  const auto epoch = m_projectEpoch;
+  m_waitingSubtitleTransition = true;
+  m_subtitleTransitionConnection = connect(
+      m_delivery, &DesktopDelivery::subtitleCloseResolved, this,
+      [this, path, project, epoch,
+       continuation = std::move(continuation)](bool closed) {
+        disconnect(m_subtitleTransitionConnection);
+        m_subtitleTransitionConnection = {};
+        if (!closed) {
+          m_waitingSubtitleTransition = false;
+          return;
+        }
+        QTimer::singleShot(0, this, [this, path, project, epoch, continuation] {
+          m_waitingSubtitleTransition = false;
+          if (path == m_path && project == m_project["id"].toString() &&
+              epoch == m_projectEpoch && !busy() &&
+              !m_delivery->subtitleDraftDirty())
+            continuation();
+        });
+      });
+  m_delivery->requestCloseSubtitles();
+  return true;
 }
 void DesktopBackend::importShapeTransfer(const QUrl &transfer,
                                          const QUrl &destination,
@@ -477,9 +514,12 @@ void DesktopBackend::setProjectChanging(bool changing) {
   if (m_projectChanging == changing)
     return;
   m_projectChanging = changing;
+  if (changing)
+    stopRangePlayback();
   emit busyChanged();
 }
 void DesktopBackend::playPreview(const QUrl &file, const QVariantList &peaks) {
+  stopRangePlayback();
   m_selected.clear();
   ++m_selectionSequence;
   ++m_playbackSequence;
@@ -491,6 +531,7 @@ void DesktopBackend::playPreview(const QUrl &file, const QVariantList &peaks) {
   emit playFile(file);
 }
 void DesktopBackend::selectAudio(const QString &id) {
+  stopRangePlayback();
   ++m_playbackSequence;
   if (m_selected == id && !id.isEmpty())
     return;
@@ -515,6 +556,7 @@ void DesktopBackend::selectAudio(const QString &id) {
           });
 }
 void DesktopBackend::playSelected() {
+  stopRangePlayback();
   if (m_selected.isEmpty() || m_path.isEmpty())
     return;
   const auto playback = ++m_playbackSequence;
@@ -530,6 +572,79 @@ void DesktopBackend::playSelected() {
               emit playFile(QUrl::fromLocalFile(
                   r["result"].toObject()["file"].toString()));
           });
+}
+bool DesktopBackend::audioRangeValid(const QString &audioID, qint64 startMs,
+                                     qint64 endMs) const {
+  if (m_path.isEmpty() || m_projectChanging || audioID.isEmpty() ||
+      audioID != m_selected || startMs < 0 || endMs <= startMs)
+    return false;
+  for (const auto &key : {"audio", "candidates"}) {
+    for (const auto &item : m_project[key].toArray()) {
+      const auto audio = item.toObject();
+      if (audio["id"].toString() != audioID)
+        continue;
+      const auto contract = audio["contract"].toObject();
+      const auto frames = contract["frame_count"].toInteger(-1);
+      const auto rate = contract["sample_rate_hz"].toInteger(-1);
+      if (frames <= 0 || rate <= 0 ||
+          rate > std::numeric_limits<quint32>::max())
+        return false;
+      // Match captions' nearest-millisecond boundary. Splitting into seconds
+      // keeps the arithmetic bounded even for a large stored frame count.
+      const auto remainderMs = ((frames % rate) * 1000 + rate / 2) / rate;
+      const auto seconds = frames / rate + remainderMs / 1000;
+      return endMs / 1000 < seconds ||
+             (endMs / 1000 == seconds && endMs % 1000 <= remainderMs % 1000);
+    }
+  }
+  return false;
+}
+bool DesktopBackend::playAudioRange(const QString &audioID, qint64 startMs,
+                                    qint64 endMs) {
+  stopRangePlayback();
+  if (!audioRangeValid(audioID, startMs, endMs))
+    return false;
+  const auto playback = ++m_playbackSequence;
+  m_rangePlaybackSequence = playback;
+  m_rangePlaybackActive = true;
+  emit rangePlaybackChanged();
+  if (m_preparedID == audioID && m_preparedFile.isLocalFile()) {
+    emit playRangeFile(m_preparedFile, startMs, endMs);
+    return true;
+  }
+  command("playback", {{"audio_id", audioID}},
+          [this, audioID, startMs, endMs, playback](const QJsonObject &r) {
+            if (!m_rangePlaybackActive || m_rangePlaybackSequence != playback)
+              return;
+            if (!r["ok"].toBool() || playback != m_playbackSequence ||
+                !audioRangeValid(audioID, startMs, endMs)) {
+              stopRangePlayback();
+              return;
+            }
+            const auto result = r["result"].toObject();
+            const auto file = result["file"].toString();
+            if (file.isEmpty()) {
+              stopRangePlayback();
+              return;
+            }
+            m_preparedFile = QUrl::fromLocalFile(file);
+            m_preparedID = audioID;
+            m_waveform = result["peaks"].toArray().toVariantList();
+            emit waveformChanged();
+            emit playRangeFile(m_preparedFile, startMs, endMs);
+          });
+  return true;
+}
+void DesktopBackend::stopRangePlayback() {
+  if (!m_rangePlaybackActive)
+    return;
+  // A newer whole-audio request may already own the shared playback sequence.
+  // Cancelling this range must not invalidate that newer request.
+  if (m_rangePlaybackSequence == m_playbackSequence)
+    ++m_playbackSequence;
+  m_rangePlaybackActive = false;
+  emit rangePlaybackChanged();
+  emit stopRangePlaybackRequested();
 }
 void DesktopBackend::acceptSelected() {
   if (busy() || m_selected.isEmpty())

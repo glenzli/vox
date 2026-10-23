@@ -648,3 +648,112 @@ fn fractional_chapter_frames_accumulate_before_millisecond_rounding() {
     // Summing individually rounded 10ms chapters would start the third at22ms.
     assert_ne!(manifest.chapters[2].start_ms, 22);
 }
+
+#[test]
+fn accepted_offline_revisions_drive_canonical_chapter_and_compiled_subtitles() {
+    let f = Fixture::new();
+    let chapter = f.add("Corrected chapter", "Original.", ScriptFormat::Plain);
+    f.batch(&[], |_, request| Ok(output(request, 1)));
+    f.accept(&chapter);
+    let child = f.project.chapter_project(&chapter).unwrap();
+    let original = child.read().unwrap();
+    let audio_id = original.audio_head.clone().unwrap();
+    assert_eq!(original.draft.language, "auto");
+    assert!(child.subtitle_track(&audio_id).unwrap().language.is_none());
+    let options = ChapterCompilationOptions::default();
+    let before = preflight(&f, &[], &options);
+    let correction = vec![SubtitleCue {
+        start_ms: 1,
+        end_ms: 9,
+        text: "Corrected 中文 <literal> & café".into(),
+    }];
+    let (candidate, revision_id) = child
+        .edit_subtitles(original.version, &audio_id, None, correction.clone())
+        .unwrap();
+    assert_eq!(candidate.source_head, original.source_head);
+    assert_eq!(candidate.audio_head, original.audio_head);
+    assert_eq!(
+        child.subtitle_track(&audio_id).unwrap().source,
+        SubtitleSource::MeasuredSegments
+    );
+    child
+        .accept_subtitles(candidate.version, &revision_id)
+        .unwrap();
+    let after = preflight(&f, &[], &options);
+    assert!(after.ready);
+    assert_ne!(before.fingerprint, after.fingerprint);
+    assert_eq!(
+        after.chapters[0].subtitle_source,
+        Some(SubtitleSource::ManualRevision)
+    );
+    assert!(after.chapters[0].alignment_revision.is_none());
+    assert_eq!(
+        after.chapters[0].subtitle_revision.as_ref(),
+        Some(&revision_id)
+    );
+    let compilation = export(&f, &[], &options, "corrected");
+    let selected = compilation.chapters[0].subtitle_track.as_ref().unwrap();
+    assert_eq!(selected.cues, correction);
+    assert_eq!(selected.revision_id.as_ref(), Some(&revision_id));
+    let srt = fs::read_to_string(f.base.join("corrected/compilation.srt")).unwrap();
+    assert!(srt.contains("00:00:00,001 --> 00:00:00,009"));
+    assert!(srt.contains("Corrected 中文 &lt;literal&gt; &amp; café"));
+    assert!(!srt.contains("Original."));
+    let package = f
+        .project
+        .export_chapters(
+            f.project.read().unwrap().version,
+            &[],
+            &f.base.join("corrected-package"),
+        )
+        .unwrap();
+    assert_eq!(
+        package.chapters[0].subtitle_revision.as_ref(),
+        Some(&revision_id)
+    );
+    assert!(package.chapters[0].alignment_revision.is_none());
+    let path = package.chapters[0].srt.as_ref().unwrap();
+    assert_eq!(
+        fs::read(f.base.join("corrected-package").join(path)).unwrap(),
+        srt.as_bytes()
+    );
+
+    // Importing is a second independent candidate, then explicit selection
+    // changes the shared canonical track consumed by both delivery paths.
+    let bytes = b"WEBVTT\n\n00:00.002 --> 00:00.008\nImported correction.\n\n";
+    let (candidate, imported_id) = child
+        .import_subtitles(
+            child.read().unwrap().version,
+            &audio_id,
+            bytes,
+            "vtt",
+            Some("English"),
+        )
+        .unwrap();
+    assert_eq!(
+        child
+            .subtitle_track(&audio_id)
+            .unwrap()
+            .revision_id
+            .as_ref(),
+        Some(&revision_id)
+    );
+    child
+        .accept_subtitles(candidate.version, &imported_id)
+        .unwrap();
+    let imported = export(&f, &[], &options, "imported");
+    let track = imported.chapters[0].subtitle_track.as_ref().unwrap();
+    assert_eq!(track.source, SubtitleSource::ImportedSubtitles);
+    let preview = preflight(&f, &[], &options);
+    assert_eq!(
+        preview.chapters[0].subtitle_revision.as_ref(),
+        Some(&imported_id)
+    );
+    assert!(preview.chapters[0].alignment_revision.is_none());
+    assert_eq!(track.revision_id.as_ref(), Some(&imported_id));
+    assert!(
+        fs::read_to_string(f.base.join("imported/compilation.vtt"))
+            .unwrap()
+            .contains("Imported correction.")
+    );
+}

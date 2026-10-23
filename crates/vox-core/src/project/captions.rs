@@ -1,4 +1,7 @@
 //! Audio-pinned subtitle candidates, explicit acceptance and shared export.
+mod offline;
+pub use offline::*;
+
 use super::{AudioRevision, Error, Manifest, Project, Result, ScriptFormat};
 use crate::{
     ContentDigest, ContentRef, SpeechSynthesisControl,
@@ -26,15 +29,20 @@ pub struct SubtitleCue {
 pub enum SubtitleSource {
     MeasuredSegments,
     ForcedAlignment,
+    ManualRevision,
+    ImportedSubtitles,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SubtitleTrack {
     pub audio_revision: String,
     pub audio_digest: ContentDigest,
     pub source_revision: String,
     pub source: SubtitleSource,
     pub cues: Vec<SubtitleCue>,
+    /// Any accepted or pending subtitle revision; absent for measured timings.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub revision_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub alignment_revision: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -60,14 +68,12 @@ impl SubtitleTrack {
                 .filter(|line| !line.trim().is_empty())
                 .collect::<Vec<_>>()
                 .join("\n");
-            // Preserve literal text instead of interpreting authored WebVTT markup.
-            let text = if format == "vtt" {
-                text.replace('&', "&amp;")
-                    .replace('<', "&lt;")
-                    .replace('>', "&gt;")
-            } else {
-                text
-            };
+            // Both formats can carry markup. Escape literal characters instead
+            // of letting a consumer turn authored text into presentation tags.
+            let text = text
+                .replace('&', "&amp;")
+                .replace('<', "&lt;")
+                .replace('>', "&gt;");
             output.push_str(&format!(
                 "{}\n{} --> {}\n{}\n\n",
                 index + 1,
@@ -84,7 +90,8 @@ impl SubtitleTrack {
 #[serde(deny_unknown_fields)]
 pub struct SubtitleRevision {
     pub id: String,
-    pub run_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub run_id: Option<String>,
     pub audio_revision: String,
     pub audio_digest: ContentDigest,
     pub source_revision: String,
@@ -92,8 +99,23 @@ pub struct SubtitleRevision {
     pub transcript: String,
     pub language: String,
     pub cues: Vec<SubtitleCue>,
-    pub alignment: ContentRef,
-    pub generation: AlignmentReceipt,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub alignment: Option<ContentRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub generation: Option<AlignmentReceipt>,
+    /// Offline authoring has no Runtime Job or alignment response.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provenance: Option<SubtitleProvenance>,
+}
+
+impl SubtitleRevision {
+    pub fn source(&self) -> SubtitleSource {
+        match &self.provenance {
+            Some(SubtitleProvenance::ManualRevision { .. }) => SubtitleSource::ManualRevision,
+            Some(SubtitleProvenance::ImportedSubtitles { .. }) => SubtitleSource::ImportedSubtitles,
+            None => SubtitleSource::ForcedAlignment,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -222,7 +244,7 @@ impl Project {
                 let cues = cues_for_alignment(&response, &spec, audio_duration(&bytes)?)?;
                 let revision = SubtitleRevision {
                     id: uuid::Uuid::now_v7().to_string(),
-                    run_id: run_id.clone(),
+                    run_id: Some(run_id.clone()),
                     audio_revision: audio.id.clone(),
                     audio_digest: audio.content.digest,
                     source_revision: audio.source_revision.clone(),
@@ -230,8 +252,9 @@ impl Project {
                     transcript: spec.transcript,
                     language: spec.language,
                     cues,
-                    alignment: self.put_object(&response_bytes, "application/json")?,
-                    generation,
+                    alignment: Some(self.put_object(&response_bytes, "application/json")?),
+                    generation: Some(generation),
+                    provenance: None,
                 };
                 let candidate_id = revision.id.clone();
                 let status = if control.is_cancelled() {
@@ -471,21 +494,51 @@ impl Project {
     ) -> Result<SubtitleTrack> {
         let audio = accepted_audio(manifest, &revision.audio_revision)?;
         let bytes = self.checked_audio(audio)?;
-        let response = self.object(&revision.alignment)?;
-        let parsed = revision.generation.validate(&response, &bytes)?;
-        if cues_for_alignment(&parsed, &revision.generation.spec, audio_duration(&bytes)?)?
-            != revision.cues
-        {
+        self.checked_subtitle_depth(manifest, revision, audio, &bytes, 0)
+    }
+
+    fn checked_subtitle_depth(
+        &self,
+        manifest: &Manifest,
+        revision: &SubtitleRevision,
+        audio: &AudioRevision,
+        bytes: &[u8],
+        depth: usize,
+    ) -> Result<SubtitleTrack> {
+        if depth >= 128 || revision.audio_revision != audio.id {
             return Err(Error::new("invalid_subtitles"));
+        }
+        validate_revision_record(manifest, revision)?;
+        if let Some(provenance) = &revision.provenance {
+            self.check_offline_subtitle(manifest, revision, provenance, audio, bytes, depth)?;
+        } else {
+            let generation = revision
+                .generation
+                .as_ref()
+                .ok_or_else(|| Error::new("invalid_subtitles"))?;
+            let response = self.object(
+                revision
+                    .alignment
+                    .as_ref()
+                    .ok_or_else(|| Error::new("invalid_subtitles"))?,
+            )?;
+            let parsed = generation.validate(&response, bytes)?;
+            if cues_for_alignment(&parsed, &generation.spec, audio_duration(bytes)?)?
+                != revision.cues
+            {
+                return Err(Error::new("invalid_subtitles"));
+            }
         }
         Ok(SubtitleTrack {
             audio_revision: audio.id.clone(),
             audio_digest: audio.content.digest,
             source_revision: audio.source_revision.clone(),
-            source: SubtitleSource::ForcedAlignment,
+            source: revision.source(),
             cues: revision.cues.clone(),
-            alignment_revision: Some(revision.id.clone()),
-            language: Some(revision.language.clone()),
+            revision_id: Some(revision.id.clone()),
+            alignment_revision: (revision.source() == SubtitleSource::ForcedAlignment)
+                .then(|| revision.id.clone()),
+            language: (!revision.language.is_empty()).then(|| revision.language.clone()),
         })
     }
 
@@ -521,6 +574,7 @@ impl Project {
             source_revision: audio.source_revision.clone(),
             source: SubtitleSource::MeasuredSegments,
             cues,
+            revision_id: None,
             alignment_revision: None,
             language: None,
         })
@@ -595,40 +649,10 @@ pub(crate) fn validate_records(manifest: &Manifest) -> Result<()> {
         .iter()
         .chain(&manifest.subtitles)
     {
-        revision.generation.validate_metadata()?;
-        let audio = accepted_audio(manifest, &revision.audio_revision)?;
-        let run = manifest
-            .subtitle_runs
-            .iter()
-            .find(|run| run.id == revision.run_id)
-            .ok_or_else(|| Error::new("invalid_subtitles"))?;
-        if !valid_id(&revision.id)
-            || !ids.insert(&revision.id)
-            || run.candidate_id.as_ref() != Some(&revision.id)
-            || !matches!(run.status.as_str(), "completed" | "cancelled")
-            || run.audio_revision != revision.audio_revision
-            || run.audio_digest != revision.audio_digest
-            || run.source_revision != revision.source_revision
-            || run.document_digest != revision.document_digest
-            || revision.audio_digest != audio.content.digest
-            || revision.generation.audio_digest != revision.audio_digest
-            || revision.generation.spec != run.spec
-            || revision.transcript != run.spec.transcript
-            || revision.language != run.spec.language
-            || revision.alignment.media_type != "application/json"
-            || revision.alignment.byte_length > MAX_ALIGNMENT_RESPONSE_BYTES as u64
-            || revision.alignment.digest != revision.generation.output_digest
-            || revision.cues.len() > 8192
-        {
+        if !ids.insert(&revision.id) {
             return Err(Error::new("invalid_subtitles"));
         }
-        validate_cues(
-            &revision.cues,
-            Some(frame_milliseconds(
-                audio.contract.frame_count,
-                audio.contract.sample_rate_hz,
-            )),
-        )?;
+        validate_revision_record(manifest, revision)?;
     }
     for (audio_id, revision_id) in &manifest.subtitle_selections {
         if !manifest
@@ -638,6 +662,65 @@ pub(crate) fn validate_records(manifest: &Manifest) -> Result<()> {
         {
             return Err(Error::new("invalid_subtitles"));
         }
+    }
+    Ok(())
+}
+
+fn validate_revision_record(manifest: &Manifest, revision: &SubtitleRevision) -> Result<()> {
+    let audio = accepted_audio(manifest, &revision.audio_revision)?;
+    let source = manifest
+        .sources
+        .iter()
+        .find(|source| source.id == revision.source_revision)
+        .ok_or_else(|| Error::new("source_missing"))?;
+    if !valid_id(&revision.id)
+        || revision.cues.len() > 8192
+        || revision.audio_digest != audio.content.digest
+        || revision.source_revision != audio.source_revision
+        || revision.document_digest != audio.document_digest
+        || source.document.digest() != revision.document_digest
+    {
+        return Err(Error::new("invalid_subtitles"));
+    }
+    validate_cues(
+        &revision.cues,
+        Some(frame_milliseconds(
+            audio.contract.frame_count,
+            audio.contract.sample_rate_hz,
+        )),
+    )?;
+    if revision.provenance.is_some() {
+        return offline::validate_offline_record(revision);
+    }
+    let generation = revision
+        .generation
+        .as_ref()
+        .ok_or_else(|| Error::new("invalid_subtitles"))?;
+    let alignment = revision
+        .alignment
+        .as_ref()
+        .ok_or_else(|| Error::new("invalid_subtitles"))?;
+    generation.validate_metadata()?;
+    let run = manifest
+        .subtitle_runs
+        .iter()
+        .find(|run| Some(&run.id) == revision.run_id.as_ref())
+        .ok_or_else(|| Error::new("invalid_subtitles"))?;
+    if run.candidate_id.as_ref() != Some(&revision.id)
+        || !matches!(run.status.as_str(), "completed" | "cancelled")
+        || run.audio_revision != revision.audio_revision
+        || run.audio_digest != revision.audio_digest
+        || run.source_revision != revision.source_revision
+        || run.document_digest != revision.document_digest
+        || generation.audio_digest != revision.audio_digest
+        || generation.spec != run.spec
+        || revision.transcript != run.spec.transcript
+        || revision.language != run.spec.language
+        || alignment.media_type != "application/json"
+        || alignment.byte_length > MAX_ALIGNMENT_RESPONSE_BYTES as u64
+        || alignment.digest != generation.output_digest
+    {
+        return Err(Error::new("invalid_subtitles"));
     }
     Ok(())
 }
@@ -767,12 +850,12 @@ pub(crate) mod tests {
             .unwrap()
     }
 
-    struct Fixture {
-        project: Project,
-        audio_id: String,
+    pub(super) struct Fixture {
+        pub(super) project: Project,
+        pub(super) audio_id: String,
     }
     impl Fixture {
-        fn new() -> Self {
+        pub(super) fn new() -> Self {
             let path =
                 std::env::temp_dir().join(format!("vox-captions-{}.vox", uuid::Uuid::now_v7()));
             let project = Project::create(&path, "Subtitle contracts").unwrap();
@@ -815,7 +898,7 @@ pub(crate) mod tests {
                 .unwrap();
             Self { project, audio_id }
         }
-        fn align(&self, control: &SpeechSynthesisControl) -> SubtitleOutcome {
+        pub(super) fn align(&self, control: &SpeechSynthesisControl) -> SubtitleOutcome {
             let version = self.project.read().unwrap().version;
             self.project
                 .align_subtitles_using(
@@ -1052,7 +1135,7 @@ pub(crate) mod tests {
             .project
             .path
             .join("objects")
-            .join(revision.alignment.digest.to_string());
+            .join(revision.alignment.as_ref().unwrap().digest.to_string());
         let original = std::fs::read(&path).unwrap();
         std::fs::write(&path, b"{}").unwrap();
         assert_eq!(
@@ -1201,6 +1284,7 @@ pub(crate) mod tests {
                 end_ms: 3_600_001,
                 text: "中文 <tag> & café".into(),
             }],
+            revision_id: None,
             alignment_revision: None,
             language: None,
         };

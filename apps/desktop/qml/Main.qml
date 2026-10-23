@@ -40,6 +40,15 @@ ApplicationWindow {
     onProductionModeChanged: backend.selectAudio("")
     property bool applyingText: false
     property bool exitWhenStopped: false
+    property string subtitleContinuation: ""
+    function beginProjectAction(action) {
+        if (backend.busy || subtitleContinuation.length) return
+        if (backend.delivery.subtitleActive) {
+            subtitleContinuation = action
+            backend.delivery.requestCloseSubtitles()
+        } else if (action === "new") newFile.open()
+        else if (action === "open") openFile.open()
+    }
     readonly property bool renderReady: !backend.busy && !backend.dirty && !!backend.analysis.ready && (backend.document.text || "").trim().length > 0
     readonly property string readinessHint: {
         if (!(backend.document.text || "").trim().length) return qsTr("Write or import a script to begin.")
@@ -63,11 +72,29 @@ ApplicationWindow {
         window.close()
     }
     onClosing: close => {
-        if (backend.rendering) { close.accepted = false; stopDialog.open() }
+        if (backend.delivery.subtitleDraftDirty) {
+            close.accepted = false
+            if (!subtitleContinuation.length) {
+                subtitleContinuation = "close"
+                backend.delivery.requestCloseSubtitles()
+            }
+        } else if (backend.rendering) { close.accepted = false; stopDialog.open() }
         else if (backend.busy || backend.pending || backend.dirty) {
             close.accepted = false
             exitWhenStopped = true
             if (!backend.busy && !backend.pending) backend.save()
+        }
+    }
+    Connections {
+        target: backend.delivery
+        function onSubtitleCloseResolved(closed) {
+            const action = window.subtitleContinuation
+            window.subtitleContinuation = ""
+            if (!closed || !action.length) return
+            Qt.callLater(() => {
+                if (action === "close") window.close()
+                else window.beginProjectAction(action)
+            })
         }
     }
     Connections {
@@ -80,10 +107,14 @@ ApplicationWindow {
             window.finishClosing(ok)
         }
     }
-    Shortcut { sequences: [StandardKey.New]; onActivated: if (!backend.busy) newFile.open() }
-    Shortcut { sequences: [StandardKey.Open]; onActivated: if (!backend.busy) openFile.open() }
-    Shortcut { sequences: [StandardKey.Save]; onActivated: backend.save() }
-    Shortcut { sequence: "Ctrl+Return"; onActivated: if (window.scriptWorkspace && window.renderReady && !window.segments && (window.productionMode !== "chapters" || backend.selectedChapter.length > 0)) backend.render() }
+    Shortcut { sequences: [StandardKey.New]; onActivated: window.beginProjectAction("new") }
+    Shortcut { sequences: [StandardKey.Open]; onActivated: window.beginProjectAction("open") }
+    Shortcut {
+        sequences: [StandardKey.Save]
+        enabled: !backend.delivery.subtitleActive
+        onActivated: backend.save()
+    }
+    Shortcut { sequence: "Ctrl+Return"; enabled: !backend.delivery.subtitleActive; onActivated: if (window.scriptWorkspace && window.renderReady && !window.segments && (window.productionMode !== "chapters" || backend.selectedChapter.length > 0)) backend.render() }
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -119,8 +150,8 @@ ApplicationWindow {
                 Rectangle { Layout.leftMargin: 4; Layout.rightMargin: 4; width: 1; height: 18; color: Theme.border }
                 Label { text: backend.collection.title || backend.project.title || qsTr("Script-led voice production"); color: Theme.secondary; elide: Text.ElideRight; Layout.fillWidth: true }
                 Label { text: backend.dirty ? qsTr("Saving…") : backend.path.length ? qsTr("Saved") : ""; font.pixelSize: 10; color: Theme.muted }
-                IconButton { symbol: "add"; hint: qsTr("New project"); enabled: !backend.busy; onClicked: newFile.open() }
-                IconButton { symbol: "folder"; hint: qsTr("Open project"); enabled: !backend.busy; onClicked: openFile.open() }
+                IconButton { symbol: "add"; hint: qsTr("New project"); enabled: !backend.busy; onClicked: window.beginProjectAction("new") }
+                IconButton { symbol: "folder"; hint: qsTr("Open project"); enabled: !backend.busy; onClicked: window.beginProjectAction("open") }
                 IconButton { symbol: "save"; hint: qsTr("Save project"); enabled: backend.dirty && !backend.busy; onClicked: backend.save() }
                 IconButton { objectName: "settingsButton"; symbol: "settings"; hint: qsTr("Settings"); onClicked: settings.open() }
             }

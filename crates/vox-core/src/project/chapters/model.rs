@@ -133,6 +133,8 @@ pub struct ChapterExport {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub subtitle_source: Option<crate::project::SubtitleSource>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub subtitle_revision: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub alignment_revision: Option<String>,
     pub sample_rate_hz: u32,
     pub frames: u64,

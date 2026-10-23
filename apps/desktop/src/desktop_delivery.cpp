@@ -2,6 +2,33 @@
 #include "desktop_backend.hpp"
 #include <QDir>
 #include <QFileInfo>
+#include <QRegularExpression>
+
+namespace {
+QString subtitleTime(qint64 value) {
+  value = qMax<qint64>(0, value);
+  return QStringLiteral("%1:%2:%3.%4")
+      .arg(value / 3600000, 2, 10, QLatin1Char('0'))
+      .arg(value / 60000 % 60, 2, 10, QLatin1Char('0'))
+      .arg(value / 1000 % 60, 2, 10, QLatin1Char('0'))
+      .arg(value % 1000, 3, 10, QLatin1Char('0'));
+}
+qint64 subtitleMilliseconds(const QString &value) {
+  static const QRegularExpression timestamp(
+      QStringLiteral("^(\\d{1,4}):([0-5]\\d):([0-5]\\d)\\.(\\d{3})$"));
+  const auto match = timestamp.match(value);
+  if (!match.hasMatch())
+    return -1;
+  return match.captured(1).toLongLong() * 3600000 +
+         match.captured(2).toLongLong() * 60000 +
+         match.captured(3).toLongLong() * 1000 + match.captured(4).toLongLong();
+}
+QJsonObject subtitleDraftCue(qint64 start, qint64 end, const QString &text) {
+  return {{"start_time", subtitleTime(start)},
+          {"end_time", subtitleTime(end)},
+          {"text", text}};
+}
+} // namespace
 
 DesktopDelivery::DesktopDelivery(DesktopBackend &backend)
     : QObject(&backend), m_backend(backend) {
@@ -10,8 +37,20 @@ DesktopDelivery::DesktopDelivery(DesktopBackend &backend)
   connect(&backend, &DesktopBackend::documentChanged, this,
           &DesktopDelivery::syncIdentity);
   connect(&backend, &DesktopBackend::selectionChanged, this, [this] {
-    if (subtitleActive() && m_audioID != m_backend.selectedAudio())
+    if (!subtitleActive() || m_audioID == m_backend.selectedAudio())
+      return;
+    if (subtitleIdentity() && subtitleDraftDirty()) {
+      const auto next = m_backend.selectedAudio();
+      m_backend.selectAudio(m_audioID);
+      if (m_subtitleLoading) {
+        m_subtitleCode = "subtitle_wait";
+        emit subtitleChanged();
+      } else {
+        confirmSubtitleDiscard("audio", next);
+      }
+    } else {
       closeSubtitles();
+    }
   });
 }
 
@@ -66,7 +105,12 @@ void DesktopDelivery::setLanguage(const QString &value) {
   emit formChanged();
 }
 void DesktopDelivery::openSubtitles(const QString &id) {
-  if (m_backend.busy() || m_backend.m_path.isEmpty() || id.isEmpty())
+  if (m_backend.busy() || m_subtitleLoading || m_backend.m_path.isEmpty() ||
+      id.isEmpty())
+    return;
+  if (subtitleActive() && m_audioID == id && subtitleIdentity())
+    return;
+  if (subtitleActive() && !confirmSubtitleDiscard("open", id))
     return;
   closeSubtitles();
   m_subtitlePath = m_backend.m_path;
@@ -76,6 +120,8 @@ void DesktopDelivery::openSubtitles(const QString &id) {
   loadSubtitles({}, true);
 }
 void DesktopDelivery::closeSubtitles() {
+  const bool pendingClose = m_pendingSubtitleAction == "close";
+  m_backend.stopRangePlayback();
   ++m_subtitleSequence;
   m_subtitlePath.clear();
   m_subtitleProject.clear();
@@ -83,6 +129,12 @@ void DesktopDelivery::closeSubtitles() {
   m_candidateID.clear();
   m_track = {};
   m_candidates = {};
+  m_draftCues = {};
+  m_savedCues = {};
+  m_cueIndex = -1;
+  m_durationMs = 0;
+  m_pendingSubtitleAction.clear();
+  m_pendingSubtitleValue.clear();
   m_acceptedAudio = false;
   m_subtitleLoading = false;
   m_subtitleCode.clear();
@@ -90,6 +142,8 @@ void DesktopDelivery::closeSubtitles() {
   m_language.clear();
   emit subtitleChanged();
   emit formChanged();
+  if (pendingClose)
+    emit subtitleCloseResolved(false);
 }
 void DesktopDelivery::loadSubtitles(const QString &candidateID,
                                     bool initialize) {
@@ -98,8 +152,12 @@ void DesktopDelivery::loadSubtitles(const QString &candidateID,
   const auto sequence = ++m_subtitleSequence;
   const auto edit = m_backend.m_editSequence;
   m_subtitleLoading = true;
+  m_backend.stopRangePlayback();
   m_candidateID = candidateID;
   m_track = {};
+  m_draftCues = {};
+  m_savedCues = {};
+  m_cueIndex = -1;
   emit subtitleChanged();
   QJsonObject fields{{"audio_id", m_audioID}};
   if (!candidateID.isEmpty())
@@ -121,6 +179,8 @@ void DesktopDelivery::loadSubtitles(const QString &candidateID,
                       m_track = result["track"].toObject();
                       m_candidates = result["candidates"].toArray();
                       m_acceptedAudio = result["accepted_audio"].toBool();
+                      m_durationMs = result["duration_ms"].toInteger();
+                      resetSubtitleCues();
                       if (initialize) {
                         m_transcript = result["transcript"].toString();
                         m_language = result["language"].toString();
@@ -139,8 +199,335 @@ void DesktopDelivery::loadSubtitles(const QString &candidateID,
 void DesktopDelivery::previewSubtitleCandidate(const QString &id) {
   if (m_backend.busy() || m_subtitleLoading || !subtitleIdentity())
     return;
+  if (!confirmSubtitleDiscard("candidate", id))
+    return;
   m_subtitleCode.clear();
   loadSubtitles(id);
+}
+bool DesktopDelivery::subtitleEditable() const {
+  return subtitleIdentity() && !m_backend.busy() && !m_subtitleLoading &&
+         !m_aligning && !subtitleDiscardPending();
+}
+bool DesktopDelivery::confirmSubtitleDiscard(const QString &action,
+                                             const QString &value) {
+  if (!subtitleDraftDirty())
+    return true;
+  if (!m_pendingSubtitleAction.isEmpty())
+    return false;
+  m_backend.stopRangePlayback();
+  m_pendingSubtitleAction = action;
+  m_pendingSubtitleValue = value;
+  emit subtitleChanged();
+  emit subtitleDiscardRequested();
+  return false;
+}
+void DesktopDelivery::requestCloseSubtitles() {
+  if (m_aligning || m_subtitleLoading || subtitleDiscardPending()) {
+    m_subtitleCode = "subtitle_wait";
+    emit subtitleChanged();
+    emit subtitleCloseResolved(false);
+    return;
+  }
+  if (!confirmSubtitleDiscard("close"))
+    return;
+  closeSubtitles();
+  emit subtitleCloseResolved(true);
+}
+void DesktopDelivery::resolveSubtitleDiscard(bool discard) {
+  const auto action = m_pendingSubtitleAction;
+  const auto value = m_pendingSubtitleValue;
+  m_pendingSubtitleAction.clear();
+  m_pendingSubtitleValue.clear();
+  if (action.isEmpty())
+    return;
+  if (!discard) {
+    emit subtitleChanged();
+    if (action == "close")
+      emit subtitleCloseResolved(false);
+    return;
+  }
+  resetSubtitleCues();
+  m_subtitleCode.clear();
+  emit subtitleChanged();
+  if (action == "close") {
+    closeSubtitles();
+    emit subtitleCloseResolved(true);
+  } else if (action == "candidate") {
+    previewSubtitleCandidate(value);
+  } else if (action == "open") {
+    openSubtitles(value);
+  } else if (action == "audio") {
+    closeSubtitles();
+    m_backend.selectAudio(value);
+  } else if (action == "align") {
+    alignSubtitles(true);
+  } else if (action == "import") {
+    requestSubtitleImport();
+  }
+}
+void DesktopDelivery::resetSubtitleCues() {
+  m_draftCues = {};
+  for (const auto &value : m_track.value("cues").toArray()) {
+    const auto cue = value.toObject();
+    m_draftCues.append(subtitleDraftCue(cue["start_ms"].toInteger(),
+                                        cue["end_ms"].toInteger(),
+                                        cue["text"].toString()));
+  }
+  m_savedCues = m_draftCues;
+  m_cueIndex = m_draftCues.isEmpty() ? -1 : 0;
+}
+QVariantMap DesktopDelivery::selectedSubtitleCue() const {
+  if (m_cueIndex < 0 || m_cueIndex >= m_draftCues.size())
+    return {};
+  return m_draftCues[m_cueIndex].toObject().toVariantMap();
+}
+QString DesktopDelivery::subtitleDraftIssue() const {
+  if (m_draftCues.isEmpty())
+    return tr("Add at least one cue before saving.");
+  if (m_draftCues.size() > 8192)
+    return tr("Use no more than 8192 subtitle cues.");
+  qint64 previousEnd = 0;
+  for (qsizetype i = 0; i < m_draftCues.size(); ++i) {
+    const auto cue = m_draftCues[i].toObject();
+    const auto start = subtitleMilliseconds(cue["start_time"].toString());
+    const auto end = subtitleMilliseconds(cue["end_time"].toString());
+    if (start < 0 || end < 0)
+      return tr("Cue %1: enter times as hh:mm:ss.mmm.").arg(i + 1);
+    if (end <= start)
+      return tr("Cue %1: the end must follow the start.").arg(i + 1);
+    if (m_durationMs <= 0 || end > m_durationMs)
+      return tr("Cue %1: keep the cue within this audio.").arg(i + 1);
+    if (start < previousEnd)
+      return tr("Cue %1: cues must stay in order without overlap.").arg(i + 1);
+    const auto text = cue["text"].toString();
+    if (text.trimmed().isEmpty())
+      return tr("Cue %1: enter subtitle text.").arg(i + 1);
+    if (text.contains(QChar::Null) || text.toUtf8().size() > 65536)
+      return tr("Cue %1: the text is too large or contains an invalid "
+                "character.")
+          .arg(i + 1);
+    previousEnd = end;
+  }
+  return {};
+}
+bool DesktopDelivery::canSaveSubtitleDraft() const {
+  return subtitleEditable() && m_acceptedAudio &&
+         !m_track["cues"].toArray().isEmpty() && subtitleDraftDirty() &&
+         subtitleDraftIssue().isEmpty();
+}
+void DesktopDelivery::selectSubtitleCue(int index) {
+  if (!subtitleEditable() || index < 0 || index >= m_draftCues.size() ||
+      index == m_cueIndex)
+    return;
+  m_backend.stopRangePlayback();
+  m_cueIndex = index;
+  emit subtitleChanged();
+}
+void DesktopDelivery::updateSubtitleCue(const QString &startTime,
+                                        const QString &endTime,
+                                        const QString &text) {
+  if (!subtitleEditable() || m_cueIndex < 0 || m_cueIndex >= m_draftCues.size())
+    return;
+  const QJsonObject cue{
+      {"start_time", startTime}, {"end_time", endTime}, {"text", text}};
+  if (cue == m_draftCues[m_cueIndex].toObject())
+    return;
+  const auto previous = m_draftCues[m_cueIndex].toObject();
+  if (previous["start_time"] != startTime || previous["end_time"] != endTime)
+    m_backend.stopRangePlayback();
+  m_draftCues[m_cueIndex] = cue;
+  m_subtitleCode.clear();
+  emit subtitleChanged();
+}
+void DesktopDelivery::splitSubtitleCue(int cursorPosition,
+                                       const QString &splitTime) {
+  if (!subtitleEditable() || m_cueIndex < 0 || m_cueIndex >= m_draftCues.size())
+    return;
+  const auto cue = m_draftCues[m_cueIndex].toObject();
+  const auto text = cue["text"].toString();
+  const auto start = subtitleMilliseconds(cue["start_time"].toString());
+  const auto end = subtitleMilliseconds(cue["end_time"].toString());
+  const auto split = subtitleMilliseconds(splitTime);
+  if (cursorPosition <= 0 || cursorPosition >= text.size() ||
+      (text[cursorPosition - 1].isHighSurrogate() &&
+       text[cursorPosition].isLowSurrogate()) ||
+      text.left(cursorPosition).trimmed().isEmpty() ||
+      text.mid(cursorPosition).trimmed().isEmpty()) {
+    m_subtitleCode = "subtitle_split_cursor";
+  } else if (start < 0 || end <= start || split <= start || split >= end) {
+    m_subtitleCode = "subtitle_split_time";
+  } else {
+    m_backend.stopRangePlayback();
+    m_draftCues[m_cueIndex] =
+        subtitleDraftCue(start, split, text.left(cursorPosition));
+    m_draftCues.insert(m_cueIndex + 1,
+                       subtitleDraftCue(split, end, text.mid(cursorPosition)));
+    m_subtitleCode.clear();
+  }
+  emit subtitleChanged();
+}
+void DesktopDelivery::mergeNextSubtitleCue() {
+  if (!subtitleEditable() || m_cueIndex < 0 ||
+      m_cueIndex + 1 >= m_draftCues.size())
+    return;
+  const auto first = m_draftCues[m_cueIndex].toObject();
+  const auto next = m_draftCues[m_cueIndex + 1].toObject();
+  const auto start = subtitleMilliseconds(first["start_time"].toString());
+  const auto end = subtitleMilliseconds(first["end_time"].toString());
+  const auto nextStart = subtitleMilliseconds(next["start_time"].toString());
+  const auto nextEnd = subtitleMilliseconds(next["end_time"].toString());
+  if (start < 0 || end <= start || nextStart < end || nextEnd <= nextStart) {
+    m_subtitleCode = "subtitle_merge_time";
+  } else {
+    m_backend.stopRangePlayback();
+    auto text = first["text"].toString();
+    if (!text.endsWith(QLatin1Char('\n')))
+      text += QLatin1Char('\n');
+    text += next["text"].toString();
+    m_draftCues[m_cueIndex] = subtitleDraftCue(start, nextEnd, text);
+    m_draftCues.removeAt(m_cueIndex + 1);
+    m_subtitleCode.clear();
+  }
+  emit subtitleChanged();
+}
+void DesktopDelivery::addSubtitleCue() {
+  if (!subtitleEditable() || m_track["cues"].toArray().isEmpty() ||
+      m_draftCues.size() >= 8192)
+    return;
+  const auto insertion = m_cueIndex < 0 ? 0 : m_cueIndex + 1;
+  const auto start =
+      insertion == 0
+          ? 0
+          : subtitleMilliseconds(
+                m_draftCues[insertion - 1].toObject()["end_time"].toString());
+  const auto limit =
+      insertion >= m_draftCues.size()
+          ? m_durationMs
+          : subtitleMilliseconds(
+                m_draftCues[insertion].toObject()["start_time"].toString());
+  if (start < 0 || limit <= start) {
+    m_subtitleCode = "subtitle_add_gap";
+  } else {
+    m_backend.stopRangePlayback();
+    m_draftCues.insert(insertion,
+                       subtitleDraftCue(start, qMin(start + 1000, limit), {}));
+    m_cueIndex = insertion;
+    m_subtitleCode.clear();
+  }
+  emit subtitleChanged();
+}
+void DesktopDelivery::removeSubtitleCue() {
+  if (!subtitleEditable() || m_cueIndex < 0 || m_cueIndex >= m_draftCues.size())
+    return;
+  m_backend.stopRangePlayback();
+  m_draftCues.removeAt(m_cueIndex);
+  m_cueIndex = m_draftCues.isEmpty()
+                   ? -1
+                   : qMin(m_cueIndex, int(m_draftCues.size()) - 1);
+  m_subtitleCode.clear();
+  emit subtitleChanged();
+}
+void DesktopDelivery::resetSubtitleDraft() {
+  if (!subtitleEditable() || !confirmSubtitleDiscard("reset"))
+    return;
+  m_backend.stopRangePlayback();
+  resetSubtitleCues();
+  m_subtitleCode.clear();
+  emit subtitleChanged();
+}
+void DesktopDelivery::saveSubtitleDraft() {
+  if (!canSaveSubtitleDraft())
+    return;
+  QJsonArray cues;
+  for (const auto &value : m_draftCues) {
+    const auto cue = value.toObject();
+    cues.append(QJsonObject{
+        {"start_ms", subtitleMilliseconds(cue["start_time"].toString())},
+        {"end_ms", subtitleMilliseconds(cue["end_time"].toString())},
+        {"text", cue["text"]}});
+  }
+  QJsonObject fields{{"audio_id", m_audioID}, {"cues", cues}};
+  if (!m_candidateID.isEmpty())
+    fields.insert("candidate_id", m_candidateID);
+  createSubtitleCandidate("subtitle_edit", fields);
+}
+void DesktopDelivery::requestSubtitleImport() {
+  if (!subtitleEditable() || !m_acceptedAudio ||
+      !confirmSubtitleDiscard("import"))
+    return;
+  m_backend.stopRangePlayback();
+  emit subtitleImportRequested();
+}
+void DesktopDelivery::importSubtitles(const QUrl &file, const QString &format,
+                                      const QString &reviewToken) {
+  if (!subtitleEditable() || !m_acceptedAudio)
+    return;
+  if (reviewToken != subtitleReviewToken() || subtitleDraftDirty()) {
+    m_subtitleCode = "subtitle_review_changed";
+    emit subtitleChanged();
+    return;
+  }
+  if (!file.isLocalFile() || (format != "srt" && format != "vtt")) {
+    m_subtitleCode = "subtitle_import_format";
+    emit subtitleChanged();
+    return;
+  }
+  QJsonObject fields{{"audio_id", m_audioID},
+                     {"file", file.toLocalFile()},
+                     {"format", format}};
+  if (!m_language.isEmpty() && m_language != "auto")
+    fields.insert("language", m_language);
+  createSubtitleCandidate("subtitle_import", fields);
+}
+void DesktopDelivery::createSubtitleCandidate(const QString &action,
+                                              QJsonObject fields) {
+  const auto sequence = m_subtitleSequence;
+  const auto epoch = m_backend.m_projectEpoch;
+  m_subtitleLoading = true;
+  m_subtitleCode = "subtitle_saving_candidate";
+  m_backend.stopRangePlayback();
+  emit subtitleChanged();
+  m_backend.saveThen(
+      [this, sequence, epoch, action, fields] {
+        if (sequence != m_subtitleSequence || !subtitleIdentity())
+          return;
+        const auto edit = m_backend.m_editSequence;
+        m_backend.command(
+            action, fields,
+            [this, sequence, epoch, edit](const QJsonObject &r) {
+              if (epoch == m_backend.m_projectEpoch && r["ok"].toBool())
+                m_backend.apply(r["result"].toObject(), edit);
+              if (sequence != m_subtitleSequence || !subtitleIdentity())
+                return;
+              m_subtitleLoading = false;
+              const auto candidate =
+                  r["result"].toObject()["subtitle_candidate_id"].toString();
+              if (!r["ok"].toBool() || candidate.isEmpty()) {
+                m_subtitleCode = r["ok"].toBool() ? "subtitle_candidate_missing"
+                                                  : r["error"].toString();
+                emit subtitleChanged();
+                return;
+              }
+              m_subtitleCode = "subtitle_candidate_ready";
+              loadSubtitles(candidate);
+            });
+      },
+      [this, sequence] {
+        if (sequence == m_subtitleSequence) {
+          m_subtitleLoading = false;
+          m_subtitleCode = "subtitle_prepare_failed";
+          emit subtitleChanged();
+        }
+      });
+}
+void DesktopDelivery::auditionSubtitleCue() {
+  if (!subtitleEditable() || m_cueIndex < 0 || m_cueIndex >= m_draftCues.size())
+    return;
+  const auto cue = m_draftCues[m_cueIndex].toObject();
+  const auto start = subtitleMilliseconds(cue["start_time"].toString());
+  const auto end = subtitleMilliseconds(cue["end_time"].toString());
+  if (start >= 0 && end > start && end <= m_durationMs)
+    m_backend.playAudioRange(m_audioID, start, end);
 }
 void DesktopDelivery::alignSubtitles(bool exactTranscriptConfirmed) {
   if (m_backend.busy() || m_subtitleLoading || !subtitleIdentity())
@@ -152,6 +539,9 @@ void DesktopDelivery::alignSubtitles(bool exactTranscriptConfirmed) {
     emit subtitleChanged();
     return;
   }
+  if (!confirmSubtitleDiscard("align"))
+    return;
+  m_backend.stopRangePlayback();
   const auto epoch = m_backend.m_projectEpoch;
   const auto sequence = m_subtitleSequence;
   const auto audio = m_audioID;
@@ -218,7 +608,8 @@ void DesktopDelivery::alignSubtitles(bool exactTranscriptConfirmed) {
 }
 void DesktopDelivery::changeSubtitleCandidate(bool accept) {
   if (m_backend.busy() || m_subtitleLoading || !subtitleIdentity() ||
-      m_candidateID.isEmpty())
+      m_candidateID.isEmpty() || subtitleDraftDirty() ||
+      subtitleDiscardPending())
     return;
   const auto candidate = m_candidateID;
   const auto sequence = m_subtitleSequence;
@@ -271,8 +662,10 @@ void DesktopDelivery::cancelAlignment() {
   }
 }
 bool DesktopDelivery::canExportSubtitles() const {
-  return subtitleIdentity() && m_candidateID.isEmpty() && !m_track.isEmpty() &&
-         !m_subtitleLoading && !m_aligning;
+  return subtitleIdentity() && m_candidateID.isEmpty() &&
+         !m_track.value("cues").toArray().isEmpty() && !m_subtitleLoading &&
+         !m_aligning && !m_backend.busy() && !subtitleDraftDirty() &&
+         !subtitleDiscardPending();
 }
 void DesktopDelivery::exportSubtitles(const QUrl &destination,
                                       const QString &format) {
@@ -406,6 +799,10 @@ QString DesktopDelivery::subtitleSourceLabel(const QString &source) const {
     return tr("Measured segments");
   if (source == "forced_alignment")
     return tr("Aligned estimate");
+  if (source == "manual_revision")
+    return tr("Manual corrections");
+  if (source == "imported_subtitles")
+    return tr("Imported subtitles");
   return tr("No current timings");
 }
 QString DesktopDelivery::subtitleMessage() const {
@@ -415,16 +812,30 @@ QString DesktopDelivery::subtitleMessage() const {
     return tr("Waiting for the current alignment request to finish…");
   if (m_subtitleCode == "subtitle_candidate_ready")
     return tr(
-        "Candidate timings are ready. Review them, then accept explicitly.");
+        "Candidate subtitles are ready. Review them, then accept explicitly.");
   if (m_subtitleCode == "subtitle_cancelled_candidate")
     return tr("Alignment stopped. The completed candidate is kept for review.");
   if (m_subtitleCode == "subtitle_cancelled" ||
       m_subtitleCode == "request_cancelled")
     return tr("Alignment stopped. Existing timings are kept.");
   if (m_subtitleCode == "subtitle_accepted")
-    return tr("Timings accepted for this audio version.");
+    return tr("Subtitles accepted for this audio version.");
   if (m_subtitleCode == "subtitle_discarded")
-    return tr("Candidate timings discarded.");
+    return tr("Candidate subtitles discarded.");
+  if (m_subtitleCode == "subtitle_saving_candidate")
+    return tr("Saving a new subtitle candidate…");
+  if (m_subtitleCode == "subtitle_wait")
+    return tr("Wait for the current subtitle request to finish.");
+  if (m_subtitleCode == "subtitle_split_cursor")
+    return tr("Place the text cursor between the words to split.");
+  if (m_subtitleCode == "subtitle_split_time")
+    return tr("Choose a split time strictly between this cue's start and end.");
+  if (m_subtitleCode == "subtitle_merge_time")
+    return tr("Correct these cues' times before merging them.");
+  if (m_subtitleCode == "subtitle_add_gap")
+    return tr("There is no gap after this cue. Shorten or split it first.");
+  if (m_subtitleCode == "subtitle_review_changed")
+    return tr("The reviewed track changed. Open the file chooser again.");
   if (m_subtitleCode.isEmpty())
     return {};
   return issueText(m_subtitleCode);
@@ -450,8 +861,20 @@ QString DesktopDelivery::issueText(const QString &code) const {
     return tr("Enter the exact spoken transcript, choose its language and "
               "confirm it matches this audio.");
   if (code == "subtitles_unavailable" || code == "subtitle_track_unavailable")
-    return tr("This audio has no current timings. Align a confirmed transcript "
-              "to create them.");
+    return tr("This audio has no current timings. Import subtitles or align a "
+              "confirmed transcript.");
+  if (code == "subtitle_import_format" || code == "invalid_subtitle_import")
+    return tr("Choose a plain UTF-8 SRT or WebVTT file with valid cue times.");
+  if (code == "unsupported_subtitle_features")
+    return tr("This file uses styling or layout features. Import plain SRT or "
+              "WebVTT captions.");
+  if (code == "subtitle_import_too_large")
+    return tr("The subtitle file exceeds 1 MiB. Use a smaller file.");
+  if (code == "subtitle_snapshot_limit")
+    return tr("This subtitle snapshot is too large. Use fewer cues or shorter "
+              "text.");
+  if (code == "invalid_subtitle_language")
+    return tr("Choose a supported subtitle language.");
   if (code == "subtitle_prepare_failed" || code == "compilation_save_required")
     return tr("Save the current script before continuing.");
   if (code == "subtitle_missing" || code == "subtitle_candidate_missing" ||
@@ -509,8 +932,8 @@ QString DesktopDelivery::issueText(const QString &code) const {
   if (code == "invalid_subtitles" || code == "invalid_alignment_response" ||
       code == "invalid_alignment_receipt" || code == "invalid_alignment" ||
       code == "invalid_provenance")
-    return tr("Subtitle timing evidence is invalid. Realign this audio and "
-              "review a new candidate.");
+    return tr("Check subtitle text, cue order and times against this audio, "
+              "then save a new candidate.");
   if (code == "alignment_audio_too_large")
     return tr("Alignment supports audio up to 128 MiB and 30 minutes. Use a "
               "shorter accepted version.");
