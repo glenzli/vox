@@ -1,6 +1,8 @@
 //! Independent .vox bundle, working drafts, immutable sources and explicit audio acceptance.
+mod captions;
 pub mod chapters;
 pub mod materials;
+pub use captions::*;
 pub use chapters::*;
 mod model;
 mod render;

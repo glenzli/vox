@@ -7,6 +7,8 @@
 #include <QUrl>
 #include <QVariantMap>
 
+class DesktopDelivery;
+
 // Owns the live project/draft identity and routes all durable operations
 // through vox-core.
 class DesktopBackend final : public QObject {
@@ -47,6 +49,7 @@ class DesktopBackend final : public QObject {
                  selectionChanged)
   Q_PROPERTY(QVariantList waveform READ waveform NOTIFY waveformChanged)
   Q_PROPERTY(bool hasEchoHandoff READ hasEchoHandoff NOTIFY stateChanged)
+  Q_PROPERTY(QObject *delivery READ delivery CONSTANT)
 public:
   explicit DesktopBackend(QObject *parent = nullptr);
   QVariantMap project() const { return m_project.toVariantMap(); }
@@ -86,6 +89,7 @@ public:
   QString selectedAudio() const { return m_selected; }
   QVariantList waveform() const { return m_waveform; }
   bool hasEchoHandoff() const;
+  QObject *delivery() const;
   Q_INVOKABLE void createProject(const QUrl &url);
   Q_INVOKABLE void openProject(const QUrl &url);
   Q_INVOKABLE void importShapeTransfer(const QUrl &transfer,
@@ -187,6 +191,8 @@ signals:
   void waveformChanged();
 
 private:
+  friend class DesktopDelivery;
+  DesktopDelivery *m_delivery = nullptr;
   WorkerClient m_worker;
   WorkerClient m_probeWorker;
   EchoLauncher m_echoLauncher;

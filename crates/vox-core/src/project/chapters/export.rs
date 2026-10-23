@@ -81,9 +81,7 @@ impl Project {
         let m = self.read()?;
         check_version(&m, expected)?;
         let chapters = selected_chapters(&m, ids)?;
-        if destination.exists() {
-            return Err(Error::new("destination_exists"));
-        }
+        validate_destination(self, destination)?;
         let mut manifest = ChapterExportManifest {
             schema: "vox.chapter-export/1".into(),
             project_id: m.id.clone(),
@@ -115,16 +113,19 @@ impl Project {
             {
                 return Err(Error::new("stale_source"));
             }
-            let captions = audio.segment_assembly.is_some();
-            if captions {
-                child.validate_segment_assembly(&current, audio)?;
-            } else if crate::audio::parse_pcm_s16le_wav(
+            if crate::audio::parse_pcm_s16le_wav(
                 &child.object(&audio.content)?,
                 audio.contract.origin,
             )? != audio.contract
             {
                 return Err(Error::new("corrupt_audio"));
             }
+            let track = match child.subtitle_track(&audio.id) {
+                Ok(track) => Some(track),
+                Err(error) if error.code == "subtitles_unavailable" => None,
+                Err(error) => return Err(error),
+            };
+            let captions = track.is_some();
             let stem = format!("{:03}-{}", index + 1, chapter.id);
             manifest.chapters.push(ChapterExport {
                 chapter_id: chapter.id.clone(),
@@ -144,25 +145,23 @@ impl Project {
                 vtt: captions.then(|| format!("{stem}.vtt")),
                 subtitles_unavailable_reason: (!captions)
                     .then(|| "accepted_audio_has_no_measured_segment_timings".into()),
+                subtitle_source: track.as_ref().map(|track| track.source),
+                alignment_revision: track
+                    .as_ref()
+                    .and_then(|track| track.alignment_revision.clone()),
                 sample_rate_hz: audio.contract.sample_rate_hz,
                 frames: audio.contract.frame_count,
             });
-            selected.push((child, audio.id.clone()));
+            selected.push((child, audio.id.clone(), track));
         }
-        let parent = destination
-            .parent()
-            .filter(|path| !path.as_os_str().is_empty())
-            .ok_or_else(|| Error::new("invalid_destination"))?;
-        let staging = parent.join(format!(".vox-chapter-export-{}", uuid::Uuid::now_v7()));
-        fs::create_dir(&staging)?;
-        let result = (|| {
-            for ((child, id), chapter) in selected.iter().zip(&manifest.chapters) {
+        publish_export(self, destination, |staging| {
+            for ((child, id, track), chapter) in selected.iter().zip(&manifest.chapters) {
                 child.export(id, &staging.join(&chapter.wav))?;
                 if let Some(srt) = &chapter.srt {
-                    child.export_subtitles(id, &staging.join(srt), "srt")?;
+                    write_caption(staging, srt, track.as_ref(), "srt")?;
                 }
                 if let Some(vtt) = &chapter.vtt {
-                    child.export_subtitles(id, &staging.join(vtt), "vtt")?;
+                    write_caption(staging, vtt, track.as_ref(), "vtt")?;
                 }
             }
             let mut output = fs::OpenOptions::new()
@@ -171,37 +170,106 @@ impl Project {
                 .open(staging.join("manifest.json"))?;
             output.write_all(&serde_json::to_vec_pretty(&manifest)?)?;
             output.sync_all()?;
-            fs::File::open(&staging)?.sync_all()?;
-            // create_dir is the no-clobber publication reservation. Only files
-            // this call created are removed if a later publication step fails.
-            fs::create_dir(destination).map_err(|_| Error::new("destination_exists"))?;
-            if let Err(error) = fs::rename(&staging, destination) {
-                let _ = fs::remove_dir(destination);
-                return Err(error.into());
-            }
-            fs::File::open(parent)?.sync_all()?;
-            Ok::<_, Error>(())
-        })();
-        if result.is_err() {
-            let _ = fs::remove_dir_all(&staging);
-        }
-        result?;
+            Ok(())
+        })?;
         Ok(manifest)
     }
 }
 
-fn require_current_settings(parent: &Manifest, child: &Manifest) -> Result<()> {
+pub(super) fn require_current_settings(parent: &Manifest, child: &Manifest) -> Result<()> {
     if settings_digest(&parent.draft) != settings_digest(&child.draft) {
         return Err(Error::new("chapter_settings_changed"));
     }
     Ok(())
 }
 
-fn require_current_source(child: &Manifest) -> Result<()> {
+pub(super) fn require_current_source(child: &Manifest) -> Result<()> {
     if !child.sources.iter().any(|source| {
         Some(&source.id) == child.source_head.as_ref() && source.document == child.draft
     }) {
         return Err(Error::new("stale_source"));
     }
     Ok(())
+}
+
+fn write_caption(
+    staging: &Path,
+    filename: &str,
+    track: Option<&crate::project::SubtitleTrack>,
+    format: &str,
+) -> Result<()> {
+    let track = track.ok_or_else(|| Error::new("subtitles_unavailable"))?;
+    let mut file = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(staging.join(filename))?;
+    file.write_all(track.serialize(format)?.as_bytes())?;
+    file.sync_all()?;
+    Ok(())
+}
+
+/// Resolve the parent before creating anything, including through a symlink.
+/// Exports cannot write generated files into the source project or its children.
+pub(super) fn validate_destination(project: &Project, destination: &Path) -> Result<()> {
+    if !destination.is_absolute() {
+        return Err(Error::new("invalid_destination"));
+    }
+    let parent = destination
+        .parent()
+        .ok_or_else(|| Error::new("invalid_destination"))?;
+    if destination.file_name().is_none() {
+        return Err(Error::new("invalid_destination"));
+    }
+    let parent = fs::canonicalize(parent).map_err(|_| Error::new("invalid_destination"))?;
+    if !parent.is_dir() || parent.starts_with(&project.path) {
+        return Err(Error::new("invalid_destination"));
+    }
+    if fs::symlink_metadata(destination).is_ok() {
+        return Err(Error::new("destination_exists"));
+    }
+    Ok(())
+}
+
+/// Both collection exports use the same cleanup and no-clobber publication path.
+pub(super) fn publish_export(
+    project: &Project,
+    destination: &Path,
+    write: impl FnOnce(&Path) -> Result<()>,
+) -> Result<()> {
+    validate_destination(project, destination)?;
+    let parent = fs::canonicalize(
+        destination
+            .parent()
+            .ok_or_else(|| Error::new("invalid_destination"))?,
+    )?;
+    let destination = parent.join(
+        destination
+            .file_name()
+            .ok_or_else(|| Error::new("invalid_destination"))?,
+    );
+    let staging = parent.join(format!(".vox-chapter-export-{}", uuid::Uuid::now_v7()));
+    let mut builder = fs::DirBuilder::new();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        builder.mode(0o700);
+    }
+    builder.create(&staging)?;
+    let result = (|| {
+        write(&staging)?;
+        fs::File::open(&staging)?.sync_all()?;
+        // This reservation fails if any kind of destination already exists.
+        // Only this invocation's empty reservation can be removed on failure.
+        fs::create_dir(&destination).map_err(|_| Error::new("destination_exists"))?;
+        if let Err(error) = fs::rename(&staging, &destination) {
+            let _ = fs::remove_dir(&destination);
+            return Err(error.into());
+        }
+        fs::File::open(&parent)?.sync_all()?;
+        Ok(())
+    })();
+    if result.is_err() {
+        let _ = fs::remove_dir_all(&staging);
+    }
+    result
 }

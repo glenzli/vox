@@ -90,6 +90,25 @@ pub(super) fn execute(v: &Value) -> Result<Value> {
                 p.export_chapters(version(v)?, &ids(v)?, Path::new(field(v, "destination")?))?;
             return Ok(json!({"exported":true,"destination":v["destination"],"manifest":exported}));
         }
+        "chapter_compilation_preflight" => {
+            let options = serde_json::from_value(v["options"].clone())?;
+            return Ok(json!(p.chapter_compilation_preflight(
+                version(v)?,
+                &ids(v)?,
+                &options
+            )?));
+        }
+        "chapter_compile" => {
+            let options = serde_json::from_value(v["options"].clone())?;
+            let exported = p.export_chapter_compilation(
+                version(v)?,
+                &ids(v)?,
+                &options,
+                field(v, "fingerprint")?,
+                Path::new(field(v, "destination")?),
+            )?;
+            return Ok(json!({"exported":true,"destination":v["destination"],"manifest":exported}));
+        }
         "chapter_begin_echo" => {
             let destination = Path::new(field(v, "destination")?);
             let (m, ticket) = p.begin_chapter_echo(

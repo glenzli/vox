@@ -43,6 +43,10 @@ impl Project {
             segment_candidates: vec![],
             accepted_segments: vec![],
             segment_selections: std::collections::BTreeMap::new(),
+            subtitle_candidates: vec![],
+            subtitles: vec![],
+            subtitle_selections: std::collections::BTreeMap::new(),
+            subtitle_runs: vec![],
             handoffs: vec![],
             voice_library: vec![],
             sound_library: vec![],
@@ -95,6 +99,7 @@ impl Project {
         }
         super::materials::validate_libraries(&m)?;
         super::segments::validate_records(&m)?;
+        super::captions::validate_records(&m)?;
         super::voice_design::validate_records(&m)?;
         super::chapters::validate_records(&m)?;
         if !super::shape_transfer::unsupported(&m, &m.draft) {

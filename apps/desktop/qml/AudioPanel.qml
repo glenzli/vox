@@ -52,7 +52,7 @@ Rectangle {
             IconButton { objectName: "echoEditButton"; symbol: "echo"; hint: qsTr("Edit in Echo"); enabled: panel.selected && panel.selected.accepted && !backend.busy; onClicked: backend.editInEcho() }
             IconButton { symbol: "import"; hint: qsTr("Return edited WAV from Echo"); enabled: backend.hasEchoHandoff && !backend.busy; onClicked: { panel.dialogIdentity = backend.path + ":" + (backend.project.id || ""); echoReturnDialog.open() } }
             IconButton { objectName: "exportButton"; symbol: "export"; hint: qsTr("Export WAV"); enabled: panel.selected !== null; onClicked: { panel.dialogIdentity = backend.path + ":" + (backend.project.id || ""); panel.exportId = backend.selectedAudio; exportFile.open() } }
-            IconButton { objectName: "takeSubtitlesButton"; symbol: "file"; hint: qsTr("Export subtitles"); visible: !!panel.selected && !!panel.selected.record.segment_assembly; enabled: !backend.busy; onClicked: panel.exportSubtitlesRequested(panel.selected.record.id) }
+            IconButton { objectName: "takeSubtitlesButton"; symbol: "file"; hint: qsTr("Subtitles and timing review"); visible: !!panel.selected && panel.selected.accepted; enabled: !backend.busy; onClicked: panel.exportSubtitlesRequested(panel.selected.record.id) }
         }
         ListView {
             id: takeList

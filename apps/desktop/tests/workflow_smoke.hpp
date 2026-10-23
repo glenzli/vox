@@ -28,3 +28,6 @@ void startSoundWorkspaceSmoke(QGuiApplication &, QQmlApplicationEngine &,
                               const QString &);
 void startLongformSmoke(QGuiApplication &, QQmlApplicationEngine &,
                         UiPreferences &, DesktopBackend &, const QString &);
+void startDeliverySmoke(QGuiApplication &, QQmlApplicationEngine &,
+                        UiPreferences &, DesktopBackend &, const QString &);
+QString prepareDeliverySmoke(const QString &);

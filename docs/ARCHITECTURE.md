@@ -102,8 +102,8 @@ CLI and desktop share the same use case, with visible draft restoration in the s
 
 ## Persistent segment production
 
-`project::segments` owns compilation, candidates, explicit selection, assembly and measured-caption
-export. Definitions bind authored text, effective spoken text, voice, language, delivery and reference
+`project::segments` owns compilation, candidates, explicit selection, assembly and measured timing
+receipts consumed by caption export. Definitions bind authored text, effective spoken text, voice, language, delivery and reference
 content identities. Matching selections survive unrelated source edits; changed inputs need a new
 segment take. Source revisions and accepted whole audio remain immutable. Re-selecting an older
 accepted segment changes only the selection for the next assembly.
@@ -164,3 +164,27 @@ The desktop keeps collection identity separately from the currently edited child
 voice, segment and audio controls operate on that child; collection actions retain their captured
 parent and selected-chapter identities. Dedicated voice-design and long-form adapters share the
 worker's single foreground task and cancellation boundary.
+
+## Subtitle review and compiled delivery
+
+`project::captions` owns audio-pinned subtitle revisions, selections and interrupted-run recovery.
+Its measured track projection reuses assembly receipts; `infer_runtime::captions` sends exact
+confirmed words to the existing local `audio.align` SDK operation. It checks bounded times and
+transcript coverage and retains the canonical response as an immutable object. Job metadata proves
+App, intent, physical deployment and local/no-fallback policy; input/output hashes identify consumed
+and retained bytes, rather than claiming a payload signature that the Job API does not expose.
+Generation produces a candidate and explicit acceptance selects it for one immutable audio revision.
+An Echo return has a distinct audio identity and cannot inherit the old selection. Unchanged measured
+tracks retain authored text; realignment retains the confirmed spoken transcript and estimates timing.
+
+`project::chapters::compilation` owns export-only joining and its preflight fingerprint. It locks the
+parent and selected children, validates current source/settings and accepted audio, and binds selected
+order, captions and output options before writing. Preserve mode requires one PCM format; explicit
+normalization produces mono 24 kHz PCM16 without replacing any stored take. Silent gaps and chapter
+positions use output frames; merged subtitle timestamps derive from those positions. Publication is
+an atomic no-clobber directory containing audio, source and chapter/provenance records. Mixing and
+timeline editing remain Echo responsibilities.
+
+`DesktopDelivery` owns correlated preview, alignment and compilation requests. Audio/project changes
+invalidate open reviews and pending callbacks. User transcript edits remain separate from refreshed
+project snapshots; adopting timing and exporting a reviewed compilation are explicit actions.

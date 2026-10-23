@@ -1,8 +1,15 @@
 //! Synchronous adapter for the official SDK, called only outside the GUI thread.
 use infer_runtime_client::{
-    AudioBytesResponse, Client, DiscoveryResolver, Error, JobSnapshot, SpeechRequest,
+    AlignmentResponse, AudioBytesResponse, Client, DiscoveryResolver, Error, JobSnapshot,
+    SpeechRequest,
 };
-use std::{future::Future, path::PathBuf, sync::Mutex, time::Duration};
+use std::{
+    collections::BTreeMap,
+    future::Future,
+    path::{Path, PathBuf},
+    sync::Mutex,
+    time::Duration,
+};
 
 #[derive(Debug)]
 pub(super) enum SdkAdapterError {
@@ -28,6 +35,17 @@ pub(super) trait InferRuntimeSdk: Send + Sync {
         Err(SdkAdapterError::RuntimeUnavailable)
     }
     fn job(&self, id: &str) -> Result<JobSnapshot, SdkAdapterError>;
+    fn align_file(
+        &self,
+        path: &Path,
+        transcript: &str,
+        language: &str,
+        metadata: &BTreeMap<String, String>,
+        timeout: Duration,
+    ) -> Result<AlignmentResponse, SdkAdapterError> {
+        let _ = (path, transcript, language, metadata, timeout);
+        Err(SdkAdapterError::RuntimeUnavailable)
+    }
 }
 pub(super) struct OfficialSdkClient {
     client: Client,
@@ -92,6 +110,20 @@ impl InferRuntimeSdk for OfficialSdkClient {
     }
     fn job(&self, id: &str) -> Result<JobSnapshot, SdkAdapterError> {
         self.run(Duration::from_secs(10), self.client.job(id))
+    }
+    fn align_file(
+        &self,
+        path: &Path,
+        transcript: &str,
+        language: &str,
+        metadata: &BTreeMap<String, String>,
+        timeout: Duration,
+    ) -> Result<AlignmentResponse, SdkAdapterError> {
+        self.run(
+            timeout,
+            self.client
+                .align_file(path, "audio/wav", transcript, Some(language), metadata),
+        )
     }
 }
 pub(super) fn execution_failure(error: SdkAdapterError) -> (String, bool) {

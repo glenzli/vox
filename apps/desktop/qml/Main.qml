@@ -233,7 +233,7 @@ ApplicationWindow {
                                         Layout.fillWidth: true
                                         Layout.minimumWidth: 0
                                         horizontalAlignment: Text.AlignRight
-                                        text: backend.rendering ? (backend.total > 0 ? qsTr("%1 / %2 segments").arg(backend.completed).arg(backend.total) : qsTr("Preparing…")) : window.readinessHint
+                                        text: backend.delivery.aligning ? qsTr("Aligning subtitles…") : backend.rendering ? (backend.total > 0 ? qsTr("%1 / %2 segments").arg(backend.completed).arg(backend.total) : qsTr("Preparing…")) : window.readinessHint
                                         color: Theme.secondary
                                         font.pixelSize: 11
                                         elide: Text.ElideRight
@@ -241,7 +241,7 @@ ApplicationWindow {
                                         ToolTip.visible: readinessHover.hovered && truncated
                                         ToolTip.text: text
                                     }
-                                    IconButton { visible: backend.rendering; symbol: "stop"; hint: qsTr("Stop after current segment"); onClicked: backend.cancel() }
+                                    IconButton { visible: backend.rendering; symbol: "stop"; hint: backend.delivery.aligning ? qsTr("Stop alignment") : qsTr("Stop after current segment"); onClicked: backend.delivery.aligning ? backend.delivery.cancelAlignment() : backend.cancel() }
                                     ActionButton { objectName: "renderButton"; text: backend.rendering ? qsTr("Rendering…") : qsTr("Render voice"); symbol: "waveform"; primary: true; enabled: window.renderReady; onClicked: backend.render() }
                                 }
                                 ProgressBar { Layout.fillWidth: true; visible: backend.rendering; from: 0; to: Math.max(1,backend.total); value: backend.completed; indeterminate: backend.total <= 0 }
@@ -316,7 +316,7 @@ ApplicationWindow {
     Dialog {
         id: stopDialog
         objectName: "stopDialog"
-        title: qsTr("Audio is still being generated")
+        title: backend.delivery.aligning ? qsTr("Subtitle alignment is still running") : qsTr("Audio is still being generated")
         anchors.centerIn: Overlay.overlay
         width: 440
         modal: true
@@ -325,7 +325,7 @@ ApplicationWindow {
             standardButton(Dialog.Ok).text = qsTr("Stop and close")
             standardButton(Dialog.Cancel).text = qsTr("Keep open")
         }
-        Label { text: qsTr("Stop after the current generation, then close Vox?"); color: Theme.text }
+        Label { width: parent.width; wrapMode: Text.WordWrap; text: backend.delivery.aligning ? qsTr("Wait for the current alignment request, keep any completed candidate, then close Vox?") : qsTr("Stop after the current generation, then close Vox?"); color: Theme.text }
         onAccepted: {
             window.exitWhenStopped = true
             if (backend.rendering) backend.cancel()

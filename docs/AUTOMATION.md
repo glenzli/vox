@@ -80,7 +80,7 @@ legacy document digests. Rules affect spoken input; they never replace authored 
 | `accept_segment` | `path`, expected `version`, `segment_id`; explicit selection for assembly |
 | `segment_playback` | `path`, `segment_id`; verified WAV and peaks |
 | `assemble_segments` | `path`, expected `version`; all current segments must have selected takes |
-| `export_subtitles` | `path`, assembled `audio_id`, new `destination`, `format: "srt"` or `"vtt"` |
+| `export_subtitles` | `path`, exact `audio_id` with measured or accepted aligned timing, new `destination`, `format: "srt"` or `"vtt"` |
 
 Assembly creates a whole-take candidate. `accept` remains the only operation advancing the whole
 audio head. Repeated passages reuse the same PCM; subtitle timings include local pauses and cues.
@@ -153,10 +153,58 @@ prevents further dispatch; later batches reuse it. Unexpected interruption requi
 
 Chapter export rejects stale or unaccepted audio. It writes ordered WAVs plus `manifest.json` with
 authored scripts, source/audio identities and provenance. `srt`/`vtt` are relative paths when the
-accepted audio has measured assembly timing, otherwise null with `subtitles_unavailable_reason`.
+accepted audio has measured assembly timing or an explicitly accepted alignment, otherwise null with `subtitles_unavailable_reason`.
 Echo returns require review and explicit chapter acceptance; arbitrary edits do not retain old
 caption timing. Exports do not overwrite an existing destination.
 
 `scripts/test_longform_live.py` exercises real design, reference reuse, two-chapter cancellation and
 resume, unchanged-result reuse, changed-segment generation, accepted exports and the independent
 Echo editor in a new external project. It never records a human voice or modifies a user project.
+
+## Subtitle alignment and review
+
+`subtitle_preview` takes `path`, `audio_id` and an optional `candidate_id`. Its ordinary snapshot
+adds `track`, `track_error`, `transcript`, `language`, `accepted_audio`, pending `candidates` and
+`runs`. Missing timing returns a null track with a reason. The transcript suggestion comes from
+the selected audio's immutable source, including effective spoken pronunciation and repeats;
+after editing, the caller must supply the words actually present in the recording.
+
+`align_subtitles` takes `path`, expected `version`, accepted `audio_id`, and
+`spec: {transcript, language}`. Language is one of the explicit speech language names; `auto` is
+not accepted. It uses Vox's own local `audio.align` grant through the pinned official SDK.
+Each request is bounded to 64 KiB of transcript, 128 MiB of PCM16 WAV and 30 minutes of audio.
+An unavailable transcript suggestion reports `transcript_error` without hiding an existing valid
+caption track; long recordings should be divided into chapters before realignment.
+The final snapshot includes `subtitle_outcome: {run_id, candidate_id, state, error}`. Check the
+outcome even when the outer request succeeds. Stop waits for the current request and retains a
+completed candidate; it does not claim to abort provider inference. Lost running journals become
+`interrupted_unknown` and are never automatically resubmitted.
+
+`accept_subtitles` and `discard_subtitles` take `path`, expected `version` and subtitle `id`.
+Only explicit acceptance selects alignment for that exact audio revision. Previewing a candidate
+never changes export selection. `SubtitleTrack` reports `source: "measured_segments"` or
+`"forced_alignment"`, exact audio/source pins, optional `alignment_revision`, and ordered
+`cues: [{start_ms, end_ms, text}]`. Alignment timing is an estimate to review, not an ASR accuracy
+claim. Measured timing keeps authored captions; alignment preserves the caller's confirmed wording.
+
+## Compiled chapter delivery
+
+`chapter_compilation_preflight` takes parent `path`, current `version`, ordered `chapter_ids`
+(empty means all active chapters), and `options: {gap_ms, audio_mode, subtitles}`.
+`audio_mode` is `preserve` or explicit `normalize_mono24000`; `subtitles` is `required` or
+`audio_only`. The silent gap is 0–600000 ms. Defaults are zero gap, preserve and required subtitles.
+Its direct response includes `ready`, collection and per-chapter `issues`, the output contract
+and `fingerprint`. Preserve mode requires matching formats; normalized output is mono 24 kHz PCM16.
+
+`chapter_compile` adds the reviewed preflight `fingerprint` and a new `destination` directory.
+The parent and selected chapters are locked and revalidated before publication; changed source,
+accepted audio or subtitle selection returns `compilation_preflight_changed`. The response is
+`{exported, destination, manifest}`. The package contains `compilation.wav`, `manifest.json`,
+`chapters.json`, `chapters.ffmetadata`, source scripts, and merged SRT/VTT when required.
+Audio-only mode does not export partial or stale captions. Inputs and output are bounded to
+512 MiB and total duration to 24 hours; the smaller byte limit may govern first. No existing
+destination is overwritten, and compilation does not create or accept a replacement project take.
+
+`scripts/test_delivery_live.py` copies an existing isolated long-form fixture, performs a fresh
+Echo edit, real local alignment, explicit subtitle acceptance and compiled export, and checks
+format choice, stale preflight rejection, no-clobber export and unchanged original input.

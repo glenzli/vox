@@ -207,6 +207,7 @@ impl Project {
             }
         }
         changed |= super::voice_design::recover_records(&mut m);
+        changed |= super::captions::recover_records(&mut m);
         changed |= super::chapters::recover_records(&mut m);
         if changed {
             m.version += 1;

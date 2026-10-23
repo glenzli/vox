@@ -129,6 +129,7 @@
         <source>Export subtitles</source>
         <translation>导出字幕</translation>
     </message>
+    <message><source>Subtitles and timing review</source><translation>字幕与时间审阅</translation></message>
 </context>
 <context>
     <name>DesktopBackend</name>
@@ -804,6 +805,7 @@ Give your words a moment to breathe.</source>
       <source>Reused</source>
       <translation>已复用</translation>
     </message>
+    <message><source>Waiting for the current alignment request to finish…</source><translation>正在等待当前对齐请求结束…</translation></message>
 </context>
 <context>
     <name>Main</name>
@@ -1032,6 +1034,10 @@ Write the script. Direct the voices. Keep the take.</source>
       <source>Select a chapter to write, direct voices and review its takes.</source>
       <translation>选择章节，编写脚本、配置音色并审核录音。</translation>
     </message>
+    <message><source>Aligning subtitles…</source><translation>正在对齐字幕…</translation></message>
+    <message><source>Stop alignment</source><translation>停止对齐</translation></message>
+    <message><source>Subtitle alignment is still running</source><translation>字幕对齐仍在进行</translation></message>
+    <message><source>Wait for the current alignment request, keep any completed candidate, then close Vox?</source><translation>等待当前对齐请求结束，保留已完成的候选后关闭 Vox？</translation></message>
 </context>
 <context>
     <name>MaterialsDialog</name>
@@ -2367,6 +2373,27 @@ Write a narration, import an existing script, or choose a form on the left.</sou
         <source>SubRip subtitles (*.srt)</source>
         <translation>SubRip 字幕 (*.srt)</translation>
     </message>
+    <message><source>Subtitles</source><translation>字幕</translation></message>
+    <message><source>%1 cues</source><translation>%1 条字幕</translation></message>
+    <message><source>Listen to this audio</source><translation>试听此录音</translation></message>
+    <message><source>Measured timings follow the assembled segments. Aligned timings are model estimates; review them before accepting.</source><translation>实测时间来自拼装分段的实际时长；对齐时间是模型估计，请审阅后采用。</translation></message>
+    <message><source>Current timings</source><translation>当前字幕时间</translation></message>
+    <message><source>Candidate %1 · %2</source><translation>候选 %1 · %2</translation></message>
+    <message><source>Accept timings</source><translation>采用字幕时间</translation></message>
+    <message><source>Discard candidate timings</source><translation>丢弃候选字幕时间</translation></message>
+    <message><source>Loading timings…</source><translation>正在读取字幕时间…</translation></message>
+    <message><source>No current timings for this audio</source><translation>此录音暂无有效字幕时间</translation></message>
+    <message><source>Exact spoken transcript</source><translation>实际台词</translation></message>
+    <message><source>Check these words against the audio. After Echo cuts or edits, update the transcript to match exactly. This does not change the script.</source><translation>请对照录音核对台词。经 Echo 裁剪或编辑后，请将台词修改为与录音完全一致的内容，此操作不会修改脚本。</translation></message>
+    <message><source>Enter the words actually spoken in this audio</source><translation>填写此录音中实际说出的台词</translation></message>
+    <message><source>Choose language</source><translation>选择语言</translation></message>
+    <message><source>These words match this audio</source><translation>台词与此录音一致</translation></message>
+    <message><source>Realign</source><translation>重新对齐</translation></message>
+    <message><source>Accept this audio version before realigning.</source><translation>请先采用此录音版本，再重新对齐。</translation></message>
+    <message><source>Connect Runtime to realign. Saved timings can still be exported.</source><translation>连接 Runtime 后可重新对齐，已保存的字幕时间仍可导出。</translation></message>
+    <message><source>Stop alignment</source><translation>停止对齐</translation></message>
+    <message><source>Close</source><translation>关闭</translation></message>
+    <message><source>Export subtitles…</source><translation>导出字幕…</translation></message>
 </context>
   <context>
     <name>ChaptersPanel</name>
@@ -2494,6 +2521,7 @@ Write a narration, import an existing script, or choose a form on the left.</sou
       <source>Markdown uses repeated # headings, or repeated ## headings when needed. Code fences are ignored. Long text splits at paragraphs.</source>
       <translation>Markdown 按多个一级标题拆分，必要时使用多个二级标题；忽略代码块中的标题。长文本按段落拆分。</translation>
     </message>
+    <message><source>Compile chapters…</source><translation>合编章节…</translation></message>
 </context>
   <context>
     <name>VoiceDesignWorkspace</name>
@@ -2630,4 +2658,77 @@ Write a narration, import an existing script, or choose a form on the left.</sou
       <translation>WAV 音频 (*.wav)</translation>
     </message>
   </context>
+<context>
+    <name>CompilationDialog</name>
+    <message><source>Compile chapters</source><translation>合编章节</translation></message>
+    <message><source>Compilation</source><translation>合编音频</translation></message>
+    <message><source>Select chapters and arrange their export order. Only current accepted audio is included.</source><translation>选择章节并安排导出顺序，仅包含当前已采用的录音。</translation></message>
+    <message><source>%1 of %2 chapters selected</source><translation>已选择 %1 / %2 章</translation></message>
+    <message><source>Select all</source><translation>全选</translation></message>
+    <message><source>Clear</source><translation>清空</translation></message>
+    <message><source>Move earlier in this export</source><translation>在本次导出中前移</translation></message>
+    <message><source>Move later in this export</source><translation>在本次导出中后移</translation></message>
+    <message><source>Between chapters</source><translation>章间停顿</translation></message>
+    <message><source>ms silence</source><translation>毫秒静音</translation></message>
+    <message><source>Audio format</source><translation>音频格式</translation></message>
+    <message><source>Keep matching formats</source><translation>保留相同的原始格式</translation></message>
+    <message><source>Convert all to mono · 24 kHz · PCM16</source><translation>全部转换为单声道 · 24 kHz · PCM16</translation></message>
+    <message><source>Subtitles</source><translation>字幕</translation></message>
+    <message><source>Require current subtitles</source><translation>必须有当前有效字幕</translation></message>
+    <message><source>Audio only</source><translation>仅音频</translation></message>
+    <message><source>Conversion downmixes and resamples every chapter. Original project audio is kept.</source><translation>转换将对每章进行混缩与重采样，工程内的原始录音会保留。</translation></message>
+    <message><source>Checking accepted versions…</source><translation>正在检查已采用版本…</translation></message>
+    <message><source>Check selection</source><translation>检查所选章节</translation></message>
+    <message><source>%1 · %2 Hz · %3 channels · %4 subtitle cues</source><translation>%1 · %2 Hz · %3 声道 · %4 条字幕</translation></message>
+    <message><source>New folder</source><translation>新文件夹</translation></message>
+    <message><source>Folder name</source><translation>文件夹名称</translation></message>
+    <message><source>Choose parent…</source><translation>选择上级文件夹…</translation></message>
+    <message><source>Choose an existing parent folder. The new export folder must not already exist.</source><translation>选择已有的上级文件夹。新导出文件夹必须尚不存在。</translation></message>
+    <message><source>WAV · chapter markers · source manifest</source><translation>WAV · 章节标记 · 来源清单</translation></message>
+    <message><source>Close</source><translation>关闭</translation></message>
+    <message><source>Export compilation</source><translation>导出合编音频</translation></message>
+    <message><source>Choose parent folder for compilation</source><translation>选择合编音频的上级文件夹</translation></message>
+</context>
+<context>
+    <name>DesktopDelivery</name>
+    <message><source>Measured segments</source><translation>实际分段时长</translation></message>
+    <message><source>Aligned estimate</source><translation>对齐估计时间</translation></message>
+    <message><source>No current timings</source><translation>暂无有效时间</translation></message>
+    <message><source>Aligning the confirmed transcript to this audio…</source><translation>正在将已确认的台词与此录音对齐…</translation></message>
+    <message><source>Waiting for the current alignment request to finish…</source><translation>正在等待当前对齐请求结束…</translation></message>
+    <message><source>Candidate timings are ready. Review them, then accept explicitly.</source><translation>候选时间已就绪，请审阅后明确采用。</translation></message>
+    <message><source>Alignment stopped. The completed candidate is kept for review.</source><translation>对齐已停止，已完成的候选会保留供审阅。</translation></message>
+    <message><source>Alignment stopped. Existing timings are kept.</source><translation>对齐已停止，已有字幕时间会保留。</translation></message>
+    <message><source>Timings accepted for this audio version.</source><translation>已为此录音版本采用字幕时间。</translation></message>
+    <message><source>Candidate timings discarded.</source><translation>已丢弃候选字幕时间。</translation></message>
+    <message><source>Check this selection before exporting.</source><translation>导出前请检查所选章节。</translation></message>
+    <message><source>Ready to export the reviewed chapter versions.</source><translation>已审阅的章节版本可以导出。</translation></message>
+    <message><source>Resolve the issues below, then check again.</source><translation>请处理下列问题后重新检查。</translation></message>
+    <message><source>Exporting the compilation…</source><translation>正在导出合编音频…</translation></message>
+    <message><source>Compilation exported to a new folder.</source><translation>合编音频已导出到新文件夹。</translation></message>
+    <message><source>Enter the exact spoken transcript, choose its language and confirm it matches this audio.</source><translation>请输入准确的实际台词，选择语言，并确认台词与此录音一致。</translation></message>
+    <message><source>This audio has no current timings. Align a confirmed transcript to create them.</source><translation>此录音暂无有效字幕时间，可将已确认的台词与录音对齐来创建。</translation></message>
+    <message><source>Save the current script before continuing.</source><translation>请先保存当前脚本，再继续。</translation></message>
+    <message><source>These timings no longer match the audio. Reopen subtitles to review it.</source><translation>这些字幕时间已不再匹配录音，请重新打开字幕并审阅。</translation></message>
+    <message><source>Accept this audio version before realigning subtitles.</source><translation>请先采用此录音版本，再重新对齐字幕。</translation></message>
+    <message><source>Select at least one chapter.</source><translation>请至少选择一章。</translation></message>
+    <message><source>Choose a parent folder and a new folder name.</source><translation>请选择上级文件夹，并填写新的文件夹名称。</translation></message>
+    <message><source>A chapter changed after review. Check the selection again.</source><translation>某章在审阅后已变化，请重新检查所选章节。</translation></message>
+    <message><source>The audio formats differ. Explicitly choose mono 24 kHz conversion, or use matching audio.</source><translation>音频格式不同。请明确选择转换为单声道 24 kHz，或使用格式一致的录音。</translation></message>
+    <message><source>A chapter needs current subtitles. Align and accept them, or choose audio only.</source><translation>某章缺少当前有效字幕，请对齐并采用字幕，或选择仅音频。</translation></message>
+    <message><source>Choose a gap from 0 to 600000 milliseconds and supported export options.</source><translation>请选择 0 至 600000 毫秒的章间停顿，以及支持的导出选项。</translation></message>
+    <message><source>Check the selection and resolve every issue before exporting.</source><translation>请检查所选章节并处理所有问题后再导出。</translation></message>
+    <message><source>Mono conversion supports one or two input channels. Prepare this chapter in Echo first.</source><translation>单声道转换仅支持单声道或双声道输入，请先在 Echo 中准备此章录音。</translation></message>
+    <message><source>This compilation exceeds the 512 MB audio limit. Export fewer chapters at a time.</source><translation>此合编内容超过 512 MB 音频限制，请减少每次导出的章节。</translation></message>
+    <message><source>This compilation exceeds 24 hours. Export fewer chapters at a time.</source><translation>此合编内容超过 24 小时，请减少每次导出的章节。</translation></message>
+    <message><source>A selected chapter has empty audio. Accept a playable version first.</source><translation>所选章节的录音为空，请先采用可播放的版本。</translation></message>
+    <message><source>A subtitle cue is too short for the output audio. Revise its timing or choose audio only.</source><translation>某条字幕对输出音频而言过短，请调整时间或选择仅音频。</translation></message>
+    <message><source>Audio or source material failed its integrity check. Restore the project material before exporting.</source><translation>音频或来源素材未通过完整性检查，请恢复工程素材后再导出。</translation></message>
+    <message><source>Select each available chapter once in the desired export order.</source><translation>请按所需导出顺序选择可用章节，每章仅选一次。</translation></message>
+    <message><source>A chapter does not belong to this collection. Refresh the chapter list.</source><translation>某章不属于当前章节集，请刷新章节列表。</translation></message>
+    <message><source>Choose a new export folder outside the project.</source><translation>请选择工程之外的新导出文件夹。</translation></message>
+    <message><source>Subtitle timing evidence is invalid. Realign this audio and review a new candidate.</source><translation>字幕时间依据无效，请重新对齐此录音并审阅新候选。</translation></message>
+    <message><source>Alignment supports audio up to 128 MiB and 30 minutes. Use a shorter accepted version.</source><translation>对齐支持最大 128 MiB、最长 30 分钟的录音，请使用较短的已采用版本。</translation></message>
+    <message><source>The alignment could not match these words. Review the exact transcript against the audio, then try again.</source><translation>对齐未能匹配这些台词，请逐字核对录音中的实际台词后重试。</translation></message>
+</context>
 </TS>

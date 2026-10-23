@@ -1,4 +1,5 @@
 #include "desktop_backend.hpp"
+#include "desktop_delivery.hpp"
 #include "project_open_filter.hpp"
 #include "reference_recorder.hpp"
 #include "ui_preferences.hpp"
@@ -36,6 +37,7 @@ int main(int argc, char **argv) {
       app.arguments().contains("--smoke-production") ||
       app.arguments().contains("--smoke-sound-workspace") ||
       app.arguments().contains("--smoke-longform") ||
+      app.arguments().contains("--smoke-delivery") ||
       app.arguments().contains("--smoke-audio") ||
       app.arguments().contains("--smoke-shape-transfer")) {
     QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -54,6 +56,15 @@ int main(int argc, char **argv) {
     }
   }
   QTranslator translator;
+  const int preparedDeliveryIndex = app.arguments().indexOf("--smoke-delivery");
+  if (preparedDeliveryIndex >= 0 &&
+      preparedDeliveryIndex + 1 < app.arguments().size()) {
+    const auto worker =
+        prepareDeliverySmoke(app.arguments()[preparedDeliveryIndex + 1]);
+    if (worker.isEmpty())
+      return 32;
+    qputenv("VOX_CLI_BINARY", worker.toUtf8());
+  }
   DesktopBackend backend;
   ReferenceRecorder recorder;
   const auto echoIndex = app.arguments().indexOf("--echo-binary");
@@ -72,6 +83,7 @@ int main(int argc, char **argv) {
       app.installTranslator(&translator);
     engine.retranslate();
     backend.retranslate();
+    static_cast<DesktopDelivery *>(backend.delivery())->retranslate();
   };
   QObject::connect(&preferences, &UiPreferences::languageChanged, &app,
                    translate);
@@ -178,5 +190,9 @@ int main(int argc, char **argv) {
   if (longformIndex >= 0 && longformIndex + 1 < arguments.size())
     startLongformSmoke(app, engine, preferences, backend,
                        arguments[longformIndex + 1]);
+  const int deliveryIndex = arguments.indexOf("--smoke-delivery");
+  if (deliveryIndex >= 0 && deliveryIndex + 1 < arguments.size())
+    startDeliverySmoke(app, engine, preferences, backend,
+                       arguments[deliveryIndex + 1]);
   return app.exec();
 }

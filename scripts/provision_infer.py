@@ -18,6 +18,7 @@ def main():
     parser.add_argument("--backup", type=Path, required=True)
     parser.add_argument("--studio", action="store_true", help="Explicitly add local reference-voice, sound and faithful Chinese prompt grants to Vox")
     parser.add_argument("--voice-design", action="store_true", help="Explicitly add local description-based voice design to Vox")
+    parser.add_argument("--alignment", action="store_true", help="Explicitly add local subtitle alignment to Vox")
     args = parser.parse_args()
     if not re.fullmatch(r"http://127\.0\.0\.1:\d+", args.console):
         raise SystemExit("Use an explicit numeric-loopback Console URL")
@@ -77,7 +78,7 @@ def main():
     if updated != current:
         if call("/api/config")["source"] != current: raise RuntimeError("Configuration changed; retry after review")
         call("/api/config",{"source":updated},"PUT")
-    if args.studio or args.voice_design:
+    if args.studio or args.voice_design or args.alignment:
         current_apps = {a["app_id"]:a for a in call("/api/access/apps")["apps"]}
         app = current_apps["vox"]
         # Add only requested authority; rerunning studio setup never removes later grants.
@@ -86,6 +87,8 @@ def main():
             requested += ["speech.clone_voice", "audio.generate_sound", "text.edit"]
         if args.voice_design:
             requested += ["speech.design_voice", "speech.clone_voice"]
+        if args.alignment:
+            requested += ["audio.align"]
         allowed = list(dict.fromkeys(app["allowed_intents"] + requested))
         overrides = dict(app["request_overrides"])
         for key, values in {"priority":["interactive","background"], "capability_floor":["capable","foundational"], "latency":["interactive","balanced"]}.items():
@@ -103,6 +106,8 @@ def main():
             routes.update({"speech.clone_voice":["mlx_qwen3_tts_base_1_7b"], "audio.generate_sound":["stable_audio_3_sm_sfx_mlx","stable_audio_3_sm_music_mlx"], "text.edit":["ollama_qwen3_5_4b"]})
         if args.voice_design:
             routes.update({"speech.design_voice":["mlx_qwen3_tts_voice_design_1_7b"], "speech.clone_voice":["mlx_qwen3_tts_base_1_7b"]})
+        if args.alignment:
+            routes.update({"audio.align":["mlx_qwen3_forced_aligner_0_6b"]})
         for intent, ids in routes.items():
             route = config["apps"]["vox"].get("routing",{}).get("intents",{}).get(intent)
             if route is None:

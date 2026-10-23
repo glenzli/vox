@@ -81,6 +81,7 @@ Rectangle {
             ActionButton { objectName: "stopChaptersButton"; Layout.fillWidth: true; text: qsTr("Stop after current segment"); symbol: "stop"; onClicked: backend.cancel() }
         }
         ActionButton { objectName: "exportChaptersButton"; Layout.fillWidth: true; text: qsTr("Export accepted set…"); symbol: "export"; enabled: !backend.busy && !backend.dirty && !backend.chapterError.length && panel.acceptedCount > 0; onClicked: { panel.dialogIdentity = backend.collectionPath; exportFolder.open() } }
+        ActionButton { objectName: "compileChaptersButton"; Layout.fillWidth: true; text: qsTr("Compile chapters…"); symbol: "export"; enabled: !backend.busy && !backend.dirty && !backend.chapterError.length && panel.activeChapters.length > 0; onClicked: compilationDialog.openForCollection() }
         Label { text: qsTr("Matching segments are reused. Changed chapters receive new candidates for review."); Layout.fillWidth: true; wrapMode: Text.WordWrap; font.pixelSize: 10; color: Theme.muted }
     }
     Dialog {
@@ -112,4 +113,5 @@ Rectangle {
     }
     Native.FileDialog { id: importFiles; title: qsTr("Import text as chapters"); fileMode: Native.FileDialog.OpenFiles; nameFilters: [qsTr("Text files (*.txt *.md)"),qsTr("All files (*)")]; onAccepted: if (panel.dialogIdentity === backend.collectionPath) backend.importChapters(selectedFiles) }
     Native.FileDialog { id: exportFolder; title: qsTr("Export accepted chapter set"); fileMode: Native.FileDialog.SaveFile; onAccepted: if (panel.dialogIdentity === backend.collectionPath) backend.exportChapters(selectedFile) }
+    CompilationDialog { id: compilationDialog; anchors.centerIn: Overlay.overlay }
 }

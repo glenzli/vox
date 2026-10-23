@@ -32,6 +32,10 @@
 - Project-owned chapters, shared cast/pronunciation, bounded text imports, resumable batch candidates,
   unchanged-segment reuse, explicit chapter acceptance and ordered WAV/caption/source export.
 - Chapter-specific Echo handoff and returned candidates; edited audio exports without stale captions.
+- Audio-pinned subtitle review and local forced alignment of a confirmed transcript, with explicit
+  candidate acceptance and SRT/VTT export after Echo edits.
+- Ordered chapter compilation with silent gaps, explicit format normalization, merged subtitles,
+  chapter markers and revision-pinned provenance; reviewed preflight prevents stale exports.
 - Complete songs and singing production are outside the product scope.
 
 Implementation, focused checks, packaged checks and real Runtime/Echo evidence are recorded

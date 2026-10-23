@@ -360,3 +360,48 @@ record a human microphone. Generated media and fixtures remain outside the check
 Native interaction and export evidence is in `/private/tmp/vox-native-longform-20261023/report.json`;
 the original user project remains byte-identical. This phase does not commit or push source changes.
 The final signed preview is `/Users/g4i/lab/.vox-local-build/current-debug/Vox.app`.
+
+## Subtitle realignment and compiled chapter delivery — 2026-10-23
+
+Three parallel GPT-6.1 Sol/max tasks implemented audio-pinned caption review, chapter compilation
+and their desktop workflows. Integration reuses the existing pinned Runtime SDK and independent
+Echo editor; no Runtime source or SDK publication was needed.
+
+- The required `scripts/build_and_promote_debug.sh` workflow passed formatting, strict Clippy and
+  **161 Rust tests**. Initial desktop checks found a read-only QML layout assignment; the focused
+  delivery check then exposed a compilation dialog constrained by its sidebar parent. Both were
+  corrected, along with translated completion status. The final incremental build passed all
+  **ten packaged checks**; unchanged Rust evidence was reused. All **645 Chinese messages** are
+  complete. Chinese/light and English/dark delivery panels were inspected.
+- The final signed worker passed `scripts/test_delivery_live.py` against a new isolated copy of
+  the two-chapter fixture. A real Echo process edited the accepted audio and returned PCM24 WAV;
+  explicit PCM16 conversion and acceptance preceded local forced alignment. Job
+  `audio_d0bd50ed7344419e9c884ae2d28e4577` ran through Vox's own `audio.align` authorization on
+  `mlx_qwen3_forced_aligner_0_6b`. Candidate preview, explicit subtitle acceptance, SRT/VTT export
+  and chapter-package export succeeded. Export before subtitle acceptance was rejected.
+- Compilation correctly rejected preservation of mixed 48 kHz stereo and 24 kHz mono inputs.
+  Explicit normalization produced mono 24 kHz PCM16 with a 350 ms chapter gap, four merged cues,
+  frame-based chapter markers and pinned source/audio records. The resulting WAV has **230161
+  frames / 9590 ms**. Existing output was not overwritten; a changed chapter invalidated the
+  reviewed fingerprint. Reopening preserved the accepted alignment, and the input fixture and
+  untouched chapter remained byte-identical.
+- Native Cocoa use of the final signed app played Chinese audio through to its end, submitted
+  the confirmed mixed Chinese/Latin transcript, reviewed and accepted a new alignment, and
+  exported SRT through the native save dialog. Job `audio_5cf1953c6c1a4b42b09c2e7f8f072dbc`
+  returned two cues with the original punctuation. The native chapter dialog then exercised the
+  mixed-format warning, explicit conversion, 350 ms gap, preflight and complete package export.
+  The exported frame count, captions and markers match the reviewed settings.
+- Provisioning added only the alignment route to Vox's existing Runtime grants and retained its
+  credential. Other applications were unchanged; the idle local daemon was restarted through
+  Console. User projects were not used for testing. The original welcome project remains
+  byte-identical, and all generated media, fixtures, screenshots and builds are outside the checkout.
+
+The signed app is `/Users/g4i/lab/.vox-local-build/releases/20261023-160404-21007/Vox.app`, also
+available through `current-debug/Vox.app`. Its worker SHA-256 is
+`06bbe60a4cab7f76a1d878e1dee9f3d2b2a3f07a9595db32884e16a04cd31cef`.
+Final real Runtime/Echo evidence is `/private/tmp/vox-delivery-final-live-20261023/report.json`;
+native interaction, subtitle and compiled package evidence is under
+`/private/tmp/vox-native-delivery-20261023/`. The consolidated validation and artifact identities
+are `/private/tmp/vox-delivery-validation-20261023.json`.
+Alignment times are model estimates for review, not an independent verification of spoken words.
+This phase leaves source changes uncommitted and does not push.

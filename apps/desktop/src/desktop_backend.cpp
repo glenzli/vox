@@ -1,4 +1,5 @@
 #include "desktop_backend.hpp"
+#include "desktop_delivery.hpp"
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
@@ -11,6 +12,7 @@
 DesktopBackend::DesktopBackend(QObject *parent)
     : QObject(parent), m_worker(this), m_probeWorker(this),
       m_echoLauncher(this) {
+  m_delivery = new DesktopDelivery(*this);
   connect(&m_echoLauncher, &EchoLauncher::opened, this, [this] {
     m_echoOpening = false;
     messageCode("echo_opened");
@@ -75,6 +77,7 @@ void DesktopBackend::command(const QString &action, const QJsonObject &fields,
                                        "generate_sound",
                                        "generate_sound_batch",
                                        "generate_voice_design_batch",
+                                       "align_subtitles",
                                        "import_shape_transfer"}
                                .contains(action);
   ++m_pendingRequests;
@@ -110,7 +113,8 @@ void DesktopBackend::command(const QString &action, const QJsonObject &fields,
           r.insert("error", action == "generate_sound" ? "generation_cancelled"
                             : action == "import_shape_transfer"
                                 ? "shape_transfer_cancelled"
-                                : "speech_cancelled");
+                            : action == "align_subtitles" ? "subtitle_cancelled"
+                                                          : "speech_cancelled");
         const bool ok = r["ok"].toBool();
         if (!ok)
           messageCode(r["error"].toString());
@@ -122,6 +126,7 @@ void DesktopBackend::command(const QString &action, const QJsonObject &fields,
       },
       cancellable);
 }
+QObject *DesktopBackend::delivery() const { return m_delivery; }
 void DesktopBackend::apply(const QJsonObject &result, quint64 capturedEdit,
                            bool reset) {
   const auto project = result["project"].toObject();
@@ -821,6 +826,8 @@ QString DesktopBackend::message() const {
     return tr("WAV exported");
   if (m_messageCode == "stop_requested" && m_designingVoice)
     return tr("Stopping after the current voice candidate…");
+  if (m_messageCode == "stop_requested" && m_delivery->aligning())
+    return tr("Waiting for the current alignment request to finish…");
   if (m_messageCode == "stop_requested")
     return tr("Stopping after the current segment…");
   if (m_messageCode == "voice_sample")

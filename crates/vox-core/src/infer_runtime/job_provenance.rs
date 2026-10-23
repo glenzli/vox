@@ -26,6 +26,7 @@ pub(super) enum JobPolicyProfile {
     Speech,
     VoiceClone,
     VoiceDesign,
+    Alignment,
     Sound(&'static str),
 }
 
@@ -164,6 +165,7 @@ impl JobPolicyProfile {
         match self {
             Self::Speech | Self::VoiceDesign => INFER_RUNTIME_SPEECH_CAPABILITY,
             Self::VoiceClone => "infer.audio.voice-clone@20260811.1",
+            Self::Alignment => "infer.audio.alignment@20260811.1",
             Self::Sound(_) => "infer.audio.sound-generation@20260926.2",
         }
     }
@@ -172,6 +174,7 @@ impl JobPolicyProfile {
             Self::Speech => Some(SPEECH_DEPLOYMENT),
             Self::VoiceClone => Some("mlx_qwen3_tts_base_1_7b"),
             Self::VoiceDesign => Some("mlx_qwen3_tts_voice_design_1_7b"),
+            Self::Alignment => Some("mlx_qwen3_forced_aligner_0_6b"),
             Self::Sound(_) => None,
         }
     }

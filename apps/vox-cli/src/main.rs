@@ -1,5 +1,6 @@
 //! Bounded JSON adapter shared by humans, AI and the native Qt application.
 mod chapters;
+mod subtitles;
 use serde_json::{Value, json};
 use std::{
     io::{self, BufRead, Write},
@@ -57,9 +58,15 @@ fn execute(v: &Value) -> Result<Value> {
     if action.starts_with("chapter_") {
         return chapters::execute(v);
     }
+    if matches!(
+        action,
+        "subtitle_preview" | "accept_subtitles" | "discard_subtitles"
+    ) {
+        return subtitles::execute(v);
+    }
     if action == "capabilities" {
         return Ok(
-            json!({"schema":"vox.capabilities/1","project_schema":"vox.project/1","voices":voices(),"languages":["auto","Chinese","English","Japanese","Korean","German","French","Russian","Portuguese","Spanish","Italian"],"operations":["segment_plan","render_segment","accept_segment","assemble_segments","segment_playback","export_subtitles","generate_sound_batch","generate_voice_design_batch","accept_voice_design","discard_voice_design","chapter_list","chapter_open","chapter_add","chapter_save","chapter_rename","chapter_reorder","chapter_archive","chapter_import","chapter_shared_settings","chapter_batch","chapter_accept","chapter_export","chapter_begin_echo","chapter_review_echo","import_shape_transfer","shape_transfer_receipt","restore_shape_draft","create","open","save","adopt","validate","render","cancel","accept","discard","playback","export","import_script","import_cue","import_reference","bind_reference","add_builtin","import_sound","generate_sound","accept_sound","discard_sound","bind_sound","material_file","export_material","restore_source","begin_echo","review_echo"],"forms":["narration","dialogue","listening"],"workspaces":["speech","voice_design","chapters","sfx","ambience","short_music"],"voice_design":true,"chapter_batches":true,"pronunciation_dictionary":true,"segment_candidates":true,"voice_reference":true,"sound_generation":true,"builtin_sounds":vox_core::materials::BUILTIN_SOUNDS,"acceptance":"explicit","runtime_app":"vox"}),
+            json!({"schema":"vox.capabilities/1","project_schema":"vox.project/1","voices":voices(),"languages":["auto","Chinese","English","Japanese","Korean","German","French","Russian","Portuguese","Spanish","Italian"],"operations":["segment_plan","render_segment","accept_segment","assemble_segments","segment_playback","export_subtitles","subtitle_preview","align_subtitles","accept_subtitles","discard_subtitles","generate_sound_batch","generate_voice_design_batch","accept_voice_design","discard_voice_design","chapter_list","chapter_open","chapter_add","chapter_save","chapter_rename","chapter_reorder","chapter_archive","chapter_import","chapter_shared_settings","chapter_batch","chapter_accept","chapter_export","chapter_compilation_preflight","chapter_compile","chapter_begin_echo","chapter_review_echo","import_shape_transfer","shape_transfer_receipt","restore_shape_draft","create","open","save","adopt","validate","render","cancel","accept","discard","playback","export","import_script","import_cue","import_reference","bind_reference","add_builtin","import_sound","generate_sound","accept_sound","discard_sound","bind_sound","material_file","export_material","restore_source","begin_echo","review_echo"],"forms":["narration","dialogue","listening"],"workspaces":["speech","voice_design","chapters","sfx","ambience","short_music"],"voice_design":true,"chapter_batches":true,"subtitle_alignment":true,"chapter_compilation":true,"pronunciation_dictionary":true,"segment_candidates":true,"voice_reference":true,"sound_generation":true,"builtin_sounds":vox_core::materials::BUILTIN_SOUNDS,"acceptance":"explicit","runtime_app":"vox"}),
         );
     }
     if action == "probe" {
@@ -260,6 +267,7 @@ fn main() {
                 | "generate_sound_batch"
                 | "generate_voice_design_batch"
                 | "chapter_batch"
+                | "align_subtitles"
                 | "import_shape_transfer"
         ) {
             if busy
@@ -273,7 +281,9 @@ fn main() {
             let control = control.clone();
             let busy = busy.clone();
             let worker = std::thread::spawn(move || {
-                let result = if v["action"] == "chapter_batch" {
+                let result = if v["action"] == "align_subtitles" {
+                    subtitles::align(&v, control)
+                } else if v["action"] == "chapter_batch" {
                     chapters::batch(&v, control)
                 } else if v["action"] == "generate_voice_design_batch" {
                     (|| {

@@ -9,25 +9,25 @@ use crate::{
 };
 use std::{fs, path::PathBuf, sync::Arc};
 
-struct Fixture {
-    base: PathBuf,
-    project: Project,
+pub(super) struct Fixture {
+    pub(super) base: PathBuf,
+    pub(super) project: Project,
 }
 impl Fixture {
-    fn new() -> Self {
+    pub(super) fn new() -> Self {
         let base = std::env::temp_dir().join(format!("vox-chapters-{}", uuid::Uuid::now_v7()));
         fs::create_dir(&base).unwrap();
         let project = Project::create(&base.join("Book.vox"), "Ordered chapters").unwrap();
         Self { base, project }
     }
-    fn add(&self, title: &str, text: &str, format: ScriptFormat) -> String {
+    pub(super) fn add(&self, title: &str, text: &str, format: ScriptFormat) -> String {
         let m = self
             .project
             .add_chapter(self.project.read().unwrap().version, title, text, format)
             .unwrap();
         m.chapters.last().unwrap().id.clone()
     }
-    fn batch(
+    pub(super) fn batch(
         &self,
         ids: &[String],
         execute: impl FnMut(&str, &ExecutionRequest) -> crate::project::Result<ExecutionOutput>,
@@ -43,7 +43,7 @@ impl Fixture {
             )
             .unwrap()
     }
-    fn accept(&self, id: &str) -> Manifest {
+    pub(super) fn accept(&self, id: &str) -> Manifest {
         let state = self.project.chapter_state(id).unwrap();
         self.project
             .accept_chapter(
@@ -60,7 +60,7 @@ impl Drop for Fixture {
     }
 }
 
-fn wav(seed: i16) -> Vec<u8> {
+pub(super) fn wav(seed: i16) -> Vec<u8> {
     let mut wave = SpeechWaveAssembly::default();
     wave.push_pcm(
         24_000,
@@ -89,7 +89,7 @@ fn provenance() -> ExternalExecutionProvenance {
         "attempts":[{"number":1,"provider":"fixture-local","deployment":"mlx_qwen3_tts_custom_voice_1_7b","outcome":"succeeded","trigger":"initial","error_kind":null}]
     })).unwrap()
 }
-fn output(request: &ExecutionRequest, seed: i16) -> ExecutionOutput {
+pub(super) fn output(request: &ExecutionRequest, seed: i16) -> ExecutionOutput {
     let bytes = wav(seed);
     let text = std::str::from_utf8(request.inputs[0].bytes().unwrap()).unwrap();
     let operation: SpeechSynthesisOperation = serde_json::from_slice(&request.instruction).unwrap();

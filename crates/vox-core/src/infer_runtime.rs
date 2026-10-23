@@ -1,6 +1,7 @@
 //! Official SDK mechanics; Vox alone owns its app identity, credential and product policy.
 use infer_runtime_client::{Client, DiscoveryResolver};
 use std::path::PathBuf;
+pub mod captions;
 mod job_provenance;
 mod sdk;
 pub mod sound;

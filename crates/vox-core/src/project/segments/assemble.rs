@@ -8,7 +8,7 @@ use crate::{
     project::{AudioRevision, Document, Error, Manifest, Project, Result, ScriptFormat},
     speech_script::parse_speech_script,
 };
-use std::{fs::OpenOptions, io::Write, path::Path};
+use std::fs::OpenOptions;
 
 impl Project {
     /// Assemble only explicitly selected immutable segments. No model is called
@@ -274,81 +274,4 @@ impl Project {
         };
         Ok((bytes, provenance, metadata))
     }
-
-    /// Export captions measured from an immutable assembled take. No duration
-    /// estimates or current-draft text are used, and existing files are preserved.
-    pub fn export_subtitles(&self, id: &str, destination: &Path, format: &str) -> Result<()> {
-        if !matches!(format, "srt" | "vtt") {
-            return Err(Error::new("invalid_subtitle_format"));
-        }
-        let m = self.read()?;
-        let record = m
-            .audio
-            .iter()
-            .chain(&m.candidates)
-            .find(|r| r.id == id)
-            .ok_or_else(|| Error::new("audio_missing"))?;
-        if record.segment_assembly.is_none() {
-            return Err(Error::new("subtitles_unavailable"));
-        }
-        self.validate_segment_assembly(&m, record)?;
-        let assembly = record
-            .segment_assembly
-            .as_ref()
-            .ok_or_else(|| Error::new("subtitles_unavailable"))?;
-        let mut text = if format == "vtt" {
-            "WEBVTT\n\n".to_owned()
-        } else {
-            String::new()
-        };
-        for (index, timing) in assembly.timings.iter().enumerate() {
-            let caption = timing
-                .text
-                .lines()
-                .filter(|line| !line.trim().is_empty())
-                .collect::<Vec<_>>()
-                .join("\n");
-            // Captions contain literal source text; escape WebVTT markup instead
-            // of interpreting authored angle brackets as caption styling.
-            let caption = if format == "vtt" {
-                caption
-                    .replace('&', "&amp;")
-                    .replace('<', "&lt;")
-                    .replace('>', "&gt;")
-            } else {
-                caption
-            };
-            text.push_str(&format!(
-                "{}\n{} --> {}\n{}\n\n",
-                index + 1,
-                timestamp(timing.start_frame, format),
-                timestamp(timing.end_frame, format),
-                caption
-            ));
-        }
-        let mut file = OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(destination)
-            .map_err(|_| Error::new("destination_exists"))?;
-        file.write_all(text.as_bytes())?;
-        file.sync_all()?;
-        Ok(())
-    }
-}
-
-fn timestamp(frames: u64, format: &str) -> String {
-    // One shared rounding rule keeps adjacent caption boundaries identical at
-    // the subtitle format's millisecond resolution. Exact frames remain stored.
-    let milliseconds =
-        (frames * 1000 + u64::from(SCRIPT_SAMPLE_RATE) / 2) / u64::from(SCRIPT_SAMPLE_RATE);
-    let separator = if format == "srt" { ',' } else { '.' };
-    format!(
-        "{:02}:{:02}:{:02}{}{:03}",
-        milliseconds / 3_600_000,
-        milliseconds / 60_000 % 60,
-        milliseconds / 1000 % 60,
-        separator,
-        milliseconds % 1000
-    )
 }

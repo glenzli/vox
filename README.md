@@ -35,7 +35,8 @@ Vox 是独立的 Qt 桌面应用，用于旁白、多角色对话、听力材料
 | 预设音色 | 九种预设音色，可自动识别或明确指定配音语言 |
 | 音色模仿 | 现场录音或导入单声道/立体声 PCM16 WAV，填写逐字参考文本并确认使用权限；可分配给旁白或任意角色 |
 | 音色设计 | 用文字描述声音，生成最多四份样音；试听后命名保存为合成参考音色，复用于默认旁白或角色 |
-| 长内容制作 | 按章节导入和编写，复用音色与发音设置；批量生成、停止与续作，只重做变化的分段，逐章审阅和采用，再导出章节包 |
+| 长内容制作 | 按章节导入和编写，复用音色与发音设置；批量生成、停止与续作，只重做变化的分段；逐章采用后导出章节包，或合成带章节标记和字幕的完整音频 |
+| 字幕审阅 | 查看分段实测时间；对已采用的音频填写实际台词，通过本地模型重新对齐，预览并采用后导出 SRT/VTT；支持 Echo 编辑后的录音 |
 | 声音工作区 | 音效、环境声、短配乐三个入口；本地生成、批量候选、循环试听、原始 WAV 导出与 Echo 编辑 |
 | 音效库 | 八种程序生成的内置音效、WAV 导入；采用后可绑定脚本音效提示 |
 | 版本与素材 | 独立项目、自动保存的工作草稿、不可变素材、明确采用的脚本与录音版本 |
@@ -53,7 +54,12 @@ Vox 是独立的 Qt 桌面应用，用于旁白、多角色对话、听力材料
 Markdown 按一级标题分章；一级标题不足时使用二级标题，长段落和纯文本按大小继续拆分，并保留导入原文。
 批量生成产出待审阅的录音，不自动采用；取消和失败保留已完成的分段，重试复用匹配的结果。
 意外中断的任务需明确重试。章节包只导出当前已采用版本；附带 WAV、脚本与来源清单，
-有准确分段时间时同时导出 SRT/VTT。Echo 编辑后的音频若没有新时间依据，不沿用编辑前字幕。
+有分段实测时间或已采用的对齐结果时同时导出 SRT/VTT。Echo 编辑后的音频不沿用编辑前字幕。
+
+重新对齐时，填写与当前录音一致的台词并指定语言；模型结果先作为候选，审阅后才用于导出。
+对齐时间属于模型估计，不代表逐字识别校验。整书导出按所选章节顺序加入可配置的静音间隔，
+包含 WAV、章节标记、脚本与来源清单，可选择合并字幕。音频格式不一致时，需要明确选择统一为
+24 kHz 单声道 PCM16；保留格式模式不做隐式转换。导出到新目录，不覆盖已有结果。
 
 声音生成支持 1–30 秒、显式随机种子、最多四个变体和中英文描述。短配乐限定为器乐素材，完整歌曲不在 Vox 范围内。
 环境声使用音效模型；循环试听用于检查首尾衔接，不保证模型输出无缝循环。中文描述经过本地提示词准备，
@@ -90,7 +96,8 @@ python3 scripts/provision_infer.py --help
 ```
 
 默认凭据位置为 `~/.config/vox/infer-credential`；`--studio` 额外申请 Vox 的本地参考音色、
-音效生成和中文提示词准备权限；`--voice-design` 增加本地音色设计与参考音色复用权限。
+音效生成和中文提示词准备权限；`--voice-design` 增加本地音色设计与参考音色复用权限，
+`--alignment` 增加本地字幕对齐权限。
 授权变更需在 Console 队列空闲时进行并重启生效。Vox 不使用 Shape 凭据；
 Runtime 离线时，脚本编辑和已保存音频仍可使用。
 
@@ -114,8 +121,8 @@ Vox 复用了 Shape 的语音制作代码，保留其来源和许可。Shape 的
 旧工程保留读取与精确交接：选中文稿、写作与配音草稿、角色选声、音效和可选已采用音频，
 导入独立 `.vox` 工程。已采用历史与未完成工作稿分别保留，可在侧栏恢复迁移的写作或配音草稿。
 原 `.shape` 工程不改动，也不自动转换其中其他作品。迁移合同见 [Shape 交接](docs/SHAPE_TRANSFER.md)。
-表演驱动的换声和带时码的视频配音列入后续规划。当前字幕导出使用已组装音频的实际段落时长；
-它不执行词级强制对齐，也不承诺生成音频恰好匹配外部视频时长。
+表演驱动的换声和带时码的视频配音列入后续规划。字幕支持分段实测时间和本地强制对齐；
+生成音频恰好匹配外部视频时长仍需独立的同步制作流程。
 
 ### 许可证
 
@@ -160,7 +167,8 @@ Script editing, voice direction and takes share one workspace. These screenshots
 | Voice presets | Nine presets, with automatic or explicit speech language |
 | Reference voices | Record a microphone sample or import mono/stereo PCM16 WAV, enter its exact transcript and confirm permitted use; assign to narration or any role |
 | Voice design | Describe a voice, generate up to four samples, then audition and explicitly save a named synthetic reference for narration or roles |
-| Long-form production | Import and edit chapters, share voices and pronunciation, generate in batches, stop and resume, regenerate changed segments, review and accept chapters, then export a chapter package |
+| Long-form production | Import and edit chapters, share voices and pronunciation, batch and resume generation, regenerate changed segments, then export accepted chapter packages or one recording with chapter markers and subtitles |
+| Subtitle review | Inspect measured segment timing, supply the exact spoken transcript for accepted audio, align locally, review and explicitly accept estimated timing, then export SRT/VTT; supports Echo-edited takes |
 | Sound workspaces | Separate effects, ambience and short instrumental music entries; local generation, batch candidates, loop audition, original WAV export and Echo editing |
 | Sound library | Eight procedural effects and WAV import; accepted materials can be bound to script cues |
 | Versions and materials | Independent projects, autosaved drafts, immutable materials, and explicit script/audio acceptance |
@@ -183,8 +191,15 @@ level-two headings when needed; oversized sections and plain text split further 
 the original imported source. Batch output remains a candidate until reviewed and accepted.
 Cancellation and failure retain completed segments; a later batch reuses matching results.
 Unexpected interruption requires an explicit retry. Chapter packages contain only current accepted
-versions, with WAV, authored scripts and provenance metadata. Measured SRT/VTT is included when
-timing evidence exists; edited Echo audio never inherits captions whose timing is no longer verified.
+versions, with WAV, authored scripts and provenance metadata. SRT/VTT is included when measured
+segment timing or an accepted alignment exists. Echo edits never inherit obsolete captions.
+
+For realignment, enter the transcript actually present in the selected recording and choose its language.
+Results remain candidates until reviewed and accepted. Timings are model estimates, not verification of
+the spoken words. Compilation joins selected chapters in order with a configurable silent gap, producing
+WAV, chapter markers, scripts and provenance, with optional merged captions. Mixed audio formats require
+an explicit conversion to mono 24 kHz PCM16; preserve mode never converts implicitly. Export writes a
+new directory and does not overwrite earlier deliverables.
 
 Sound generation supports 1–30 seconds, an explicit seed, up to four variations, and English or Chinese descriptions.
 Short music is instrumental; complete songs are outside Vox’s scope. Ambience uses the sound-effects model.
@@ -227,7 +242,8 @@ python3 scripts/provision_infer.py --help
 
 The default credential path is `~/.config/vox/infer-credential`. `--studio` additionally requests
 Vox-only local reference voices, sound generation and Chinese prompt preparation. Apply grants while
-Console queues are idle; `--voice-design` adds local voice design and reference reuse. Restart through
+Console queues are idle; `--voice-design` adds local voice design and reference reuse, and `--alignment`
+adds local subtitle alignment. Restart through
 Console to activate changes. Vox does not use Shape's credential. Offline editing and saved audio remain usable.
 
 ### Development and documentation
@@ -253,8 +269,8 @@ script, writing and speech drafts, role choices, cues and optional accepted audi
 the preserved writing or speech draft. The original `.shape` project stays intact; other works in that
 project are not automatically converted. See the [Shape transfer contract](docs/SHAPE_TRANSFER.md).
 Performance-driven voice conversion and timecoded video dubbing remain future work.
-Caption export uses measured durations of assembled segments; it does not perform word-level forced alignment
-or guarantee a fit to external video timings.
+Captions support both measured segment durations and local forced alignment. Matching generated
+audio to an external video duration still requires a separate synchronized-production workflow.
 
 ### License
 

@@ -165,6 +165,14 @@ pub struct Manifest {
     pub accepted_segments: Vec<super::SegmentRevision>,
     #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
     pub segment_selections: std::collections::BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub subtitle_candidates: Vec<super::SubtitleRevision>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub subtitles: Vec<super::SubtitleRevision>,
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub subtitle_selections: std::collections::BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub subtitle_runs: Vec<super::SubtitleRun>,
     #[serde(default)]
     pub handoffs: Vec<crate::handoff::Ticket>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
